@@ -41,3 +41,12 @@ L'UI est déjà conçue. Ton travail est de l'**implémenter fidèlement**, pas 
 - Après chaque écran : lance lint + typecheck + tests de l'app concernée, et compare visuellement à la maquette (mêmes textes, mêmes tokens, même ordre de sections).
 - Si une info manque (numéro WhatsApp, tarif transporteur, coûts…), utilise une variable d'environnement ou un placeholder `[À DÉFINIR]` et signale-le. N'invente rien.
 - Commits petits et en anglais (`feat(shop): savings calculator`).
+
+## Évolution v2 — catalogue multi-packs (prioritaire sur les règles ci-dessus)
+
+- La boutique vend désormais **plusieurs packs** (Barista, Setup & Productivité, Espace Autonome, Meal Prep…), gérés depuis le back-office (création, prix, textes, photo principale, galerie, composition avec une photo par produit, points d'intérêt sur la photo). Le Pack Barista reste le produit phare.
+- Toujours **sans compte ni panier** : une commande = un pack, payé à la livraison, confirmé sur WhatsApp. Chaque page pack a son tiroir de checkout à 3 champs.
+- Numéro WhatsApp de la boutique : **+216 92 184 592** (`21692184592`).
+- Photos des packs : `design/photos/` (copiées comme données d'amorçage dans l'API). Les maquettes `design/screens/` restent la référence du style (tokens, composants, ton) ; la v2 étend la structure (accueil catalogue + page produit), voir `docs/CONTRACT.md` › v2 et `docs/SPEC-V2.md`.
+- Objectif UX : niveau des meilleures boutiques e-commerce (photo produit mise en scène, galerie, zoom, points d'intérêt, sticky buy box, réassurance claire), sans trahir la marque ni les budgets de performance.
+- **Checkout v2 : 4 champs** — nom & prénom, téléphone +216, gouvernorat **et adresse exacte** (rue, n°, quartier, ville / délégation ; obligatoire). L'adresse est une donnée personnelle : jamais dans les logs, les URLs ni le suivi public ; visible uniquement dans l'admin et sur le bon de livraison.

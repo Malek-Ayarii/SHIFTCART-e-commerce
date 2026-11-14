@@ -134,3 +134,117 @@ Réponse `201` :
 - Migration de prod : schéma + produit `PACK-BARISTA` (« Le Pack Barista », 89 TND) + 4 pièces (Cafetière italienne Moka, Thermos intelligent LED, Café tunisien 250 g, Emballage) + nomenclature 1/1/1/1, **coûts à 0 = [À DÉFINIR]**.
 - Profil Spring `dev` uniquement : migration de démo (`db/dev`) avec coûts d'exemple et ~60 commandes réparties sur octobre/novembre 2026 dans tous les statuts. Jamais en prod.
 - Variables d'environnement supplémentaires de l'API : `SHOP_PUBLIC_URL` (défaut `http://localhost:3000`), `WHATSAPP_SHOP_NUMBER` (numéro pour `wa.me`, **[À DÉFINIR]**), `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `LLM_MODEL` (défaut `claude-haiku-5-5`, API Anthropic Messages ; sans `LLM_API_KEY` → génération par gabarit déterministe).
+
+---
+
+# v2 — Catalogue multi-packs, photos, adresse exacte
+
+**Prioritaire sur les sections ci-dessus en cas de conflit.** Spec fonctionnelle : `docs/SPEC-V2.md`.
+
+## Configuration
+- Numéro WhatsApp de la boutique : `21692184592` (+216 92 184 592). Défaut de `WHATSAPP_SHOP_NUMBER` (api : profil dev et `.env.example`), de `NEXT_PUBLIC_WHATSAPP_NUMBER` (shop : `.env.example` + `.env.local`) et du numéro boutique côté admin si utilisé.
+- Les photos sont servies par l'API sur `GET /api/media/{id}` (public, `Cache-Control: public, max-age=31536000, immutable`, `ETag`). Les médias sont immuables (remplacer = nouvel id), donc le cache long est sûr.
+  - Boutique : réécriture Next `/media/:id` → `${API_URL}/api/media/:id` ; `next/image` avec `src="/media/{id}"` (même origine, optimisée par Next). `media.url` vaut `/api/media/{id}` → la boutique remplace le préfixe `/api/media/` par `/media/`.
+  - Admin : `/api/media/{id}` passe par le proxy (même origine).
+
+## Objets partagés
+`Media` : `{ "id": 12, "url": "/api/media/12", "contentType": "image/png", "width": 1024, "height": 572, "alt": "Le Pack Barista sur un bureau" }` (`width`/`height` peuvent être `null`).
+
+`PackItem` (produit d'un pack) :
+```json
+{ "id": 3, "stockItemId": 3, "name": "Thermos intelligent", "description": "Affichage LED tactile…",
+  "quantity": 1, "gift": false, "photo": null, "hotspot": { "x": 84, "y": 66 } }
+```
+(`photo` : `Media | null` ; `hotspot` : `{x,y} | null`, en % de 0 à 100.)
+
+`Savings` (calculateur, optionnel) :
+```json
+{ "title": "Calcule tes économies", "question": "Combien tu dépenses en café par jour ?", "min": 4, "max": 10, "step": 0.5,
+  "defaultValue": 6, "homeCostPerDay": 0.5, "daysPerMonth": 30 }
+```
+
+## Public — catalogue
+`ProductPublic` :
+```json
+{ "id": 1, "slug": "pack-barista", "sku": "PACK-BARISTA", "name": "Le Pack Barista", "badge": "Best-seller",
+  "tagline": "Ton café de pro partout avec toi. Rentabilisé en 20 jours.",
+  "audience": "Étudiants, jeunes actifs, employés de bureau (amateurs de café).",
+  "description": "…", "priceTnd": 89, "featured": true, "sortOrder": 0,
+  "cover": null, "gallery": [], "items": [], "savings": null, "availability": "IN_STOCK" }
+```
+(`cover` : `Media | null` ; `gallery` : `Media[]` ; `items` : `PackItem[]` ; `savings` : `Savings | null` ; `availability` : `IN_STOCK` si packs complets > 0 ou assemblables > 0, sinon `MADE_TO_ORDER`.)
+
+| Route | Réponse |
+| --- | --- |
+| `GET /api/products` | `ProductPublic[]` des packs **actifs**, triés par `sortOrder` puis `id` |
+| `GET /api/products/{slug}` | `ProductPublic` ; `404` si inconnu ou inactif |
+| `GET /api/media/{id}` | octets de l'image |
+
+## Commande — adresse exacte
+`POST /api/orders` ajoute **`address`** (obligatoire) :
+```json
+{ "customerName": "…", "phone": "98765432", "governorate": "Sousse",
+  "address": "12 rue de Marseille, cité El Khadra, Tunis (près de la pharmacie)",
+  "productSku": "PACK-SETUP", "quantity": 1, "source": {}, "website": "" }
+```
+- Validation : 10–200 caractères après trim ; erreurs `422` sous la clé `address` : vide « Ton adresse permet au livreur de te trouver. », trop courte « Précise ta rue, ton quartier et ta ville. », trop longue « Ton adresse est trop longue (200 caractères max). ».
+- `productSku` d'un pack inactif ou inconnu → `422 { "errors": { "productSku": "Ce pack n'est plus disponible." } }`.
+- Montant = `priceTnd` du pack au moment de la commande (figé dans la commande).
+- Réponse `201`/`200` : ajoute `productSlug`, `productCoverUrl` (`/api/media/{id}` ou `null`). Jamais l'adresse.
+- Suivi public `GET /api/orders/{ref}/tracking` : ajoute `productSlug`, `productCoverUrl`. **Jamais l'adresse.**
+- Anti-doublon : même téléphone + même pack en 30 min (inchangé).
+- Adresse jamais loggée (comme le téléphone).
+
+## Admin — commandes
+`OrderSummary` ajoute `productId`, `productSlug`, `productCoverUrl`, `address`. Filtre `GET /api/admin/orders?productId=`. `q` cherche aussi dans l'adresse. `counts` accepte `productId`. Le bon de livraison PDF affiche l'adresse exacte.
+
+## Admin — packs (JWT)
+`ProductAdmin` = `ProductPublic` + `{ "active": true, "createdAt": "…", "updatedAt": "…", "completePacks": 3, "assemblablePacks": 9, "ordersThisMonth": 42 }`.
+
+| Route | Détail |
+| --- | --- |
+| `GET /api/admin/products` | `ProductAdmin[]` (actifs et brouillons), triés par `sortOrder` |
+| `GET /api/admin/products/{id}` | `ProductAdmin` |
+| `POST /api/admin/products` | `ProductInput` → `201 ProductAdmin` |
+| `PUT /api/admin/products/{id}` | `ProductInput` → `ProductAdmin` |
+| `DELETE /api/admin/products/{id}` | `204` ; `409 { "error": "PRODUCT_HAS_ORDERS", "message": "Ce pack a déjà des commandes : désactive-le plutôt." }` |
+| `PUT /api/admin/products/order` | `{ "ids": [3, 1, 2, 4] }` → `204` (réécrit `sortOrder`) |
+| `PUT /api/admin/products/{id}/cover` | `{ "mediaId": 12 }` (ou `null`) → `ProductAdmin` |
+| `PUT /api/admin/products/{id}/gallery` | `{ "mediaIds": [12, 15, 16] }` (ordre d'affichage) → `ProductAdmin` |
+| `PUT /api/admin/products/{id}/items` | `{ "items": [ { "stockItemId": 3, "quantity": 1, "gift": false, "hotspot": { "x": 84, "y": 66 } } ] }` → `ProductAdmin` |
+
+`ProductInput` : `{ "name", "slug"?, "sku"?, "badge"?, "tagline", "audience"?, "description"?, "priceTnd", "active", "featured"?, "savings" }`.
+- `slug` généré depuis le nom si absent (minuscules, sans accents, tirets), unique → sinon `422 { "errors": { "slug": "Ce lien est déjà utilisé par un autre pack." } }`. `sku` généré `PACK-<SLUG>` si absent, unique.
+- `name` 3–80 car. ; `tagline` 5–160 ; `priceTnd` ≥ 0, 3 décimales max ; `active=true` exige `priceTnd > 0` → `422 { "errors": { "priceTnd": "Fixe un prix avant d'activer ce pack." } }`. Un seul `featured` à la fois.
+- `hotspot.x` / `hotspot.y` entre 0 et 100.
+
+## Admin — médias (JWT)
+- `POST /api/admin/media` (multipart : `file`, `alt` optionnel) → `201 Media`. Types `image/jpeg`, `image/png`, `image/webp`, vérifiés par les octets magiques. ≤ 8 Mo. Erreurs `422` sous `file` : « Photo trop lourde (8 Mo max). » / « Format accepté : JPEG, PNG ou WebP. ». Stockage : table `media` (bytea).
+- `PATCH /api/admin/media/{id}` `{ "alt" }` → `Media`.
+- Ne jamais supprimer un média encore référencé.
+
+## Admin — stock v2 (remplace la section « stock » ci-dessus)
+`GET /api/admin/stock` :
+```json
+{ "items": [ { "id": 1, "name": "Cafetière italienne (Moka)", "description": "…", "photo": null,
+               "unitCostTnd": 22, "quantity": 12, "threshold": 10, "status": "OK",
+               "usedIn": [ { "productId": 1, "name": "Le Pack Barista", "perPack": 1 } ] } ],
+  "packs": [ { "productId": 1, "name": "Le Pack Barista", "slug": "pack-barista", "active": true, "cover": null,
+               "completePacks": 3, "assemblablePacks": 9, "packThreshold": 5, "alert": true,
+               "priceTnd": 89, "cogsTnd": 41.5, "carrierFeeTnd": 7, "marginTnd": 40.5, "marginPct": 45.5 } ],
+  "alert": true, "carrierFeeTnd": 7 }
+```
+(`alert` global = au moins un pack **actif** sous le seuil.)
+- `PATCH /api/admin/stock` `{ "items": [ { "id", "name"?, "description"?, "photoMediaId"? (null = retirer), "quantity"?, "unitCostTnd"?, "threshold"? } ] }` → même réponse.
+- `POST /api/admin/stock/items` `{ "name", "description"?, "photoMediaId"?, "unitCostTnd", "quantity", "threshold" }` → `201` + réponse stock complète.
+- `DELETE /api/admin/stock/items/{id}` → `204` ; `409 { "error": "ITEM_IN_USE", "message": "Cette pièce est utilisée dans un pack." }`.
+- `POST /api/admin/stock/assemble` `{ "productId": 1, "packs": 5 }` → réponse stock ; `409 INSUFFICIENT_STOCK`.
+
+## Admin — stats v2
+- `kpis`, `finance`, `governorates`, `counts` acceptent un `productId` optionnel.
+- `GET /api/admin/stats/products?month=` → `[ { "productId", "name", "orders", "delivered", "returned", "collectedTnd", "sharePct" } ]`.
+
+## Données d'amorçage v2
+- Migration **de prod** : les 4 packs de `docs/SPEC-V2.md` (textes exacts, slugs, SKU, prix ; Meal Prep en brouillon prix 0), leurs pièces (coûts 0 = [À DÉFINIR]), compositions, hotspots, calculateurs. Le Pack Barista existant (`PACK-BARISTA`) est **mis à jour**, pas recréé.
+- Les 3 photos (`classpath:seed/packs/<slug>.png`) sont importées dans `media` au démarrage par un amorceur idempotent (seulement si le pack n'a pas de photo principale), avec un `alt` descriptif en français.
+- Profil `dev` : commandes de démo réparties sur les packs actifs, adresses d'exemple clairement fictives.
