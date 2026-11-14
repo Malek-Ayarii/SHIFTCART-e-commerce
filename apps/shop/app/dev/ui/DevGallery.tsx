@@ -188,7 +188,7 @@ export function DevGallery() {
             <p className="m-0 mb-2 text-label uppercase text-ink-muted">Prêt à valider (A5)</p>
             <CheckoutForm
               idPrefix="dev-c"
-              initialValues={{ customerName: "Mohamed Ben Ali", phone: "98765432", governorate: "Sousse" }}
+              initialValues={{ customerName: "Mohamed Ben Ali", phone: "98765432", governorate: "Sousse", address: "12 rue de Marseille, cité El Khadra, Tunis" }}
               onSubmit={fakeSubmit}
               onSuccess={(ref) => setLog(`Commande ${ref} créée`)}
             />
@@ -214,7 +214,15 @@ export function DevGallery() {
       <BottomSheet open={sheet} onClose={() => setSheet(false)} title="Finalise ta commande" subtitle="Tu paies à la livraison">
         <CheckoutForm idPrefix="dev-sheet" onSubmit={fakeSubmit} onSuccess={() => setSheet(false)} />
       </BottomSheet>
-      <MenuOverlay open={menu} onClose={() => setMenu(false)} onOrder={() => setSheet(true)} contactHref="/livraison#contact" />
+      <MenuOverlay
+        open={menu}
+        onClose={() => setMenu(false)}
+        packs={[
+          { slug: "pack-barista", name: "Le Pack Barista", shortName: "Pack Barista", priceTnd: 89, cover: null },
+          { slug: "pack-setup-productivite", name: "Le Pack Setup & Productivité", shortName: "Pack Setup & Productivité", priceTnd: 79, cover: null },
+        ]}
+        contactHref="/livraison#contact"
+      />
       <p className="m-0 flex items-center gap-2 text-body-sm text-ink-muted">
         <Icon name="alert" size={16} />
         {log || "Les actions s'affichent ici."}

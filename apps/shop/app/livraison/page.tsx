@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { LogoHeader, PageColumn } from "@/components/layout/PageColumn";
 import { Button } from "@/components/ui/Button";
 import { Icon, type IconName } from "@/components/ui/Icon";
-import { PRODUCT } from "@/lib/product";
 import { shopWhatsAppNumber, waLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
@@ -25,7 +24,7 @@ const BLOCKS: Array<{ icon: IconName; title: string; lines: string[] }> = [
     icon: "banknote",
     title: "Paiement",
     lines: [
-      `En espèces, au livreur, à la réception du colis (${PRODUCT.priceTnd} TND pour ${PRODUCT.name}).`,
+      "En espèces, au livreur, à la réception du colis : le prix affiché sur la page du pack, livraison comprise.",
       "Pas de carte, pas de paiement en ligne, rien à payer avant.",
     ],
   },

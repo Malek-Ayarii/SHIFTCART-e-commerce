@@ -2,6 +2,7 @@
 
 import { useId, useState, type CSSProperties } from "react";
 import { formatAmount, formatDecimal } from "@/lib/format";
+import type { Savings } from "@/lib/catalog-map";
 import { paybackDays, SAVINGS_DEFAULTS, savingsFor, treatFor } from "@/lib/savings";
 
 export interface SavingsCalculatorProps {
@@ -12,14 +13,43 @@ export interface SavingsCalculatorProps {
   homeCostPerDay?: number;
   daysPerMonth?: number;
   packPrice?: number;
+  /** Question above the slider (Savings.question). */
+  question?: string;
+  /** Accessible name of the slider. */
+  sliderLabel?: string;
+  /** What the home alternative is, in the formula (« de café maison »). */
+  homeLabel?: string;
+  /** Pack config from the API (docs/CONTRACT.md › v2 Savings): overrides the numeric props. */
+  config?: Savings | null;
   onChange?: (dailySpend: number, monthlySaving: number) => void;
+}
+
+/** Props of a calculator driven by a pack's Savings config. */
+export function savingsPropsFrom(config: Savings): Partial<SavingsCalculatorProps> {
+  const coffee = /caf[ée]/i.test(config.question);
+  return {
+    min: config.min,
+    max: config.max,
+    step: config.step,
+    defaultValue: config.defaultValue,
+    homeCostPerDay: config.homeCostPerDay,
+    daysPerMonth: config.daysPerMonth,
+    question: config.question,
+    sliderLabel: coffee ? "Dépense café par jour, en dinars" : "Dépense par jour, en dinars",
+    homeLabel: coffee ? "de café maison" : "fait maison",
+  };
 }
 
 /**
  * Slider 4–10 DT/day → monthly saving, a concrete equivalent and the payback period.
  * The formula stays visible: a saving figure without its calculation looks inflated.
  */
-export function SavingsCalculator({
+export function SavingsCalculator(props: SavingsCalculatorProps) {
+  const merged = props.config ? { ...props, ...savingsPropsFrom(props.config) } : props;
+  return <SavingsCalculatorView {...merged} />;
+}
+
+function SavingsCalculatorView({
   min = SAVINGS_DEFAULTS.min,
   max = SAVINGS_DEFAULTS.max,
   step = SAVINGS_DEFAULTS.step,
@@ -27,6 +57,9 @@ export function SavingsCalculator({
   homeCostPerDay = SAVINGS_DEFAULTS.homeCostPerDay,
   daysPerMonth = SAVINGS_DEFAULTS.daysPerMonth,
   packPrice = 89,
+  question = "Combien tu dépenses par jour en café ?",
+  sliderLabel = "Dépense café par jour, en dinars",
+  homeLabel = "de café maison",
   onChange,
 }: SavingsCalculatorProps) {
   const [daily, setDaily] = useState(defaultValue);
@@ -43,11 +76,11 @@ export function SavingsCalculator({
   return (
     <section className="grid gap-4 rounded-lg bg-ink p-5 text-ink-inverse" aria-labelledby={`${id}-q`}>
       <p className="m-0 text-title" id={`${id}-q`}>
-        Combien tu dépenses par jour en café ? <span className="font-display text-xl font-extrabold text-orange">{formatDecimal(daily)} DT</span>
+        {question} <span className="font-display text-xl font-extrabold text-orange">{formatDecimal(daily)} DT</span>
       </p>
       <div>
         <label className="sr-only" htmlFor={id}>
-          Dépense café par jour, en dinars
+          {sliderLabel}
         </label>
         <input
           id={id}
@@ -77,7 +110,7 @@ export function SavingsCalculator({
         </span>
       </div>
       <p className="m-0 text-xs leading-4 opacity-70">
-        Calcul : (dépense/jour − {formatDecimal(homeCostPerDay)} DT de café maison) × {daysPerMonth} jours.
+        Calcul : (dépense/jour − {formatDecimal(homeCostPerDay)} DT {homeLabel}) × {daysPerMonth} jours.
       </p>
     </section>
   );

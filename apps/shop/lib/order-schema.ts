@@ -3,10 +3,15 @@ import {
   type CheckoutErrors,
   isGovernorate,
   MESSAGES,
+  normalizeAddress,
   phoneDigits,
+  validateAddress,
   validateName,
   validateTnPhone,
 } from "./validation";
+
+/** PACK-BARISTA, PACK-SETUP… (generated `PACK-<SLUG>` by the API). */
+export const PRODUCT_SKU_PATTERN = /^[A-Z0-9][A-Z0-9_-]{1,63}$/;
 
 /** Server-only: zod schema of the checkout payload (kept out of the client bundle). */
 
@@ -42,6 +47,17 @@ export const orderInputSchema = z.object({
     })
     .transform((v) => phoneDigits(v)),
   governorate: z.string().refine(isGovernorate, { message: MESSAGES.governorate }),
+  // Validated AFTER normalisation: joining lines with ", " can lengthen the text, and the API
+  // checks the 10–200 rule on exactly what it receives.
+  address: z
+    .string()
+    .transform((v) => normalizeAddress(v))
+    .superRefine((v, ctx) => {
+      const msg = validateAddress(v);
+      if (msg) ctx.addIssue({ code: "custom", message: msg });
+    }),
+  /** SKU of the pack shown on the page (the API re-checks it is active). */
+  productSku: z.string().regex(PRODUCT_SKU_PATTERN, { message: MESSAGES.productUnavailable }),
   source: sourceSchema,
   website: z.string().max(200).optional().default(""),
 });
@@ -49,11 +65,14 @@ export type OrderInput = z.input<typeof orderInputSchema>;
 export type ParsedOrderInput = z.output<typeof orderInputSchema>;
 
 /** Turns zod issues into the `{ field: message }` shape used by the API (422) and the form. */
-export function errorsFromZod(error: z.ZodError): CheckoutErrors {
-  const out: CheckoutErrors = {};
+export function errorsFromZod(error: z.ZodError): CheckoutErrors & { productSku?: string } {
+  const out: CheckoutErrors & { productSku?: string } = {};
   for (const issue of error.issues) {
     const key = issue.path[0];
-    if ((key === "customerName" || key === "phone" || key === "governorate") && !out[key]) {
+    if (
+      (key === "customerName" || key === "phone" || key === "governorate" || key === "address" || key === "productSku") &&
+      !out[key]
+    ) {
       out[key] = issue.message;
     }
   }
@@ -69,6 +88,8 @@ export function normalizeOrderPayload(raw: unknown): OrderInput {
     customerName: str(r.customerName),
     phone: str(r.phone),
     governorate: str(r.governorate),
+    address: str(r.address).slice(0, 2000),
+    productSku: str(r.productSku).trim().toUpperCase().slice(0, 64),
     website: str(r.website).slice(0, 200),
     source: {
       utmSource: str(src.utmSource).trim().slice(0, 100) || undefined,

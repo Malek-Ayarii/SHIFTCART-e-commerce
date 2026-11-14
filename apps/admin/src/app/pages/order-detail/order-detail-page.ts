@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MessagesApi } from '../../core/api/messages.api';
 import { OrdersApi } from '../../core/api/orders.api';
+import { ProductsApi } from '../../core/api/products.api';
 import { StockApi } from '../../core/api/stock.api';
 import { AppState } from '../../core/app-state';
 import { DeliverySlipService } from '../../core/delivery-slip.service';
@@ -43,6 +44,7 @@ import { ToastService } from '../../core/toast.service';
 import { Button } from '../../ui/button';
 import { ErrorState } from '../../ui/error-state';
 import { Icon, IconName } from '../../ui/icon';
+import { PackVisual } from '../../ui/pack-visual';
 import { ShipDialog, ShipInfo } from '../../ui/ship-dialog';
 import { StatusBadge } from '../../ui/status-badge';
 
@@ -52,10 +54,14 @@ const TONES: { value: MessageTone; label: string }[] = [
   { value: 'relance', label: 'Relance' },
 ];
 
-/** Contenu du pack affiché sous son nom (maquette AdminCommande). */
-const PACK_CONTENTS: Record<string, string> = {
-  'PACK-BARISTA': 'Moka 6 tasses · Thermos LED · Café offert',
-};
+/** Lien Google Maps de recherche pour une adresse (ouvert seulement depuis l'admin). */
+export function mapsSearchUrl(address: string, governorate?: string | null): string {
+  const addr = address.trim();
+  const gov = governorate?.trim();
+  const withGov = gov && !addr.toLowerCase().includes(gov.toLowerCase()) ? `${addr}, ${gov}` : addr;
+  const query = /tunisi/i.test(withGov) ? withGov : `${withGov}, Tunisie`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
 
 const MESSAGE_STATUS: Record<string, { label: string; icon: IconName; cls: string }> = {
   SENT: { label: 'Envoyé', icon: 'check', cls: 'bg-success-soft text-success' },
@@ -76,7 +82,7 @@ const ACTION_ORDER: ApiOrderStatus[] = ['CANCELLED', 'PENDING', 'RETURNED', 'NEW
 /** /commandes/:id — C2 commande + message WhatsApp IA. */
 @Component({
   selector: 'app-order-detail-page',
-  imports: [RouterLink, Button, Icon, StatusBadge, ErrorState, ShipDialog],
+  imports: [RouterLink, Button, Icon, StatusBadge, ErrorState, ShipDialog, PackVisual],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   templateUrl: './order-detail-page.html',
@@ -84,6 +90,7 @@ const ACTION_ORDER: ApiOrderStatus[] = ['CANCELLED', 'PENDING', 'RETURNED', 'NEW
 export class OrderDetailPage {
   private readonly ordersApi = inject(OrdersApi);
   private readonly messagesApi = inject(MessagesApi);
+  private readonly productsApi = inject(ProductsApi);
   private readonly stockApi = inject(StockApi);
   private readonly slip = inject(DeliverySlipService);
   private readonly toast = inject(ToastService);
@@ -106,6 +113,9 @@ export class OrderDetailPage {
   protected readonly sending = signal(false);
   protected readonly sendFeedback = signal<{ status: string; text: string } | null>(null);
   protected readonly copied = signal(false);
+  protected readonly addressCopied = signal(false);
+  /** Contenu du pack (« Moka · Thermos · Café offert »), chargé depuis le pack. */
+  protected readonly packContents = signal('');
 
   protected readonly statusPending = signal<ApiOrderStatus | null>(null);
   protected readonly shipOpen = signal(false);
@@ -114,6 +124,8 @@ export class OrderDetailPage {
   private loadSub?: Subscription;
   private genSub?: Subscription;
   private copyTimer?: ReturnType<typeof setTimeout>;
+  private addressTimer?: ReturnType<typeof setTimeout>;
+  private productSub?: Subscription;
 
   protected readonly numericId = computed(() => {
     const n = Number(this.id());
@@ -129,7 +141,9 @@ export class OrderDetailPage {
       age: receivedAge(o.createdAt, this.now()),
       amount: formatTnd(o.amountTnd),
       first: firstName(o.customerName),
-      contents: PACK_CONTENTS[o.productSku] ?? '',
+      contents: this.packContents(),
+      address: o.address?.trim() || null,
+      mapsUrl: o.address?.trim() ? mapsSearchUrl(o.address, o.governorate) : null,
       carrier: o.carrier
         ? `${carrierLabel(o.carrier)}${o.trackingNumber ? ' · ' + o.trackingNumber : ''}`
         : "Yalidine (à l'expédition)",
@@ -169,7 +183,9 @@ export class OrderDetailPage {
     inject(DestroyRef).onDestroy(() => {
       clearInterval(tick);
       clearTimeout(this.copyTimer);
+      clearTimeout(this.addressTimer);
       this.loadSub?.unsubscribe();
+      this.productSub?.unsubscribe();
       this.genSub?.unsubscribe();
     });
   }
@@ -196,6 +212,7 @@ export class OrderDetailPage {
         this.order.set(o);
         this.loading.set(false);
         this.now.set(Date.now());
+        this.loadPackContents(o.productId);
         if (!this.tone() && o.status === 'PENDING') this.selectedTone.set('relance');
         // Génération automatique (appel LLM) seulement pour une commande à confirmer ;
         // pour les autres statuts, l'agent clique sur « Générer ».
@@ -209,6 +226,33 @@ export class OrderDetailPage {
         );
       },
     });
+  }
+
+  private loadPackContents(productId: number | null | undefined): void {
+    this.productSub?.unsubscribe();
+    this.packContents.set('');
+    if (productId == null) return;
+    this.productSub = this.productsApi.get(productId).subscribe({
+      next: (p) =>
+        this.packContents.set(
+          p.items.map((i) => (i.gift ? `${i.name} (offert)` : i.quantity > 1 ? `${i.name} × ${i.quantity}` : i.name)).join(' · '),
+        ),
+      error: () => undefined,
+    });
+  }
+
+  /** Copie l'adresse exacte (pour le transporteur / WhatsApp). */
+  protected async copyAddress(): Promise<void> {
+    const address = this.order()?.address?.trim();
+    if (!address) return;
+    try {
+      await navigator.clipboard.writeText(address);
+      this.addressCopied.set(true);
+      clearTimeout(this.addressTimer);
+      this.addressTimer = setTimeout(() => this.addressCopied.set(false), 1800);
+    } catch {
+      this.toast.error("Copie impossible : sélectionne l'adresse et copie-la à la main.");
+    }
   }
 
   // ---------- Message IA ----------

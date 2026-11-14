@@ -19,4 +19,7 @@ public final class StatsDtos {
 
     public record GovernorateRow(String governorate, long orders, long delivered, long returned,
             BigDecimal collectedTnd, int sharePct) {}
+
+    public record ProductRow(long productId, String name, long orders, long delivered, long returned,
+            BigDecimal collectedTnd, int sharePct) {}
 }

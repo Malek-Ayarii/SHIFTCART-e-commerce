@@ -6,6 +6,7 @@ import com.shiftcart.common.money.Money;
 import com.shiftcart.common.phone.TnPhone;
 import com.shiftcart.common.config.AppProperties;
 import com.shiftcart.common.ratelimit.RateLimiters;
+import com.shiftcart.media.MediaDto;
 import com.shiftcart.order.dto.CreateOrderRequest;
 import com.shiftcart.order.dto.OrderCreatedResponse;
 import com.shiftcart.whatsapp.WhatsAppLinks;
@@ -32,7 +33,9 @@ public class OrderService {
     public static final String HONEYPOT_REF = "SC-0000";
 
     /** Ordre d'affichage des erreurs par champ. */
-    private static final List<String> FIELD_ORDER = List.of("customerName", "phone", "governorate", "quantity");
+    private static final List<String> FIELD_ORDER =
+            List.of("customerName", "phone", "governorate", "address", "productSku", "quantity");
+    public static final String MSG_PACK_UNAVAILABLE = "Ce pack n'est plus disponible.";
 
     private final OrderRepository orders;
     private final OrderEventRepository events;
@@ -71,15 +74,14 @@ public class OrderService {
             log.info("Order rate-limited by IP");
             throw ApiException.rateLimited();
         }
-        Product product = products.findBySku(req.skuOrDefault()).filter(Product::isActive)
-                .orElseThrow(() -> ApiException.notFound("Ce produit n'est plus disponible."));
+        Product product = products.findBySku(req.skuOrDefault()).filter(Product::isActive).orElse(null);
 
         if (req.website() != null && !req.website().isBlank()) {
             log.info("Honeypot filled: fake order returned, nothing stored");
             return new Result(honeypotResponse(req, product), true);
         }
 
-        validate(req);
+        validate(req, product);
 
         String phone = TnPhone.toE164(req.phone());
         orders.lockForCreation("order:" + phone);
@@ -99,7 +101,7 @@ public class OrderService {
 
         String ref = "SC-" + orders.nextRefNumber();
         CustomerOrder order = new CustomerOrder(ref, product, req.quantityOrDefault(),
-                req.customerName().trim().replaceAll("\\s+", " "), phone, req.governorate(), now);
+                req.customerName().trim().replaceAll("\\s+", " "), phone, req.governorate(), req.cleanAddress(), now);
         if (req.source() != null) {
             order.setSource(trim100(req.source().utmSource()), trim100(req.source().utmCampaign()),
                     trim100(req.source().utmContent()));
@@ -112,14 +114,18 @@ public class OrderService {
         return new Result(toResponse(order, token), true);
     }
 
-    private void validate(CreateOrderRequest req) {
+    /** Champs du formulaire + pack actif ; toutes les erreurs ensemble (422). */
+    private void validate(CreateOrderRequest req, Product product) {
         Set<ConstraintViolation<CreateOrderRequest>> violations = validator.validate(req);
-        if (violations.isEmpty()) {
+        if (violations.isEmpty() && product != null) {
             return;
         }
         Map<String, String> byField = new LinkedHashMap<>();
         for (ConstraintViolation<CreateOrderRequest> v : violations) {
             byField.putIfAbsent(v.getPropertyPath().toString(), v.getMessage());
+        }
+        if (product == null) {
+            byField.put("productSku", MSG_PACK_UNAVAILABLE);
         }
         Map<String, String> ordered = new LinkedHashMap<>();
         FIELD_ORDER.stream().filter(byField::containsKey).forEach(f -> ordered.put(f, byField.get(f)));
@@ -133,6 +139,8 @@ public class OrderService {
                 Money.toTnd(order.getAmountMillimes()),
                 order.getStatus().name(),
                 order.getProduct().getName(),
+                order.getProduct().getSlug(),
+                MediaDto.urlOf(order.getProduct().getCoverMediaId()),
                 order.firstName(),
                 TnPhone.display(order.getPhoneE164()),
                 order.getGovernorate(),
@@ -145,8 +153,11 @@ public class OrderService {
         String name = req.customerName() == null ? "" : req.customerName().trim();
         String first = name.contains(" ") ? name.substring(0, name.indexOf(' ')) : name;
         String token = tokens.tokenFor(HONEYPOT_REF);
-        return new OrderCreatedResponse(HONEYPOT_REF, Money.toTnd(product.getPriceMillimes()), OrderStatus.NEW.name(),
-                product.getName(), first, TnPhone.display(TnPhone.toE164(req.phone())), req.governorate(), token,
+        return new OrderCreatedResponse(HONEYPOT_REF,
+                product == null ? java.math.BigDecimal.ZERO : Money.toTnd(product.getPriceMillimes()),
+                OrderStatus.NEW.name(), product == null ? null : product.getName(),
+                product == null ? null : product.getSlug(),
+                product == null ? null : MediaDto.urlOf(product.getCoverMediaId()), first, TnPhone.display(TnPhone.toE164(req.phone())), req.governorate(), token,
                 waLinks.confirmUrl(HONEYPOT_REF), tokens.trackingUrl(HONEYPOT_REF, token));
     }
 

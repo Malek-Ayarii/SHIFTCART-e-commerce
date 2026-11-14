@@ -23,7 +23,7 @@ import {
   monthShortLabel,
   shiftMonth,
 } from '../../core/format';
-import { FinanceStats, GovernorateStat, KpiStats, OrderCounts } from '../../core/models';
+import { FinanceStats, GovernorateStat, KpiStats, OrderCounts, ProductStat } from '../../core/models';
 import { DemoBadge } from '../../ui/demo-badge';
 import { ErrorState } from '../../ui/error-state';
 import { IconName } from '../../ui/icon';
@@ -39,6 +39,8 @@ interface FinanceData {
   governorates: GovernorateStat[];
   counts: OrderCounts | null;
   kpis: KpiStats | null;
+  /** v2 : par pack (null si l'endpoint ne répond pas). */
+  products: ProductStat[] | null;
 }
 
 interface KpiView {
@@ -170,6 +172,37 @@ export class FinancesPage {
     }));
   });
 
+  protected readonly productRows = computed(() => {
+    const list = this.data()?.products;
+    if (!list) return null;
+    const max = Math.max(1, ...list.map((p) => p.orders));
+    const totals = list.reduce(
+      (t, p) => ({ orders: t.orders + p.orders, delivered: t.delivered + p.delivered, returned: t.returned + p.returned, collected: t.collected + p.collectedTnd }),
+      { orders: 0, delivered: 0, returned: 0, collected: 0 },
+    );
+    return {
+      rows: list.map((p, i) => ({
+        id: p.productId,
+        name: p.name,
+        top: i === 0 && p.orders > 0,
+        barPct: (p.orders / max) * 100,
+        share: formatPct(p.sharePct, 0),
+        orders: formatNumber(p.orders),
+        plural: { orders: p.orders > 1, delivered: p.delivered > 1, returned: p.returned > 1 },
+        delivered: formatNumber(p.delivered),
+        returned: formatNumber(p.returned),
+        deliveryRate: p.orders > 0 ? formatPct((p.delivered / p.orders) * 100, 0) : '—',
+        collected: formatTnd(p.collectedTnd),
+      })),
+      total: {
+        orders: formatNumber(totals.orders),
+        delivered: formatNumber(totals.delivered),
+        returned: formatNumber(totals.returned),
+        collected: formatTnd(totals.collected),
+      },
+    };
+  });
+
   constructor() {
     effect(() => {
       const month = this.state.month();
@@ -195,6 +228,7 @@ export class FinancesPage {
       governorates: this.stats.governorates(month),
       counts: this.ordersApi.counts(month).pipe(catchError(() => of(null))),
       kpis: this.stats.kpis(month).pipe(catchError(() => of(null))),
+      products: this.stats.products(month).pipe(catchError(() => of(null))),
     }).subscribe({
       next: (d) => {
         this.data.set(d);

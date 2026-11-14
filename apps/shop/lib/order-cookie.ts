@@ -1,3 +1,4 @@
+import { mediaSrc } from "./catalog-map";
 import { REF_PATTERN } from "./types";
 
 /**
@@ -16,6 +17,9 @@ export interface OrderCookie {
   governorate?: string;
   amountTnd?: number;
   productName?: string;
+  productSlug?: string;
+  /** Same-origin thumbnail (`/media/{id}`), never the address. */
+  productCoverSrc?: string;
 }
 
 export function encodeOrderCookie(data: OrderCookie): string {
@@ -37,6 +41,8 @@ export function decodeOrderCookie(value: string | undefined | null): OrderCookie
       governorate: typeof data.governorate === "string" ? data.governorate : undefined,
       amountTnd: typeof data.amountTnd === "number" ? data.amountTnd : undefined,
       productName: typeof data.productName === "string" ? data.productName : undefined,
+      productSlug: typeof data.productSlug === "string" && /^[a-z0-9-]{1,100}$/.test(data.productSlug) ? data.productSlug : undefined,
+      productCoverSrc: mediaSrc(data.productCoverSrc) ?? undefined,
     };
   } catch {
     return null;

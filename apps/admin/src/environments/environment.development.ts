@@ -6,8 +6,12 @@
 export const environment = {
   production: false,
   apiUrl: '',
-  /** Numéro WhatsApp de l'agent stock, format international sans + (ex. 216XXXXXXXX). [À DÉFINIR] */
-  agentWhatsappNumber: '',
+  /** Numéro WhatsApp de la boutique (+216 92 184 592), format international sans +. */
+  shopWhatsappNumber: '21692184592',
+  /** Numéro WhatsApp de l'agent stock (alerte « stock bas ») ; par défaut celui de la boutique. */
+  agentWhatsappNumber: '21692184592',
+  /** URL publique de la boutique (lien « Voir sur la boutique »). Vide = [À DÉFINIR] en prod. */
+  shopUrl: 'http://localhost:3000',
   demoDataBadge: true,
   pollIntervalMs: 30_000,
 };

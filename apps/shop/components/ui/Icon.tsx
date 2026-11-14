@@ -1,5 +1,5 @@
 import {
-  Banknote, Calendar, Check, ChevronDown, CircleAlert, Clock, Coffee, Gift, GripVertical, MapPin, Menu,
+  ArrowRight, Banknote, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, Expand, Users, Clock, Coffee, Gift, GripVertical, MapPin, Menu,
   MessageCircle, Package, Pause, Play, Printer, RefreshCw, RotateCcw, ShieldCheck, ShoppingCart, Star,
   Thermometer, TrendingDown, TrendingUp, Truck, X, Zap, type LucideIcon,
 } from "lucide-react";
@@ -14,6 +14,11 @@ export const ICONS = {
   check: Check,
   x: X,
   chevronDown: ChevronDown,
+  chevronLeft: ChevronLeft,
+  chevronRight: ChevronRight,
+  arrowRight: ArrowRight,
+  expand: Expand,
+  users: Users,
   whatsapp: MessageCircle,
   clock: Clock,
   printer: Printer,

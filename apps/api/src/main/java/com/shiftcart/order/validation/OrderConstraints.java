@@ -20,8 +20,22 @@ public final class OrderConstraints {
 
     public static final String NAME_EMPTY = "Ton nom aide le livreur à te trouver.";
     public static final String NAME_INVALID = "Écris ton nom et ton prénom.";
+    public static final String ADDRESS_EMPTY = "Ton adresse permet au livreur de te trouver.";
+    public static final String ADDRESS_SHORT = "Précise ta rue, ton quartier et ta ville.";
+    public static final String ADDRESS_LONG = "Ton adresse est trop longue (200 caractères max).";
+    public static final int ADDRESS_MIN = 10;
+    public static final int ADDRESS_MAX = 200;
 
     private OrderConstraints() {}
+
+    /**
+     * Adresse telle qu'elle est validée ET enregistrée : caractères de contrôle (retours à la ligne, tabulations,
+     * NUL…) → espace, espaces multiples réduits, trim. Valider la forme enregistrée évite qu'une adresse
+     * « longue » seulement grâce à des espaces soit stockée sous 10 caractères.
+     */
+    public static String normalizeAddress(String value) {
+        return value == null ? null : value.replaceAll("[\\p{Cntrl}\\s]+", " ").trim();
+    }
 
     /** Nom & prénom : 3 à 80 caractères après trim. */
     @Documented
@@ -60,6 +74,30 @@ public final class OrderConstraints {
         Class<?>[] groups() default {};
 
         Class<? extends Payload>[] payload() default {};
+    }
+
+    /** Adresse exacte : 10 à 200 caractères après trim (docs/CONTRACT.md › v2). */
+    @Documented
+    @Constraint(validatedBy = AddressValidator.class)
+    @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT})
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Address {
+        String message() default ADDRESS_EMPTY;
+
+        Class<?>[] groups() default {};
+
+        Class<? extends Payload>[] payload() default {};
+    }
+
+    public static class AddressValidator implements ConstraintValidator<Address, String> {
+        @Override
+        public boolean isValid(String value, ConstraintValidatorContext ctx) {
+            String trimmed = value == null ? "" : normalizeAddress(value);
+            String error = trimmed.isEmpty() ? ADDRESS_EMPTY
+                    : trimmed.length() < ADDRESS_MIN ? ADDRESS_SHORT
+                    : trimmed.length() > ADDRESS_MAX ? ADDRESS_LONG : null;
+            return report(ctx, error);
+        }
     }
 
     public static class CustomerNameValidator implements ConstraintValidator<CustomerName, String> {

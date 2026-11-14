@@ -30,15 +30,22 @@ const NAV: NavItem[] = [
     path: '/',
     label: 'Commandes',
     short: 'Commandes',
+    icon: 'orders',
+    match: (u) => u === '/' || u.startsWith('/?') || u.startsWith('/#') || u.startsWith('/commandes/'),
+  },
+  {
+    path: '/packs',
+    label: 'Packs',
+    short: 'Packs',
     icon: 'package',
-    match: (u) => u === '/' || u.startsWith('/?') || u.startsWith('/#'),
+    match: (u) => u.startsWith('/packs'),
   },
   {
     path: '/messages',
     label: 'Messages IA',
     short: 'Messages',
     icon: 'whatsapp',
-    match: (u) => u.startsWith('/messages') || u.startsWith('/commandes/'),
+    match: (u) => u.startsWith('/messages'),
   },
   {
     path: '/finances',
@@ -58,6 +65,9 @@ const NAV: NavItem[] = [
 
 const MOBILE_TITLES: [RegExp, string][] = [
   [/^\/commandes\//, 'Commande'],
+  [/^\/packs\/new/, 'Nouveau pack'],
+  [/^\/packs\//, 'Éditer le pack'],
+  [/^\/packs/, 'Packs'],
   [/^\/messages/, 'Messages IA'],
   [/^\/finances/, 'Finances'],
   [/^\/stock/, 'Stock & marges'],
@@ -112,9 +122,16 @@ export class Shell {
     return MOBILE_TITLES.find(([re]) => re.test(u))?.[1] ?? 'Commandes';
   });
 
+  /** Alerte globale (au moins un pack actif sous son seuil) + packs concernés. */
   protected readonly stockAlert = computed(() => {
     const s = this.state.stock();
-    return s?.alert ? s : null;
+    if (!s?.alert) return null;
+    const packs = (s.packs ?? []).filter((p) => p.active && p.alert);
+    const text =
+      packs.length === 1
+        ? `${packs[0].name} : plus que ${packs[0].completePacks} packs complets.`
+        : `${packs.length || 'Des'} packs actifs sous leur seuil.`;
+    return { text, short: packs.length === 1 ? `${packs[0].completePacks} packs` : `${packs.length} packs` };
   });
 
   constructor() {

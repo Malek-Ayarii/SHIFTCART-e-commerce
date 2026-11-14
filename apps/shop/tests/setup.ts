@@ -18,8 +18,8 @@ vi.mock("next/navigation", () => ({
 vi.mock("next/image", async () => {
   const React = await import("react");
   return {
-    default: ({ priority: _p, ...props }: Record<string, unknown>) => {
-      void _p;
+    default: ({ priority, preload, fill, quality, placeholder, blurDataURL, ...props }: Record<string, unknown>) => {
+      void [priority, preload, fill, quality, placeholder, blurDataURL];
       return React.createElement("img", props);
     },
   };

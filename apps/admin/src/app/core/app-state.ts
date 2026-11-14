@@ -21,6 +21,9 @@ export class AppState {
     { initialValue: this.breakpoints.isMatched(MOBILE_QUERY) },
   );
 
+  /** Filtre « pack » du tableau de bord (productId), null = tous les packs. */
+  readonly productFilter = signal<number | null>(null);
+
   /** Dernier état du stock connu (alerte de la barre latérale). */
   readonly stock = signal<StockOverview | null>(null);
 

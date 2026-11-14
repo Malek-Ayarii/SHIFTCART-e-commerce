@@ -6,6 +6,7 @@ import com.shiftcart.common.time.MonthRange;
 import com.shiftcart.stats.StatsDtos.Finance;
 import com.shiftcart.stats.StatsDtos.GovernorateRow;
 import com.shiftcart.stats.StatsDtos.Kpis;
+import com.shiftcart.stats.StatsDtos.ProductRow;
 import com.shiftcart.stats.StatsDtos.Week;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -30,11 +31,13 @@ import org.springframework.transaction.annotation.Transactional;
  *       CA net = encaissé − frais transporteur ;</li>
  *   <li>semaines S1…S5 = jours 1–7, 8–14, 15–21, 22–28, 29–fin du mois.</li>
  * </ul>
+ * Toutes les vues acceptent un filtre optionnel par pack ({@code productId}) ; {@link #products} ventile par pack
+ * (packs actifs + packs inactifs ayant des commandes dans le mois).
  */
 @Service
 public class StatsService {
 
-    private static final String COHORT = " created_at >= :start AND created_at < :end";
+    private static final String COHORT_DATES = " created_at >= :start AND created_at < :end";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final AppProperties props;
@@ -47,41 +50,41 @@ public class StatsService {
     private record Cohort(long orders, long revenue, long delivered, long returned) {}
 
     @Transactional(readOnly = true)
-    public Kpis kpis(MonthRange month) {
-        Cohort cur = cohort(month);
-        Cohort prev = cohort(month.previous());
+    public Kpis kpis(MonthRange month, Long productId) {
+        Cohort cur = cohort(month, productId);
+        Cohort prev = cohort(month.previous(), productId);
         int rate = Money.pct(cur.returned(), cur.delivered() + cur.returned());
         Integer rateDelta = prev.delivered() + prev.returned() == 0 || cur.delivered() + cur.returned() == 0 ? null
                 : rate - Money.pct(prev.returned(), prev.delivered() + prev.returned());
         Long toConfirm = jdbc.queryForObject(
-                "SELECT count(*) FROM customer_order WHERE status IN ('NEW', 'PENDING')",
-                new MapSqlParameterSource(), Long.class);
+                "SELECT count(*) FROM customer_order WHERE status IN ('NEW', 'PENDING')" + product(productId),
+                new MapSqlParameterSource("productId", productId), Long.class);
         return new Kpis(month.label(), cur.orders(), Money.deltaPct(cur.orders(), prev.orders()),
                 Money.toTnd(cur.revenue()), Money.deltaPct(cur.revenue(), prev.revenue()), rate, rateDelta,
                 toConfirm == null ? 0 : toConfirm);
     }
 
-    private Cohort cohort(MonthRange month) {
+    private Cohort cohort(MonthRange month, Long productId) {
         return jdbc.queryForObject("""
                 SELECT count(*) AS orders,
                        coalesce(sum(amount_millimes) FILTER (WHERE status <> 'CANCELLED'), 0) AS revenue,
                        count(*) FILTER (WHERE status = 'DELIVERED') AS delivered,
                        count(*) FILTER (WHERE status = 'RETURNED') AS returned
-                FROM customer_order WHERE""" + COHORT,
-                params(month),
+                FROM customer_order WHERE""" + cohort(productId),
+                params(month, productId),
                 (rs, i) -> new Cohort(rs.getLong("orders"), rs.getLong("revenue"), rs.getLong("delivered"),
                         rs.getLong("returned")));
     }
 
     @Transactional(readOnly = true)
-    public Finance finance(MonthRange month) {
-        MapSqlParameterSource params = params(month);
+    public Finance finance(MonthRange month, Long productId) {
+        MapSqlParameterSource params = params(month, productId);
         long[] totals = jdbc.queryForObject("""
                 SELECT coalesce(sum(amount_millimes) FILTER (WHERE status <> 'CANCELLED'), 0),
                        coalesce(sum(amount_millimes) FILTER (WHERE status = 'DELIVERED'), 0),
                        coalesce(sum(amount_millimes) FILTER (WHERE status = 'RETURNED'), 0),
                        coalesce(sum(amount_millimes) FILTER (WHERE status IN ('NEW', 'PENDING', 'CONFIRMED', 'SHIPPED')), 0)
-                FROM customer_order WHERE""" + COHORT,
+                FROM customer_order WHERE""" + cohort(productId),
                 params,
                 (rs, i) -> new long[] {rs.getLong(1), rs.getLong(2), rs.getLong(3), rs.getLong(4)});
         long ordered = totals[0];
@@ -91,8 +94,9 @@ public class StatsService {
 
         Long parcels = jdbc.queryForObject("""
                 SELECT count(*) FROM customer_order
-                WHERE (shipped_at >= :start AND shipped_at < :end)
-                   OR (shipped_at IS NULL AND status IN ('SHIPPED', 'DELIVERED', 'RETURNED') AND""" + COHORT + ")",
+                WHERE ((shipped_at >= :start AND shipped_at < :end)
+                   OR (shipped_at IS NULL AND status IN ('SHIPPED', 'DELIVERED', 'RETURNED') AND""" + COHORT_DATES + "))"
+                + product(productId),
                 params, Long.class);
         long shippedParcels = parcels == null ? 0 : parcels;
         long feeMillimes = Money.toMillimes(props.carrierFeeTnd());
@@ -105,7 +109,7 @@ public class StatsService {
                 SELECT LEAST(((extract(day FROM created_at AT TIME ZONE 'Africa/Tunis')::int - 1) / 7), 4) AS bucket,
                        coalesce(sum(amount_millimes) FILTER (WHERE status <> 'CANCELLED'), 0) AS ordered,
                        coalesce(sum(amount_millimes) FILTER (WHERE status = 'DELIVERED'), 0) AS collected
-                FROM customer_order WHERE""" + COHORT + " GROUP BY bucket",
+                FROM customer_order WHERE""" + cohort(productId) + " GROUP BY bucket",
                 params,
                 rs -> {
                     int b = Math.min(rs.getInt("bucket"), weeks - 1);
@@ -123,8 +127,8 @@ public class StatsService {
     }
 
     @Transactional(readOnly = true)
-    public List<GovernorateRow> governorates(MonthRange month) {
-        MapSqlParameterSource params = params(month);
+    public List<GovernorateRow> governorates(MonthRange month, Long productId) {
+        MapSqlParameterSource params = params(month, productId);
         record Row(String gov, long orders, long delivered, long returned, long collected) {}
         List<Row> rows = jdbc.query("""
                 SELECT governorate,
@@ -132,7 +136,7 @@ public class StatsService {
                        count(*) FILTER (WHERE status = 'DELIVERED') AS delivered,
                        count(*) FILTER (WHERE status = 'RETURNED') AS returned,
                        coalesce(sum(amount_millimes) FILTER (WHERE status = 'DELIVERED'), 0) AS collected
-                FROM customer_order WHERE""" + COHORT + """
+                FROM customer_order WHERE""" + cohort(productId) + """
                  GROUP BY governorate
                  ORDER BY orders DESC, governorate ASC
                 """,
@@ -146,9 +150,46 @@ public class StatsService {
                 .toList();
     }
 
-    private static MapSqlParameterSource params(MonthRange month) {
+    /** Par pack (cohorte du mois) : commandes, livrées, retournées, encaissé, part des commandes. */
+    @Transactional(readOnly = true)
+    public List<ProductRow> products(MonthRange month) {
+        MapSqlParameterSource params = params(month, null);
+        record Row(long productId, String name, long orders, long delivered, long returned, long collected) {}
+        List<Row> rows = jdbc.query("""
+                SELECT p.id, p.name,
+                       count(o.id) AS orders,
+                       count(o.id) FILTER (WHERE o.status = 'DELIVERED') AS delivered,
+                       count(o.id) FILTER (WHERE o.status = 'RETURNED') AS returned,
+                       coalesce(sum(o.amount_millimes) FILTER (WHERE o.status = 'DELIVERED'), 0) AS collected
+                FROM product p
+                LEFT JOIN customer_order o ON o.product_id = p.id
+                     AND o.created_at >= :start AND o.created_at < :end
+                GROUP BY p.id, p.name, p.active, p.sort_order
+                HAVING p.active OR count(o.id) > 0
+                ORDER BY orders DESC, p.sort_order ASC, p.id ASC
+                """,
+                params,
+                (rs, i) -> new Row(rs.getLong("id"), rs.getString("name"), rs.getLong("orders"),
+                        rs.getLong("delivered"), rs.getLong("returned"), rs.getLong("collected")));
+        long total = rows.stream().mapToLong(Row::orders).sum();
+        return rows.stream()
+                .map(r -> new ProductRow(r.productId(), r.name(), r.orders(), r.delivered(), r.returned(),
+                        Money.toTnd(r.collected()), Money.pct(r.orders(), total)))
+                .toList();
+    }
+
+    private static String cohort(Long productId) {
+        return COHORT_DATES + product(productId);
+    }
+
+    private static String product(Long productId) {
+        return productId == null ? "" : " AND product_id = :productId";
+    }
+
+    private static MapSqlParameterSource params(MonthRange month, Long productId) {
         return new MapSqlParameterSource()
                 .addValue("start", OffsetDateTime.ofInstant(month.start(), ZoneOffset.UTC))
-                .addValue("end", OffsetDateTime.ofInstant(month.end(), ZoneOffset.UTC));
+                .addValue("end", OffsetDateTime.ofInstant(month.end(), ZoneOffset.UTC))
+                .addValue("productId", productId);
     }
 }

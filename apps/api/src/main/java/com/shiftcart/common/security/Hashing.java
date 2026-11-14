@@ -36,9 +36,12 @@ public final class Hashing {
     }
 
     public static String sha256Hex(String value) {
+        return sha256Hex(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    public static String sha256Hex(byte[] value) {
         try {
-            return HexFormat.of().formatHex(
-                    MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8)));
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException("SHA-256 unavailable", e);
         }

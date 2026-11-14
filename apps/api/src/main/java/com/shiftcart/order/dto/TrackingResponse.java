@@ -5,11 +5,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-/** Réponse publique de suivi : ni téléphone, ni nom complet (docs/CONTRACT.md). */
+/** Réponse publique de suivi : ni téléphone, ni nom complet, ni adresse (docs/CONTRACT.md). */
 public record TrackingResponse(
         String ref,
         String status,
         String productName,
+        String productSlug,
+        String productCoverUrl,
         BigDecimal amountTnd,
         String governorate,
         String customerFirstName,

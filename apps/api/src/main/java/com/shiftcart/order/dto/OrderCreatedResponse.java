@@ -2,12 +2,14 @@ package com.shiftcart.order.dto;
 
 import java.math.BigDecimal;
 
-/** Réponse de {@code POST /api/orders} (201, ou 200 pour un doublon). */
+/** Réponse de {@code POST /api/orders} (201, ou 200 pour un doublon). Jamais l'adresse. */
 public record OrderCreatedResponse(
         String ref,
         BigDecimal amountTnd,
         String status,
         String productName,
+        String productSlug,
+        String productCoverUrl,
         String customerFirstName,
         String phoneDisplay,
         String governorate,

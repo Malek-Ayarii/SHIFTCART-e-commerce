@@ -6,20 +6,28 @@ export interface FieldProps {
   id: string;
   label: ReactNode;
   hint?: string;
+  /** Help line under the label (linked with aria-describedby by the control: descriptionId). */
+  description?: string;
   error?: string | null;
   children: ReactNode;
 }
 
 export const errorId = (id: string) => `${id}-err`;
+export const descriptionId = (id: string) => `${id}-desc`;
 
 /** Visible label above, error under the field (alert icon + danger text). */
-export function Field({ id, label, hint, error, children }: FieldProps) {
+export function Field({ id, label, hint, description, error, children }: FieldProps) {
   return (
     <div className={cx("group grid gap-1.5", error && "is-invalid")} data-invalid={error ? "" : undefined}>
       <label htmlFor={id} className="text-sm font-bold leading-5 text-ink">
         {label}
         {hint ? <span className="font-medium text-ink-muted"> {hint}</span> : null}
       </label>
+      {description ? (
+        <p id={descriptionId(id)} className="-mt-0.5 text-small text-ink-muted">
+          {description}
+        </p>
+      ) : null}
       {children}
       {error ? (
         <p id={errorId(id)} className="m-0 flex items-center gap-1 text-meta text-danger">

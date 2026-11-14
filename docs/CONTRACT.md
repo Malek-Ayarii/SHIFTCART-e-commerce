@@ -245,6 +245,6 @@ Réponse `201` :
 - `GET /api/admin/stats/products?month=` → `[ { "productId", "name", "orders", "delivered", "returned", "collectedTnd", "sharePct" } ]`.
 
 ## Données d'amorçage v2
-- Migration **de prod** : les 4 packs de `docs/SPEC-V2.md` (textes exacts, slugs, SKU, prix ; Meal Prep en brouillon prix 0), leurs pièces (coûts 0 = [À DÉFINIR]), compositions, hotspots, calculateurs. Le Pack Barista existant (`PACK-BARISTA`) est **mis à jour**, pas recréé.
+- Migration **de prod** : les 4 packs de `docs/SPEC-V2.md` (textes exacts, slugs, SKU, prix ; Meal Prep en brouillon prix 0, puis passé à 99 TND et activé par la migration `V4__meal_prep_mvp_price` — prix MVP provisoire), leurs pièces (coûts 0 = [À DÉFINIR]), compositions, hotspots, calculateurs. Le Pack Barista existant (`PACK-BARISTA`) est **mis à jour**, pas recréé.
 - Les 3 photos (`classpath:seed/packs/<slug>.png`) sont importées dans `media` au démarrage par un amorceur idempotent (seulement si le pack n'a pas de photo principale), avec un `alt` descriptif en français.
 - Profil `dev` : commandes de démo réparties sur les packs actifs, adresses d'exemple clairement fictives.

@@ -1,14 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { SourceCapture } from "@/components/analytics/SourceCapture";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const description =
-  "Le Pack Barista à 89 TND : cafetière Moka, thermos LED et café tunisien offert. Livraison gratuite partout en Tunisie, paiement à la livraison.";
+  "Des packs routine pour bosser, réviser et vivre mieux : Pack Barista, Espace Autonome et plus. Livraison gratuite partout en Tunisie, paiement à la livraison.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "SHIFT CART · Le Pack Barista, 89 TND livré chez toi",
+    default: "SHIFT CART · Packs routine livrés chez toi, payés à la livraison",
     template: "%s · SHIFT CART",
   },
   description,
@@ -39,7 +40,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" data-theme="light">
-      <body className="min-h-dvh bg-surface font-sans text-ink antialiased">{children}</body>
+      <body className="min-h-dvh bg-surface font-sans text-ink antialiased">
+        <SourceCapture />
+        {children}
+      </body>
     </html>
   );
 }

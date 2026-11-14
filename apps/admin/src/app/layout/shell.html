@@ -33,7 +33,7 @@
         >
           <sc-icon name="alert" [size]="18" />
           <span
-            >Stock bas : plus que {{ s.completePacks }} packs complets.
+            >Stock bas · {{ s.text }}
             <a routerLink="/stock" class="text-warning underline">Voir le stock</a></span
           >
         </div>
@@ -115,7 +115,7 @@
               routerLink="/stock"
               class="flex items-center gap-2 px-3 py-2.5 rounded-sm bg-warning-soft text-warning text-sm font-bold no-underline"
             >
-              <sc-icon name="alert" [size]="16" />Stock bas : {{ s.completePacks }} packs
+              <sc-icon name="alert" [size]="16" />Stock bas : {{ s.short }}
             </a>
           }
           <button
@@ -145,7 +145,7 @@
   <!-- Barre d'onglets (< 768px) -->
   <nav
     aria-label="Navigation équipe"
-    class="md:hidden fixed inset-x-0 bottom-0 z-30 h-18 grid grid-cols-4 bg-surface-raised border-t border-line"
+    class="md:hidden fixed inset-x-0 bottom-0 z-30 h-18 grid grid-cols-5 bg-surface-raised border-t border-line"
   >
     @for (item of nav; track item.path) {
       <a

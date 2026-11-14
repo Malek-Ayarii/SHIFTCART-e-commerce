@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { cx } from "@/lib/cx";
 import type { LogoName } from "@/lib/logos";
 import { Icon } from "./Icon";
@@ -13,6 +14,8 @@ export interface NavbarProps {
   onCart?: () => void;
   menuExpanded?: boolean;
   menuControls?: string;
+  /** Replaces the cart button (v2: no cart, a WhatsApp link instead). */
+  end?: ReactNode;
   className?: string;
 }
 
@@ -20,7 +23,7 @@ export const iconButtonClass =
   "relative inline-grid size-11 flex-none cursor-pointer place-items-center rounded-md text-ink no-underline hover:bg-surface-sunken";
 
 /** Discreet sticky bar (56px): menu · centred wordmark · cart that opens the checkout. 44×44 targets. */
-export function Navbar({ logoSrc = "wordmark", logoHeight = 20, count, onMenu, onCart, menuExpanded, menuControls, className }: NavbarProps) {
+export function Navbar({ logoSrc = "wordmark", logoHeight = 20, count, onMenu, onCart, menuExpanded, menuControls, end, className }: NavbarProps) {
   return (
     <header className={cx("sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-2", className)}>
       <button
@@ -37,6 +40,7 @@ export function Navbar({ logoSrc = "wordmark", logoHeight = 20, count, onMenu, o
       <Link href="/" aria-label="SHIFT CART, accueil" className="inline-flex min-h-11 items-center rounded-sm">
         <Wordmark src={logoSrc} height={logoHeight} priority decorative />
       </Link>
+      {end ?? (
       <button
         type="button"
         className={iconButtonClass}
@@ -54,6 +58,7 @@ export function Navbar({ logoSrc = "wordmark", logoHeight = 20, count, onMenu, o
           </span>
         ) : null}
       </button>
+      )}
     </header>
   );
 }

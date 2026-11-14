@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /** Traduit toutes les erreurs dans les formes de docs/CONTRACT.md. Ne logue jamais de données client. */
@@ -60,6 +63,19 @@ public class GlobalExceptionHandler {
             errors.putIfAbsent(field, v.getMessage());
         });
         return ResponseEntity.unprocessableEntity().body(new ValidationErrors(errors));
+    }
+
+    /** Envoi plus gros que la limite multipart (~10 Mo) : même message que la limite métier de 8 Mo. */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<ValidationErrors> uploadTooBig(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.unprocessableEntity()
+                .body(new ValidationErrors(Map.of("file", "Photo trop lourde (8 Mo max).")));
+    }
+
+    @ExceptionHandler({MultipartException.class, MissingServletRequestPartException.class})
+    ResponseEntity<ValidationErrors> badUpload(Exception ex) {
+        return ResponseEntity.unprocessableEntity()
+                .body(new ValidationErrors(Map.of("file", "Format accepté : JPEG, PNG ou WebP.")));
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)

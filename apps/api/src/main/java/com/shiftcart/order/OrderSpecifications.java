@@ -17,13 +17,18 @@ final class OrderSpecifications {
         return (root, q, cb) -> statuses == null || statuses.isEmpty() ? null : root.get("status").in(statuses);
     }
 
+    static Specification<CustomerOrder> productIs(Long productId) {
+        return (root, q, cb) -> productId == null ? null : cb.equal(root.get("product").get("id"), productId);
+    }
+
     static Specification<CustomerOrder> createdBetween(Instant start, Instant end) {
         return (root, q, cb) -> start == null ? null
                 : cb.and(cb.greaterThanOrEqualTo(root.get("createdAt"), start), cb.lessThan(root.get("createdAt"), end));
     }
 
     /**
-     * {@code q} : réf (avec ou sans {@code #} / {@code SC-}), nom (insensible à la casse), chiffres du téléphone.
+     * {@code q} : réf (avec ou sans {@code #} / {@code SC-}), nom et adresse (insensibles à la casse),
+     * chiffres du téléphone.
      */
     static Specification<CustomerOrder> search(String raw) {
         return (root, query, cb) -> {
@@ -36,7 +41,9 @@ final class OrderSpecifications {
             if (!refPart.isEmpty() && refPart.matches("[0-9]+")) {
                 any.add(cb.like(root.get("ref"), "SC-" + refPart + "%"));
             }
-            any.add(cb.like(cb.lower(root.get("customerName")), "%" + escape(q.toLowerCase(Locale.ROOT)) + "%", '\\'));
+            String like = "%" + escape(q.toLowerCase(Locale.ROOT)) + "%";
+            any.add(cb.like(cb.lower(root.get("customerName")), like, '\\'));
+            any.add(cb.like(cb.lower(root.get("address")), like, '\\'));
             String digits = q.replaceAll("\\D", "");
             if (digits.length() >= 3 && digits.length() == q.replaceAll("[\\s+#-]", "").length()) {
                 any.add(cb.like(root.get("phoneE164"), "%" + digits + "%"));

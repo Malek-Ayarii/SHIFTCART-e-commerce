@@ -35,10 +35,8 @@
 @utility text-sheet-title { font-family: var(--font-display); font-size: 24px; line-height: 28px; font-weight: 800; }
 @utility text-story { font-family: var(--font-display); font-size: 22px; line-height: 26px; font-weight: 800; }
 @utility text-display-md { font-family: var(--font-display); font-size: 40px; line-height: 42px; font-weight: 800; }
-@utility text-display-2xl { font-family: var(--font-display); font-size: 72px; line-height: 70px; font-weight: 800; letter-spacing: -0.03em; }
 @utility text-display-band { font-family: var(--font-display); font-size: 44px; line-height: 46px; font-weight: 800; }
 @utility text-step-num { font-family: var(--font-display); font-size: 48px; line-height: 48px; font-weight: 800; }
-@utility text-lead { font-family: var(--font-body); font-size: 19px; line-height: 30px; font-weight: 400; }
 
 /* Hard ink shadow of the giant CTA (6px, squashed to 2px on tap). */
 @utility shadow-cta { box-shadow: 0 6px 0 0 var(--ink); }
@@ -49,6 +47,12 @@
 @utility ring-inset-line { box-shadow: inset 0 0 0 1px var(--line); }
 @utility ring-inset-strong { box-shadow: inset 0 0 0 1px var(--line-strong); }
 @utility ring-inset-strong-2 { box-shadow: inset 0 0 0 2px var(--line-strong); }
+
+/* Art-directed crop of a pack photo (lib/focus.ts › coverVars): product area kept in frame. */
+@utility object-focus {
+  object-position: var(--focus, 50% 50%);
+  @media (width >= 64rem) { object-position: var(--focus-lg, var(--focus, 50% 50%)); }
+}
 
 @utility story-stripes {
   background-image: repeating-linear-gradient(135deg, transparent 0 22px, color-mix(in srgb, var(--orange) 14%, transparent) 22px 24px);

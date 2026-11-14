@@ -12,6 +12,7 @@ import { formatTnd } from '../core/format';
 import { Order, orderAriaLabel } from '../core/order-view';
 import { Button, ButtonVariant } from './button';
 import { Icon, IconName } from './icon';
+import { PackVisual } from './pack-visual';
 import { StatusBadge } from './status-badge';
 
 export type OrderAction = 'whatsapp' | 'remind' | 'print';
@@ -45,7 +46,7 @@ export function buildWhatsAppMessage(order: Pick<Order, 'name' | 'product' | 'ci
  */
 @Component({
   selector: 'sc-order-card',
-  imports: [Button, Icon, StatusBadge],
+  imports: [Button, Icon, PackVisual, StatusBadge],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
@@ -73,6 +74,17 @@ export function buildWhatsAppMessage(order: Pick<Order, 'name' | 'product' | 'ci
         }
       </div>
       <p class="m-0 text-title font-bold">{{ order().name }}</p>
+      @if (order().product) {
+        <div class="flex items-center gap-2 min-w-0 text-sm font-semibold text-ink" data-testid="order-product">
+          <sc-pack-visual
+            class="size-7 shrink-0 rounded-xs"
+            [url]="order().productCover"
+            [name]="order().product!"
+            [compact]="true"
+          />
+          <span class="truncate">{{ order().product }}</span>
+        </div>
+      }
       <div class="flex items-center gap-3 text-sm font-semibold text-ink-muted">
         <span class="text-ink font-extrabold">{{ amount() }}</span>
         <span class="inline-flex items-center gap-1"><sc-icon name="pin" [size]="14" />{{ order().city }}</span>

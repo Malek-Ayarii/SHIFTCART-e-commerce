@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { TrackingProblem, TrackingView } from "@/components/tracking/TrackingView";
 import { getTracking } from "@/lib/api";
+import { getCatalog } from "@/lib/catalog";
+import { coverPosition } from "@/lib/focus";
 import { parseRef } from "@/lib/types";
 import { contactUrl } from "@/lib/whatsapp";
 
@@ -27,5 +29,10 @@ export default async function SuiviPage({ params, searchParams }: PageProps<"/su
   const result = await getTracking(ref, token);
   if (result.kind === "forbidden") return <TrackingProblem {...FORBIDDEN} contactHref={contactHref} />;
   if (result.kind === "not_found") return <TrackingProblem {...NOT_FOUND} contactHref={contactHref} />;
-  return <TrackingView tracking={result.tracking} contactHref={contactHref} />;
+  const { tracking } = result;
+  // Thumbnail crop on the pack's products (cached public catalogue; nothing personal involved).
+  const catalog = tracking.productSlug ? await getCatalog() : null;
+  const cover = catalog?.ok ? catalog.packs.find((p) => p.slug === tracking.productSlug)?.cover : null;
+  const coverPos = cover?.focus ? coverPosition(cover.focus, cover.width / cover.height, 4 / 3) : null;
+  return <TrackingView tracking={tracking} contactHref={contactHref} coverPosition={coverPos} />;
 }

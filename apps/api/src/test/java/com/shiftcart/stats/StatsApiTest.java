@@ -46,15 +46,24 @@ class StatsApiTest extends IntegrationTest {
         insert("SC-T9", "DELIVERED", "Tunis", "2030-02-27T10:00+01:00", "2030-03-01T10:00+01:00");
         insert("SC-T10", "RETURNED", "Tunis", "2030-02-10T10:00+01:00", "2030-02-11T10:00+01:00");
         insert("SC-T11", "NEW", "Tunis", "2030-02-12T10:00+01:00", null);
+        // Avril : deux packs (Barista 89, Setup 79) pour les filtres par pack.
+        insert("SC-T12", "DELIVERED", "Tunis", "2030-04-02T10:00+01:00", "2030-04-03T10:00+01:00");
+        insert("SC-T13", "DELIVERED", "Sfax", "2030-04-05T10:00+01:00", "2030-04-06T10:00+01:00", "PACK-SETUP");
+        insert("SC-T14", "RETURNED", "Sfax", "2030-04-06T10:00+01:00", "2030-04-07T10:00+01:00", "PACK-SETUP");
+        insert("SC-T15", "NEW", "Sousse", "2030-04-07T10:00+01:00", null, "PACK-SETUP");
     }
 
     private void insert(String ref, String status, String gov, String created, String shipped) {
+        insert(ref, status, gov, created, shipped, "PACK-BARISTA");
+    }
+
+    private void insert(String ref, String status, String gov, String created, String shipped, String sku) {
         jdbc.update("""
                 INSERT INTO customer_order (ref, product_id, quantity, amount_millimes, customer_name, phone_e164,
-                    governorate, status, created_at, updated_at, shipped_at)
-                SELECT ?, id, 1, 89000, 'Test Client', '+21690000000', ?, ?, ?, ?, ?
-                FROM product WHERE sku = 'PACK-BARISTA'
-                """, ref, gov, status, ts(created), ts(created), shipped == null ? null : ts(shipped));
+                    governorate, address, status, created_at, updated_at, shipped_at)
+                SELECT ?, id, 1, price_millimes, 'Test Client', '+21690000000', ?, 'Adresse de test, Tunis', ?, ?, ?, ?
+                FROM product WHERE sku = ?
+                """, ref, gov, status, ts(created), ts(created), shipped == null ? null : ts(shipped), sku);
     }
 
     private static Timestamp ts(String iso) {
@@ -127,6 +136,50 @@ class StatsApiTest extends IntegrationTest {
         assertThat(g.get(1).get("governorate").asText()).isEqualTo("Sfax");
         assertThat(g.get(2).get("governorate").asText()).isEqualTo("Sousse");
         assertThat(g.get(2).get("sharePct").asInt()).isEqualTo(25);
+    }
+
+    @Test
+    void filtersByProductAndBreaksDownPerPack() throws Exception {
+        long barista = jdbc.queryForObject("select id from product where sku = 'PACK-BARISTA'", Long.class);
+        long setup = jdbc.queryForObject("select id from product where sku = 'PACK-SETUP'", Long.class);
+
+        JsonNode all = getJson("/api/admin/stats/kpis", "2030-04");
+        assertThat(all.get("orders").asLong()).isEqualTo(4);
+        JsonNode k = body(mvc.perform(get("/api/admin/stats/kpis").param("month", "2030-04")
+                .param("productId", String.valueOf(setup)).header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(k.get("orders").asLong()).isEqualTo(3);
+        assertThat(k.get("revenueTnd").decimalValue()).isEqualByComparingTo("237");
+        assertThat(k.get("returnRatePct").asInt()).isEqualTo(50);
+
+        JsonNode f = body(mvc.perform(get("/api/admin/stats/finance").param("month", "2030-04")
+                .param("productId", String.valueOf(barista)).header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(f.get("collectedTnd").decimalValue()).isEqualByComparingTo("89");
+        assertThat(f.get("shippedParcels").asLong()).isEqualTo(1);
+
+        JsonNode g = body(mvc.perform(get("/api/admin/stats/governorates").param("month", "2030-04")
+                .param("productId", String.valueOf(setup)).header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(g).hasSize(2);
+        assertThat(g.get(0).get("governorate").asText()).isEqualTo("Sfax");
+
+        JsonNode p = getJson("/api/admin/stats/products", "2030-04");
+        assertThat(p.get(0).get("productId").asLong()).isEqualTo(setup);
+        assertThat(p.get(0).get("name").asText()).isEqualTo("Le Pack Setup & Productivité");
+        assertThat(p.get(0).get("orders").asLong()).isEqualTo(3);
+        assertThat(p.get(0).get("delivered").asLong()).isEqualTo(1);
+        assertThat(p.get(0).get("returned").asLong()).isEqualTo(1);
+        assertThat(p.get(0).get("collectedTnd").decimalValue()).isEqualByComparingTo("79");
+        assertThat(p.get(0).get("sharePct").asInt()).isEqualTo(75);
+        assertThat(p.get(1).get("productId").asLong()).isEqualTo(barista);
+        assertThat(p.get(1).get("sharePct").asInt()).isEqualTo(25);
+        // Les packs actifs sans commande apparaissent à 0 (Meal Prep est actif depuis V4).
+        boolean hasMealPrep = false;
+        for (JsonNode row : p) {
+            hasMealPrep |= row.get("name").asText().contains("Meal Prep");
+        }
+        assertThat(hasMealPrep).isTrue();
     }
 
     @Test

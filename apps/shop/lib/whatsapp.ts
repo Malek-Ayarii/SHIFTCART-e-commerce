@@ -1,6 +1,6 @@
 /**
- * WhatsApp links (docs/API.md › Flux WhatsApp). The shop number is business info
- * that is still [À DÉFINIR]: it comes from NEXT_PUBLIC_WHATSAPP_NUMBER (216XXXXXXXX).
+ * WhatsApp links (docs/API.md › Flux WhatsApp). The shop number comes from
+ * NEXT_PUBLIC_WHATSAPP_NUMBER (21692184592 = +216 92 184 592, docs/CONTRACT.md › v2).
  */
 export function shopWhatsAppNumber(): string | null {
   const raw = (process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? "").replace(/\D/g, "");
@@ -50,3 +50,13 @@ export function buildWhatsAppMessage(order: { name?: string; product?: string; c
   const first = String(order.name ?? "").trim().split(/\s+/)[0] ?? "";
   return `Salut ${first} ! Ton ${order.product ?? "Pack Barista"} pour ${order.city ?? "ta ville"} est prêt (${order.amount ?? 89} TND, paiement à la livraison). Réponds OUI pour déclencher la livraison 🚚`;
 }
+
+/** "21692184592" → "+216 92 184 592" (other formats are returned with a leading +). */
+export function formatShopPhone(number: string | null): string {
+  if (!number) return "[À DÉFINIR]";
+  const m = number.match(/^216(\d{2})(\d{3})(\d{3})$/);
+  return m ? `+216 ${m[1]} ${m[2]} ${m[3]}` : `+${number}`;
+}
+
+/** Shop WhatsApp number as shown in the footer and the menu (+216 92 184 592). */
+export const SHOP_PHONE_DISPLAY = formatShopPhone(shopWhatsAppNumber());

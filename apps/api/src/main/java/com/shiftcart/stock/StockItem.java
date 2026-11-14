@@ -7,7 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/** Pièce détachée d'un pack (Moka, Thermos LED, café 250 g, emballage). */
+/** Pièce du stock (produit d'un ou plusieurs packs : Moka, thermos, lunchbox…). */
 @Entity
 @Table(name = "stock_item")
 public class StockItem {
@@ -18,6 +18,11 @@ public class StockItem {
 
     @Column(nullable = false, unique = true)
     private String name;
+
+    private String description;
+
+    @Column(name = "photo_media_id")
+    private Long photoMediaId;
 
     @Column(name = "unit_cost_millimes", nullable = false)
     private long unitCostMillimes;
@@ -33,12 +38,37 @@ public class StockItem {
 
     protected StockItem() {}
 
+    public StockItem(String name, int sortOrder) {
+        this.name = name;
+        this.sortOrder = sortOrder;
+    }
+
     public Long getId() {
         return id;
     }
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Long getPhotoMediaId() {
+        return photoMediaId;
+    }
+
+    public void setPhotoMediaId(Long photoMediaId) {
+        this.photoMediaId = photoMediaId;
     }
 
     public long getUnitCostMillimes() {

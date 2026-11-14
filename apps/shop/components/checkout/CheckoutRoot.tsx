@@ -7,51 +7,42 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { CheckoutForm, type CheckoutSubmission } from "@/components/ui/CheckoutForm";
 import { StickyCta } from "@/components/ui/StickyCta";
 import { initAnalytics, track } from "@/lib/analytics";
-import { PRODUCT } from "@/lib/product";
 import type { OrderSource } from "@/lib/types";
+import { captureSource } from "@/lib/utm";
 import { CHECKOUT_HASH, CheckoutContext } from "./CheckoutContext";
 
-const UTM_KEY = "sc_utm";
+const CURRENCY = "TND";
 
-/** Reads utm_* from the landing URL (kept for the session so an in-page navigation keeps them). */
-function captureSource(): OrderSource | undefined {
-  try {
-    const q = new URLSearchParams(window.location.search);
-    const fromUrl: OrderSource = {
-      utmSource: q.get("utm_source") ?? undefined,
-      utmCampaign: q.get("utm_campaign") ?? undefined,
-      utmContent: q.get("utm_content") ?? undefined,
-    };
-    if (Object.values(fromUrl).some(Boolean)) {
-      sessionStorage.setItem(UTM_KEY, JSON.stringify(fromUrl));
-      return fromUrl;
-    }
-    const stored = sessionStorage.getItem(UTM_KEY);
-    return stored ? (JSON.parse(stored) as OrderSource) : undefined;
-  } catch {
-    return undefined;
-  }
+/** The pack this checkout sells (docs/SPEC-V2.md › Checkout pour le pack affiché). */
+export interface CheckoutProduct {
+  sku: string;
+  name: string;
+  priceTnd: number;
+  image?: { src: string; alt: string; position?: string } | null;
 }
 
 /**
- * Client island of the landing: owns the checkout dialog (bottom sheet on mobile, centred
- * modal on desktop), the StickyCta and the analytics events. Everything else stays static.
+ * Client island of a pack page: owns the checkout dialog (bottom sheet on mobile, centred
+ * modal on desktop) for that pack, the StickyCta and the analytics events.
  */
-export function CheckoutRoot({ children, sticky = true }: { children: ReactNode; sticky?: boolean }) {
+export function CheckoutRoot({ children, product, sticky = true }: { children: ReactNode; product: CheckoutProduct; sticky?: boolean }) {
   const router = useRouter();
   const [isOpen, setOpen] = useState(false);
   const [anchorVisible, setAnchorVisible] = useState(true);
   const source = useRef<OrderSource | undefined>(undefined);
+  // Bumped after a successful order so the form remounts empty (see the effect below).
+  const [formKey, setFormKey] = useState(0);
+  const ordered = useRef(false);
+  const { sku, name, priceTnd } = product;
 
   useEffect(() => {
     source.current = captureSource();
     initAnalytics();
-    track("ViewContent", { content_ids: PRODUCT.sku, content_type: "product", value: PRODUCT.priceTnd, currency: PRODUCT.currency });
-  }, []);
+    track("ViewContent", { content_ids: sku, content_type: "product", value: priceTnd, currency: CURRENCY });
+  }, [sku, priceTnd]);
 
-  // StickyCta: shown once the [data-sticky-anchor] zone (hero + ProductCard, mobile only) has
-  // left the screen. Observing a tall zone rather than the button itself means a fast fling
-  // that jumps over the button still flips the intersection state.
+  // StickyCta: shown once every [data-sticky-anchor] zone (the buy box, mobile) has left the
+  // screen. Observing a tall zone rather than the button means a fast fling still flips it.
   useEffect(() => {
     if (!sticky) return;
     const anchors = Array.from(document.querySelectorAll<HTMLElement>("[data-sticky-anchor]"));
@@ -67,12 +58,12 @@ export function CheckoutRoot({ children, sticky = true }: { children: ReactNode;
 
   const open = useCallback(() => {
     setOpen(true);
-    track("InitiateCheckout", { content_ids: PRODUCT.sku, value: PRODUCT.priceTnd, currency: PRODUCT.currency, num_items: 1 });
-  }, []);
+    track("InitiateCheckout", { content_ids: sku, value: priceTnd, currency: CURRENCY, num_items: 1 });
+  }, [sku, priceTnd]);
   const close = useCallback(() => setOpen(false), []);
   const ctx = useMemo(() => ({ available: true, isOpen, open, close }), [isOpen, open, close]);
 
-  // /#commander (cart icon from another page) opens the checkout right away.
+  // /packs/<slug>#commander opens the checkout right away.
   useEffect(() => {
     function fromHash() {
       if (window.location.hash === CHECKOUT_HASH) {
@@ -85,21 +76,38 @@ export function CheckoutRoot({ children, sticky = true }: { children: ReactNode;
     return () => window.removeEventListener("hashchange", fromHash);
   }, [open]);
 
-  const onSubmit = useCallback((order: CheckoutSubmission) => submitOrder({ ...order, source: source.current }), []);
+  // With cacheComponents, Next keeps the left page alive but hidden (React <Activity>), so after
+  // the redirect to /merci the filled form (name, phone, exact address) would stay in the DOM and
+  // reappear on « back ». Hiding runs effect cleanups: wipe the form and close the sheet then.
+  useEffect(
+    () => () => {
+      if (!ordered.current) return;
+      ordered.current = false;
+      setOpen(false);
+      setFormKey((k) => k + 1);
+    },
+    [],
+  );
+
+  const onSubmit = useCallback(
+    (order: CheckoutSubmission) => submitOrder({ ...order, productSku: sku, source: source.current }),
+    [sku],
+  );
   const onSuccess = useCallback(
     (ref: string) => {
-      track("Lead", { content_ids: PRODUCT.sku, value: PRODUCT.priceTnd, currency: PRODUCT.currency });
+      track("Lead", { content_ids: sku, value: priceTnd, currency: CURRENCY });
+      ordered.current = true;
       router.push(`/merci/${encodeURIComponent(ref)}`);
     },
-    [router],
+    [router, sku, priceTnd],
   );
 
   return (
     <CheckoutContext.Provider value={ctx}>
       {children}
-      {sticky ? <StickyCta className="lg:hidden" visible={!anchorVisible && !isOpen} price={PRODUCT.priceTnd} onClick={open} /> : null}
+      {sticky ? <StickyCta className="lg:hidden" visible={!anchorVisible && !isOpen} price={priceTnd} onClick={open} /> : null}
       <BottomSheet open={isOpen} onClose={close} title="Finalise ta commande" subtitle="Tu paies à la livraison">
-        <CheckoutForm price={PRODUCT.priceTnd} productName={PRODUCT.name} onSubmit={onSubmit} onSuccess={onSuccess} />
+        <CheckoutForm key={formKey} price={priceTnd} productName={name} productImage={product.image ?? null} onSubmit={onSubmit} onSuccess={onSuccess} />
       </BottomSheet>
     </CheckoutContext.Provider>
   );

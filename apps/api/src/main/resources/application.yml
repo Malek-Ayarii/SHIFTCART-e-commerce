@@ -39,6 +39,11 @@ spring:
   mvc:
     problemdetails:
       enabled: false
+  servlet:
+    multipart:
+      # Limite technique un peu au-dessus de la limite métier (8 Mo, contrôlée par l'API avec un message clair).
+      max-file-size: 10MB
+      max-request-size: 11MB
 
 management:
   endpoints:
@@ -74,7 +79,7 @@ shiftcart:
     phone-window: ${ORDER_RATE_LIMIT_PHONE_WINDOW:30m}
   duplicate-window: ${ORDER_DUPLICATE_WINDOW:30m}
   whatsapp:
-    shop-number: ${WHATSAPP_SHOP_NUMBER:}         # [À DÉFINIR] format 216XXXXXXXX
+    shop-number: ${WHATSAPP_SHOP_NUMBER:}         # format 216XXXXXXXX (boutique : 21692184592, défaut du profil dev)
     token: ${WHATSAPP_TOKEN:}
     phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:}
     verify-token: ${WHATSAPP_VERIFY_TOKEN:}

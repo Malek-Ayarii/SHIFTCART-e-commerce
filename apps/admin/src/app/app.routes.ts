@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth.guard';
+import { unsavedChangesGuard } from './core/unsaved-changes.guard';
 import { Shell } from './layout/shell';
 
 export const routes: Routes = [
@@ -26,6 +27,25 @@ export const routes: Routes = [
         title: 'Commande · SHIFT CART',
         loadComponent: () =>
           import('./pages/order-detail/order-detail-page').then((m) => m.OrderDetailPage),
+      },
+      {
+        path: 'packs',
+        title: 'Packs · SHIFT CART',
+        loadComponent: () => import('./pages/packs/packs-page').then((m) => m.PacksPage),
+      },
+      {
+        path: 'packs/new',
+        title: 'Nouveau pack · SHIFT CART',
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./pages/pack-editor/pack-editor-page').then((m) => m.PackEditorPage),
+      },
+      {
+        path: 'packs/:id',
+        title: 'Éditer le pack · SHIFT CART',
+        canDeactivate: [unsavedChangesGuard],
+        loadComponent: () =>
+          import('./pages/pack-editor/pack-editor-page').then((m) => m.PackEditorPage),
       },
       {
         path: 'messages',

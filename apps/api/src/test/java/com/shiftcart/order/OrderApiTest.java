@@ -22,8 +22,11 @@ class OrderApiTest extends IntegrationTest {
                 .andExpect(jsonPath("$.status").value("NEW"))
                 .andExpect(jsonPath("$.amountTnd").value(89))
                 .andExpect(jsonPath("$.productName").value("Le Pack Barista"))
+                .andExpect(jsonPath("$.productSlug").value("pack-barista"))
+                .andExpect(jsonPath("$.productCoverUrl").value(org.hamcrest.Matchers.matchesPattern("/api/media/\\d+")))
                 .andExpect(jsonPath("$.customerFirstName").value("Mohamed"))
                 .andExpect(jsonPath("$.governorate").value("Sousse"))
+                .andExpect(jsonPath("$.address").doesNotExist())
                 .andReturn();
         String raw = r.getResponse().getContentAsString();
         assertThat(raw).contains("\"amountTnd\":89,");
@@ -83,7 +86,8 @@ class OrderApiTest extends IntegrationTest {
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.errors.customerName").value("Ton nom aide le livreur à te trouver."))
                 .andExpect(jsonPath("$.errors.phone").value("Ton numéro nous sert à confirmer la commande sur WhatsApp."))
-                .andExpect(jsonPath("$.errors.governorate").value("Choisis où te livrer."));
+                .andExpect(jsonPath("$.errors.governorate").value("Choisis où te livrer."))
+                .andExpect(jsonPath("$.errors.address").value("Ton adresse permet au livreur de te trouver."));
     }
 
     @Test
@@ -176,12 +180,58 @@ class OrderApiTest extends IntegrationTest {
     }
 
     @Test
-    void unknownProductIs404() throws Exception {
+    void unknownOrInactivePackIs422() throws Exception {
+        expect422(Map.of("productSku", "NOPE"), "productSku", "Ce pack n'est plus disponible.");
+        // Un pack désactivé (brouillon) ne peut plus être commandé.
+        jdbc.update("update product set active = false where sku = 'PACK-MEALPREP'");
+        try {
+            expect422(Map.of("productSku", "PACK-MEALPREP"), "productSku", "Ce pack n'est plus disponible.");
+        } finally {
+            jdbc.update("update product set active = true where sku = 'PACK-MEALPREP'");
+        }
+    }
+
+    @Test
+    void addressValidationUsesExactMessages() throws Exception {
+        expect422(Map.of("address", ""), "address", "Ton adresse permet au livreur de te trouver.");
+        expect422(Map.of("address", "   "), "address", "Ton adresse permet au livreur de te trouver.");
+        expect422(Map.of("address", "  Tunis  "), "address", "Précise ta rue, ton quartier et ta ville.");
+        expect422(Map.of("address", "x".repeat(201)), "address", "Ton adresse est trop longue (200 caractères max).");
+        // Longue de 10 seulement grâce aux espaces / caractères de contrôle : validée sur la forme enregistrée.
+        expect422(Map.of("address", "Tunis\n\n\n\t\u0000 x"), "address", "Précise ta rue, ton quartier et ta ville.");
         Map<String, Object> payload = new HashMap<>(validOrder(freshPhone()));
-        payload.put("productSku", "NOPE");
+        payload.remove("address");
         mvc.perform(orderRequest(payload, freshIp()))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("NOT_FOUND"));
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.errors.address").value("Ton adresse permet au livreur de te trouver."));
+    }
+
+    @Test
+    void storesTrimmedAddressAndFreezesPackPrice() throws Exception {
+        String phone = freshPhone();
+        Map<String, Object> payload = new HashMap<>(validOrder(phone));
+        payload.put("productSku", "PACK-SETUP");
+        payload.put("address", "  7 rue Ibn Khaldoun,\r\n\u0000 cité Erriadh,\tSousse  ");
+        MvcResult r = mvc.perform(orderRequest(payload, freshIp()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.amountTnd").value(79))
+                .andExpect(jsonPath("$.productName").value("Le Pack Setup & Productivité"))
+                .andExpect(jsonPath("$.productSlug").value("pack-setup-productivite"))
+                .andExpect(jsonPath("$.productCoverUrl").isEmpty())
+                .andReturn();
+        String raw = r.getResponse().getContentAsString();
+        assertThat(raw).doesNotContain("Ibn Khaldoun").doesNotContain("\"address\"");
+        String ref = body(r).get("ref").asText();
+        assertThat(jdbc.queryForObject("select address from customer_order where ref = ?", String.class, ref))
+                .isEqualTo("7 rue Ibn Khaldoun, cité Erriadh, Sousse");
+        // Le prix change ensuite : la commande garde le montant du moment.
+        jdbc.update("update product set price_millimes = 99000 where sku = 'PACK-SETUP'");
+        try {
+            assertThat(jdbc.queryForObject("select amount_millimes from customer_order where ref = ?", Long.class, ref))
+                    .isEqualTo(79000L);
+        } finally {
+            jdbc.update("update product set price_millimes = 79000 where sku = 'PACK-SETUP'");
+        }
     }
 
     @Test
@@ -204,9 +254,12 @@ class OrderApiTest extends IntegrationTest {
                 .andExpect(jsonPath("$.steps[1].label").value("Confirmée sur WhatsApp"))
                 .andExpect(jsonPath("$.steps[1].state").value("upcoming"))
                 .andExpect(jsonPath("$.steps[3].label").value("Livrée & payée"))
+                .andExpect(jsonPath("$.productSlug").value("pack-barista"))
+                .andExpect(jsonPath("$.productCoverUrl").value(org.hamcrest.Matchers.startsWith("/api/media/")))
+                .andExpect(jsonPath("$.address").doesNotExist())
                 .andReturn();
         String raw = r.getResponse().getContentAsString();
-        assertThat(raw).doesNotContain(phone).doesNotContain("Ben Ali");
+        assertThat(raw).doesNotContain(phone).doesNotContain("Ben Ali").doesNotContain("Marseille");
     }
 
     @Test

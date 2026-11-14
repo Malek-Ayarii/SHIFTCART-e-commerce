@@ -28,7 +28,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 /**
- * Bon de livraison A5 (OpenPDF) : logo (si présent), réf, client, téléphone, gouvernorat, pack,
+ * Bon de livraison A5 (OpenPDF) : logo (si présent), réf, client, téléphone, gouvernorat, adresse exacte, pack,
  * montant à encaisser, transporteur. Sans code-barres. Document réservé à l'équipe (route admin).
  */
 @Service
@@ -83,6 +83,7 @@ public class DeliverySlipService {
         row(table, "Client", o.getCustomerName(), label, value);
         row(table, "Téléphone", TnPhone.display(o.getPhoneE164()), label, value);
         row(table, "Gouvernorat", o.getGovernorate(), label, value);
+        row(table, "Adresse", o.getAddress(), label, value);
         row(table, "Article", o.getProduct().getName() + " × " + o.getQuantity(), label, value);
         String carrier = Carriers.display(o.getCarrier() == null ? Carriers.DEFAULT : o.getCarrier());
         row(table, "Transporteur", carrier, label, value);

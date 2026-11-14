@@ -42,14 +42,16 @@ public class AdminOrderController {
             @RequestParam(name = "status", required = false) List<String> status,
             @RequestParam(name = "q", required = false) String q,
             @RequestParam(name = "month", required = false) String month,
+            @RequestParam(name = "productId", required = false) Long productId,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "50") int size) {
-        return service.list(status, q, month, page, size);
+        return service.list(status, q, month, productId, page, size);
     }
 
     @GetMapping("/counts")
-    public Map<String, Long> counts(@RequestParam(name = "month", required = false) String month) {
-        return service.counts(month);
+    public Map<String, Long> counts(@RequestParam(name = "month", required = false) String month,
+            @RequestParam(name = "productId", required = false) Long productId) {
+        return service.counts(month, productId);
     }
 
     @GetMapping("/{id}")

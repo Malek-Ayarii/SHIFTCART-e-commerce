@@ -26,6 +26,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @Import(TestcontainersConfiguration.class)
 public abstract class IntegrationTest {
 
+    /** Adresse fictive de test. */
+    protected static final String TEST_ADDRESS = "12 rue de Marseille, cité El Khadra, Tunis (près de la pharmacie)";
+
     private static final AtomicInteger IP_SEQ = new AtomicInteger(1);
     private static final AtomicInteger PHONE_SEQ = new AtomicInteger(1);
 
@@ -75,6 +78,7 @@ public abstract class IntegrationTest {
 
     protected static Map<String, Object> validOrder(String phone) {
         return Map.of("customerName", "Mohamed Ben Ali", "phone", phone, "governorate", "Sousse",
+                "address", TEST_ADDRESS,
                 "productSku", "PACK-BARISTA", "quantity", 1,
                 "source", Map.of("utmSource", "tiktok", "utmCampaign", "nov", "utmContent", "reel-3"),
                 "website", "");

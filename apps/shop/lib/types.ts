@@ -16,6 +16,8 @@ export interface CreateOrderRequest {
   customerName: string;
   phone: string;
   governorate: string;
+  /** Exact delivery address (v2). Personal data: never logged, never in a URL. */
+  address: string;
   productSku: string;
   quantity: 1;
   source?: OrderSource;
@@ -33,6 +35,9 @@ export interface CreateOrderResponse {
   trackingToken: string;
   whatsappConfirmUrl: string;
   trackingUrl: string;
+  productSlug?: string | null;
+  /** `/api/media/{id}` or null (v2). Never the address. */
+  productCoverUrl?: string | null;
 }
 
 export type TrackingStepKey = "RECEIVED" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | (string & {});
@@ -57,6 +62,8 @@ export interface TrackingResponse {
   trackingNumber: string | null;
   eta: string | null;
   steps: TrackingStep[];
+  productSlug?: string | null;
+  productCoverUrl?: string | null;
 }
 
 export interface ApiError {

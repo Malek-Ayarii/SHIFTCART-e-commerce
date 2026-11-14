@@ -22,17 +22,25 @@ public class StatsController {
     }
 
     @GetMapping("/kpis")
-    public StatsDtos.Kpis kpis(@RequestParam(name = "month", required = false) String month) {
-        return stats.kpis(MonthRange.parseOrCurrent(month, clock));
+    public StatsDtos.Kpis kpis(@RequestParam(name = "month", required = false) String month,
+            @RequestParam(name = "productId", required = false) Long productId) {
+        return stats.kpis(MonthRange.parseOrCurrent(month, clock), productId);
     }
 
     @GetMapping("/finance")
-    public StatsDtos.Finance finance(@RequestParam(name = "month", required = false) String month) {
-        return stats.finance(MonthRange.parseOrCurrent(month, clock));
+    public StatsDtos.Finance finance(@RequestParam(name = "month", required = false) String month,
+            @RequestParam(name = "productId", required = false) Long productId) {
+        return stats.finance(MonthRange.parseOrCurrent(month, clock), productId);
     }
 
     @GetMapping("/governorates")
-    public List<StatsDtos.GovernorateRow> governorates(@RequestParam(name = "month", required = false) String month) {
-        return stats.governorates(MonthRange.parseOrCurrent(month, clock));
+    public List<StatsDtos.GovernorateRow> governorates(@RequestParam(name = "month", required = false) String month,
+            @RequestParam(name = "productId", required = false) Long productId) {
+        return stats.governorates(MonthRange.parseOrCurrent(month, clock), productId);
+    }
+
+    @GetMapping("/products")
+    public List<StatsDtos.ProductRow> products(@RequestParam(name = "month", required = false) String month) {
+        return stats.products(MonthRange.parseOrCurrent(month, clock));
     }
 }

@@ -64,6 +64,14 @@ export interface OrderSummary {
   trackingNumber: string | null;
   source: string | null;
   createdAt: string;
+  // ---- v2 ----
+  /** Pack commandé (null si le pack a été supprimé). */
+  productId: number | null;
+  productSlug: string | null;
+  /** `/api/media/{id}` ou null. */
+  productCoverUrl: string | null;
+  /** Adresse exacte de livraison (donnée personnelle : jamais dans les logs ni les URLs). */
+  address: string | null;
 }
 
 export interface OrderEvent {
@@ -116,6 +124,8 @@ export interface OrderListQuery {
   month?: string;
   page?: number;
   size?: number;
+  /** v2 : filtre par pack. */
+  productId?: number | null;
 }
 
 export interface StatusUpdateRequest {
@@ -179,35 +189,168 @@ export interface GovernorateStat {
   sharePct: number;
 }
 
-// ---------- Stock ----------
+// ---------- Stats v2 ----------
+
+export interface ProductStat {
+  productId: number;
+  name: string;
+  orders: number;
+  delivered: number;
+  returned: number;
+  collectedTnd: number;
+  sharePct: number;
+}
+
+// ---------- Médias & packs (v2) ----------
+
+export interface Media {
+  id: number;
+  /** `/api/media/{id}` (même origine via le proxy). */
+  url: string;
+  contentType: string;
+  width: number | null;
+  height: number | null;
+  alt: string | null;
+}
+
+export interface Hotspot {
+  /** % depuis le bord gauche (0–100). */
+  x: number;
+  /** % depuis le bord haut (0–100). */
+  y: number;
+}
+
+export interface PackItem {
+  id: number;
+  stockItemId: number;
+  name: string;
+  description: string | null;
+  quantity: number;
+  gift: boolean;
+  photo: Media | null;
+  hotspot: Hotspot | null;
+}
+
+export interface Savings {
+  title: string;
+  question: string;
+  min: number;
+  max: number;
+  step: number;
+  defaultValue: number;
+  homeCostPerDay: number;
+  daysPerMonth: number;
+}
+
+export type Availability = 'IN_STOCK' | 'MADE_TO_ORDER';
+
+export interface ProductPublic {
+  id: number;
+  slug: string;
+  sku: string;
+  name: string;
+  badge: string | null;
+  tagline: string;
+  audience: string | null;
+  description: string | null;
+  priceTnd: number;
+  featured: boolean;
+  sortOrder: number;
+  cover: Media | null;
+  gallery: Media[];
+  items: PackItem[];
+  savings: Savings | null;
+  availability: Availability;
+}
+
+export interface ProductAdmin extends ProductPublic {
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+  completePacks: number;
+  assemblablePacks: number;
+  ordersThisMonth: number;
+}
+
+export interface ProductInput {
+  name: string;
+  slug?: string;
+  sku?: string;
+  badge?: string | null;
+  tagline: string;
+  audience?: string | null;
+  description?: string | null;
+  priceTnd: number;
+  active: boolean;
+  featured?: boolean;
+  savings: Savings | null;
+}
+
+export interface PackItemInput {
+  stockItemId: number;
+  quantity: number;
+  gift: boolean;
+  hotspot: Hotspot | null;
+}
+
+/** Erreurs 422 : `{ errors: { champ: message } }`. */
+export interface ValidationErrorBody {
+  errors: Record<string, string>;
+}
+
+// ---------- Stock v2 ----------
 
 export type StockItemStatus = 'OK' | 'LOW';
+
+export interface StockUsage {
+  productId: number;
+  name: string;
+  perPack: number;
+}
 
 export interface StockItem {
   id: number;
   name: string;
+  description: string | null;
+  photo: Media | null;
   unitCostTnd: number;
   quantity: number;
   threshold: number;
-  perPack: number;
   status: StockItemStatus;
+  usedIn: StockUsage[];
 }
 
-export interface StockOverview {
-  items: StockItem[];
+export interface StockPack {
+  productId: number;
+  name: string;
+  slug: string;
+  active: boolean;
+  cover: Media | null;
   completePacks: number;
+  assemblablePacks: number;
   packThreshold: number;
   alert: boolean;
-  assemblablePacks: number;
-  packPriceTnd: number;
+  priceTnd: number;
   cogsTnd: number;
   carrierFeeTnd: number;
   marginTnd: number;
   marginPct: number;
 }
 
+export interface StockOverview {
+  items: StockItem[];
+  packs: StockPack[];
+  /** Au moins un pack actif sous son seuil. */
+  alert: boolean;
+  carrierFeeTnd: number;
+}
+
 export interface StockItemPatch {
   id: number;
+  name?: string;
+  description?: string | null;
+  /** null = retirer la photo. */
+  photoMediaId?: number | null;
   quantity?: number;
   unitCostTnd?: number;
   threshold?: number;
@@ -217,6 +360,16 @@ export interface StockPatchRequest {
   items: StockItemPatch[];
 }
 
+export interface StockItemCreate {
+  name: string;
+  description?: string | null;
+  photoMediaId?: number | null;
+  unitCostTnd: number;
+  quantity: number;
+  threshold: number;
+}
+
 export interface AssembleRequest {
+  productId: number;
   packs: number;
 }

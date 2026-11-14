@@ -1,4 +1,4 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -14,6 +14,7 @@ import { Router } from '@angular/router';
 import { Subscription, debounceTime, distinctUntilChanged, forkJoin, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { OrdersApi } from '../../core/api/orders.api';
+import { ProductsApi } from '../../core/api/products.api';
 import { StatsApi } from '../../core/api/stats.api';
 import { StockApi } from '../../core/api/stock.api';
 import { AppState } from '../../core/app-state';
@@ -28,8 +29,8 @@ import {
   monthShortLabel,
   refNumber,
 } from '../../core/format';
-import { KpiStats, OrderCounts, OrderSummary, StatusUpdateRequest } from '../../core/models';
-import { Order, toOrderView } from '../../core/order-view';
+import { KpiStats, OrderCounts, OrderSummary, ProductAdmin, StatusUpdateRequest } from '../../core/models';
+import { Order, toOrderView, toSummary } from '../../core/order-view';
 import {
   KANBAN_LANES,
   OrderStatus,
@@ -39,6 +40,7 @@ import {
 } from '../../core/status';
 import { ToastService } from '../../core/toast.service';
 import { ErrorState } from '../../ui/error-state';
+import { PackVisual } from '../../ui/pack-visual';
 import { Icon } from '../../ui/icon';
 import { KanbanBoard, OrderMoveEvent } from '../../ui/kanban-board';
 import { KpiCard } from '../../ui/kpi-card';
@@ -62,7 +64,7 @@ interface KpiView {
 /** / — C1 tableau de bord (KPI + Kanban) ; sous 768px, C5 liste mobile filtrable. */
 @Component({
   selector: 'app-dashboard-page',
-  imports: [KpiCard, KanbanBoard, MonthPicker, ErrorState, OrderCard, Icon, ShipDialog],
+  imports: [KpiCard, KanbanBoard, MonthPicker, ErrorState, OrderCard, Icon, ShipDialog, PackVisual, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   templateUrl: './dashboard-page.html',
@@ -70,6 +72,7 @@ interface KpiView {
 export class DashboardPage {
   private readonly ordersApi = inject(OrdersApi);
   private readonly statsApi = inject(StatsApi);
+  private readonly productsApi = inject(ProductsApi);
   private readonly stockApi = inject(StockApi);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -86,6 +89,12 @@ export class DashboardPage {
   /** Recherche envoyée au serveur (debounce 300 ms). */
   protected readonly q = signal('');
   protected readonly mobileFilter = signal<OrderStatus>('new');
+
+  /** Packs proposés dans le filtre (vide si l'API ne répond pas : filtre masqué). */
+  protected readonly packs = signal<ProductAdmin[]>([]);
+  protected readonly selectedPack = computed(
+    () => this.packs().find((p) => p.id === this.state.productFilter()) ?? null,
+  );
 
   // ---------- Données ----------
   protected readonly kpis = signal<KpiStats | null>(null);
@@ -109,7 +118,10 @@ export class DashboardPage {
   /** Commande en attente du transporteur (fenêtre « Expédier »). */
   protected readonly shipTarget = signal<Order | null>(null);
 
-  protected readonly monthTitle = computed(() => `${monthLabel(this.state.month())} · pipeline COD`);
+  protected readonly monthTitle = computed(
+    () =>
+      `${monthLabel(this.state.month())} · ${this.selectedPack()?.name ?? 'tous les packs'} · pipeline COD`,
+  );
 
   protected readonly orders = computed<Order[]>(() => {
     const now = this.now();
@@ -190,16 +202,25 @@ export class DashboardPage {
       )
       .subscribe((q) => this.q.set(q));
 
-    // Mois → tout recharger ; recherche → recharger le Kanban.
+    // Mois / pack → tout recharger ; recherche → recharger le Kanban.
     effect(() => {
       const month = this.state.month();
+      this.state.productFilter();
       untracked(() => this.loadKpis(month, false));
     });
     effect(() => {
       const month = this.state.month();
       const q = this.q();
+      this.state.productFilter();
       untracked(() => this.loadBoard(month, q, false));
     });
+    this.productsApi
+      .list()
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (list) => this.packs.set([...list].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)),
+        error: () => this.packs.set([]),
+      });
 
     // Sous-titre de la barre du haut en mobile : « Nov. 2026 · 142 au total ».
     effect(() => {
@@ -228,7 +249,7 @@ export class DashboardPage {
       this.kpisError.set(null);
     }
     this.kpiSub?.unsubscribe();
-    this.kpiSub = this.statsApi.kpis(month).subscribe({
+    this.kpiSub = this.statsApi.kpis(month, this.state.productFilter()).subscribe({
       next: (k) => {
         this.kpis.set(k);
         this.kpisLoading.set(false);
@@ -250,11 +271,18 @@ export class DashboardPage {
     }
     this.boardSub?.unsubscribe();
     const version = this.moveVersion;
+    const productId = this.state.productFilter();
     this.boardSub = forkJoin({
-      counts: this.ordersApi.counts(month),
+      counts: this.ordersApi.counts(month, productId),
       pages: forkJoin(
         this.lanes.map((lane) =>
-          this.ordersApi.list({ status: [toApiStatus(lane)], month, q: q || undefined, size: LANE_SIZE }),
+          this.ordersApi.list({
+            status: [toApiStatus(lane)],
+            month,
+            q: q || undefined,
+            size: LANE_SIZE,
+            productId,
+          }),
         ),
       ),
     }).subscribe({
@@ -348,25 +376,7 @@ export class DashboardPage {
       next: (detail) => {
         this.pendingMoves--;
         this.summaries.update((list) =>
-          list.map((s) =>
-            s.id === detail.id
-              ? {
-                  id: detail.id,
-                  ref: detail.ref,
-                  customerName: detail.customerName,
-                  phone: detail.phone,
-                  governorate: detail.governorate,
-                  productName: detail.productName,
-                  quantity: detail.quantity,
-                  amountTnd: detail.amountTnd,
-                  status: detail.status,
-                  carrier: detail.carrier,
-                  trackingNumber: detail.trackingNumber,
-                  source: detail.source,
-                  createdAt: detail.createdAt,
-                }
-              : s,
-          ),
+          list.map((s) => (s.id === detail.id ? toSummary(detail) : s)),
         );
         this.toast.success(`#${refNumber(detail.ref)} : ${STATUS_META[to].label.toLowerCase()}.`);
         this.loadKpis(this.state.month(), true);
@@ -417,6 +427,10 @@ export class DashboardPage {
         void this.slip.open(o.key, `SC-${o.id}`);
         break;
     }
+  }
+
+  protected selectPack(id: number | null): void {
+    this.state.productFilter.set(id);
   }
 
   protected openOrder(o: Order): void {

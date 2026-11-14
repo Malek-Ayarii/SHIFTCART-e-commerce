@@ -1,6 +1,10 @@
+import Image from "next/image";
+import Link from "next/link";
+import { PackFallback } from "@/components/catalog/PackVisual";
 import { Button } from "@/components/ui/Button";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { mediaSrc, packHref } from "@/lib/catalog-map";
 import { cx } from "@/lib/cx";
 import { formatEta, formatStepDate } from "@/lib/format";
 import { toUiStatus, type ApiOrderStatus, type TrackingResponse, type TrackingStep } from "@/lib/types";
@@ -66,7 +70,18 @@ const STATE_LABEL: Record<TrackingStep["state"], string> = {
   cancelled: "annulée",
 };
 
-export function TrackingView({ tracking, contactHref, now }: { tracking: TrackingResponse; contactHref: string; now?: Date }) {
+export function TrackingView({
+  tracking,
+  contactHref,
+  now,
+  coverPosition,
+}: {
+  tracking: TrackingResponse;
+  contactHref: string;
+  now?: Date;
+  /** object-position keeping the pack's products in the thumbnail (lib/focus.ts). */
+  coverPosition?: string | null;
+}) {
   const status = tracking.status;
   const etaText = tracking.eta ? `Arrivée prévue ${formatEta(tracking.eta, now)}, ${tracking.governorate}` : tracking.governorate;
   const showCash = status !== "DELIVERED" && status !== "CANCELLED" && status !== "RETURNED";
@@ -82,6 +97,8 @@ export function TrackingView({ tracking, contactHref, now }: { tracking: Trackin
           <span className="text-sm font-semibold text-ink-muted">{etaText}</span>
         </div>
       </section>
+
+      <PackRow tracking={tracking} coverPosition={coverPosition} />
 
       <ol className="mx-4 my-0 flex list-none flex-col rounded-lg bg-surface-raised px-4 py-5 shadow-card" aria-label="Étapes de la commande">
         {tracking.steps.map((step, i) => {
@@ -153,5 +170,32 @@ export function TrackingProblem({ title, text, contactHref }: { title: string; t
         </Button>
       </div>
     </>
+  );
+}
+
+/** Ordered pack: thumbnail + name (never the address: docs/CONTRACT.md › v2). */
+function PackRow({ tracking, coverPosition }: { tracking: TrackingResponse; coverPosition?: string | null }) {
+  const cover = mediaSrc(tracking.productCoverUrl);
+  const slug = tracking.productSlug && /^[a-z0-9-]{1,100}$/.test(tracking.productSlug) ? tracking.productSlug : null;
+  return (
+    <div className="mx-4 mb-4 flex items-center gap-3 rounded-md bg-surface-raised p-3 ring-inset-line" data-testid="tracking-pack">
+      <span className="relative aspect-4/3 w-20 flex-none overflow-hidden rounded-sm bg-surface-sunken">
+        {cover ? (
+          <Image src={cover} alt="" fill sizes="80px" className="object-cover" style={coverPosition ? { objectPosition: coverPosition } : undefined} />
+        ) : (
+          <PackFallback name={tracking.productName} compact />
+        )}
+      </span>
+      <div className="flex min-w-0 flex-col">
+        {slug ? (
+          <Link href={packHref(slug)} className="text-item text-ink underline-offset-4 hover:underline">
+            {tracking.productName}
+          </Link>
+        ) : (
+          <span className="text-item">{tracking.productName}</span>
+        )}
+        <span className="text-meta text-ink-muted">{tracking.amountTnd} TND · paiement à la livraison</span>
+      </div>
+    </div>
   );
 }

@@ -46,6 +46,10 @@ class AdminOrderApiTest extends IntegrationTest {
                         "+216 " + phone.substring(0, 2) + " " + phone.substring(2, 5) + " " + phone.substring(5)))
                 .andExpect(jsonPath("$.productName").value("Le Pack Barista"))
                 .andExpect(jsonPath("$.productSku").value("PACK-BARISTA"))
+                .andExpect(jsonPath("$.productSlug").value("pack-barista"))
+                .andExpect(jsonPath("$.productId").isNumber())
+                .andExpect(jsonPath("$.productCoverUrl").value(org.hamcrest.Matchers.startsWith("/api/media/")))
+                .andExpect(jsonPath("$.address").value(TEST_ADDRESS))
                 .andExpect(jsonPath("$.amountTnd").value(89))
                 .andExpect(jsonPath("$.quantity").value(1))
                 .andExpect(jsonPath("$.source").value("tiktok / nov / reel-3"))
@@ -124,6 +128,52 @@ class AdminOrderApiTest extends IntegrationTest {
         patchStatus(id, Map.of("status", "WHATEVER"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.errors.status").isNotEmpty());
+    }
+
+    @Test
+    void filtersByPackSearchesAddressAndCountsPerPack() throws Exception {
+        long setupId = jdbc.queryForObject("select id from product where sku = 'PACK-SETUP'", Long.class);
+        String phone = freshPhone();
+        java.util.Map<String, Object> payload = new java.util.HashMap<>(validOrder(phone));
+        payload.put("productSku", "PACK-SETUP");
+        String unique = "Impasse Zinnia " + phone;
+        payload.put("address", unique + ", La Marsa, Tunis");
+        MvcResult created = mvc.perform(orderRequest(payload, freshIp())).andExpect(status().isCreated()).andReturn();
+        String ref = body(created).get("ref").asText();
+
+        mvc.perform(get("/api/admin/orders").param("q", "impasse zinnia " + phone)
+                        .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].ref").value(ref))
+                .andExpect(jsonPath("$.content[0].productId").value(setupId))
+                .andExpect(jsonPath("$.content[0].productSlug").value("pack-setup-productivite"))
+                .andExpect(jsonPath("$.content[0].productCoverUrl").isEmpty())
+                .andExpect(jsonPath("$.content[0].address").value(unique + ", La Marsa, Tunis"));
+
+        JsonNode page = body(mvc.perform(get("/api/admin/orders").param("productId", String.valueOf(setupId))
+                        .param("size", "200").header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(page.get("totalElements").asLong()).isGreaterThanOrEqualTo(1);
+        for (JsonNode o : page.get("content")) {
+            assertThat(o.get("productId").asLong()).isEqualTo(setupId);
+        }
+
+        String month = java.time.YearMonth.now(java.time.ZoneId.of("Africa/Tunis")).toString();
+        JsonNode counts = body(mvc.perform(get("/api/admin/orders/counts").param("month", month)
+                        .param("productId", String.valueOf(setupId)).header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk()).andReturn());
+        Long expected = jdbc.queryForObject("select count(*) from customer_order where product_id = ? and status = 'NEW'"
+                + " and created_at >= date_trunc('month', now() at time zone 'Africa/Tunis') at time zone 'Africa/Tunis'",
+                Long.class, setupId);
+        assertThat(counts.get("NEW").asLong()).isEqualTo(expected);
+        assertThat(counts.size()).isEqualTo(7);
+
+        mvc.perform(get("/api/admin/orders/{id}/delivery-slip.pdf", orderId(ref))
+                        .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .contentType(MediaType.APPLICATION_PDF));
     }
 
     @Test

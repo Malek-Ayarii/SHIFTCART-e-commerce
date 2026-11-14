@@ -5,6 +5,7 @@ import com.shiftcart.common.error.ValidationException;
 import com.shiftcart.common.money.Money;
 import com.shiftcart.common.phone.TnPhone;
 import com.shiftcart.common.time.MonthRange;
+import com.shiftcart.media.MediaDto;
 import com.shiftcart.messages.Message;
 import com.shiftcart.messages.MessageContext;
 import com.shiftcart.messages.MessageGenerator;
@@ -54,7 +55,8 @@ public class AdminOrderService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<OrderSummary> list(List<String> statuses, String q, String month, int page, int size) {
+    public PageResponse<OrderSummary> list(List<String> statuses, String q, String month, Long productId, int page,
+            int size) {
         if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
             throw ApiException.badRequest("Pagination invalide (size entre 1 et " + MAX_PAGE_SIZE + ").");
         }
@@ -64,6 +66,7 @@ public class AdminOrderService {
                 OrderSpecifications.statusIn(parsed),
                 range == null ? OrderSpecifications.createdBetween(null, null)
                         : OrderSpecifications.createdBetween(range.start(), range.end()),
+                OrderSpecifications.productIs(productId),
                 OrderSpecifications.search(q));
         Page<CustomerOrder> result = orders.findAll(spec,
                 PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
@@ -72,7 +75,7 @@ public class AdminOrderService {
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Long> counts(String month) {
+    public Map<String, Long> counts(String month, Long productId) {
         MonthRange range = MonthRange.parseOptional(month);
         Instant start = range == null ? Instant.EPOCH : range.start();
         Instant end = range == null ? Instant.parse("9999-12-31T00:00:00Z") : range.end();
@@ -80,7 +83,8 @@ public class AdminOrderService {
         for (OrderStatus s : OrderStatus.values()) {
             counts.put(s.name(), 0L);
         }
-        for (OrderRepository.StatusCount c : orders.countByStatus(start, end)) {
+        for (OrderRepository.StatusCount c : (productId == null ? orders.countByStatus(start, end)
+                : orders.countByStatusForProduct(start, end, productId))) {
             counts.put(c.getStatus().name(), c.getTotal());
         }
         return counts;
@@ -149,7 +153,8 @@ public class AdminOrderService {
 
     static OrderSummary summary(CustomerOrder o) {
         return new OrderSummary(o.getId(), o.getRef(), o.getCustomerName(), TnPhone.display(o.getPhoneE164()),
-                o.getGovernorate(), o.getProduct().getName(), o.getQuantity(), Money.toTnd(o.getAmountMillimes()),
+                o.getGovernorate(), o.getAddress(), o.getProduct().getId(), o.getProduct().getSlug(),
+                o.getProduct().getName(), MediaDto.urlOf(o.getProduct().getCoverMediaId()), o.getQuantity(), Money.toTnd(o.getAmountMillimes()),
                 o.getStatus().name(), o.getCarrier(), o.getTrackingNumber(), o.sourceLabel(), o.getCreatedAt());
     }
 

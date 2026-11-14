@@ -3,7 +3,7 @@ import type { CheckoutErrors } from "./validation";
 
 /**
  * Server-side client of apps/api (never imported by Client Components: API_URL is private).
- * Logs never contain the customer's phone or name: only status codes and refs.
+ * Logs never contain the customer's phone, name or address: only status codes and refs.
  */
 export function apiUrl(): string {
   return (process.env.API_URL || "http://localhost:8090").replace(/\/+$/, "");
@@ -11,9 +11,12 @@ export function apiUrl(): string {
 
 const TIMEOUT_MS = 10_000;
 
+/** 422 errors: the 4 fields + `productSku` (pack inactive or unknown). */
+export type OrderErrors = CheckoutErrors & { productSku?: string };
+
 export type CreateOrderResult =
   | { kind: "ok"; order: CreateOrderResponse }
-  | { kind: "invalid"; errors: CheckoutErrors }
+  | { kind: "invalid"; errors: OrderErrors }
   | { kind: "rate_limited"; message: string }
   | { kind: "error"; status?: number };
 
@@ -27,11 +30,11 @@ async function readJson(res: Response): Promise<unknown> {
   }
 }
 
-function pickFieldErrors(body: unknown): CheckoutErrors {
-  const out: CheckoutErrors = {};
+export function pickFieldErrors(body: unknown): OrderErrors {
+  const out: OrderErrors = {};
   const errors = (body as { errors?: Record<string, unknown> } | null)?.errors;
   if (!errors || typeof errors !== "object") return out;
-  for (const key of ["customerName", "phone", "governorate"] as const) {
+  for (const key of ["customerName", "phone", "governorate", "address", "productSku"] as const) {
     const v = errors[key];
     if (typeof v === "string" && v) out[key] = v;
   }

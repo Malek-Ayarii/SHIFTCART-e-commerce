@@ -21,7 +21,15 @@ export const MESSAGES = {
   /** Only reachable by bypassing the 8-digit input (the field never accepts more). */
   phoneTooLong: "Ton numéro doit avoir 8 chiffres (sans le +216).",
   governorate: "Choisis où te livrer.",
+  addressEmpty: "Ton adresse permet au livreur de te trouver.",
+  addressShort: "Précise ta rue, ton quartier et ta ville.",
+  /** Only reachable by bypassing the 200-character textarea. */
+  addressLong: "Ton adresse est trop longue (200 caractères max).",
+  productUnavailable: "Ce pack n'est plus disponible.",
 } as const;
+
+export const ADDRESS_MIN = 10;
+export const ADDRESS_MAX = 200;
 
 export function phoneMissingMessage(missing: number): string {
   return `Il manque ${missing} chiffre${missing > 1 ? "s" : ""} (8 au total).`;
@@ -71,14 +79,35 @@ export function validateGovernorate(input: string | null | undefined): string | 
   return isGovernorate(input) ? null : MESSAGES.governorate;
 }
 
-export type CheckoutField = "customerName" | "phone" | "governorate";
+/** Exact delivery address (checkout v2): 10 to 200 characters after trim. */
+export function validateAddress(input: string | null | undefined): string | null {
+  const a = String(input ?? "").trim();
+  if (a.length === 0) return MESSAGES.addressEmpty;
+  if (a.length < ADDRESS_MIN) return MESSAGES.addressShort;
+  if (a.length > ADDRESS_MAX) return MESSAGES.addressLong;
+  return null;
+}
+
+/** Trims and collapses inner blank runs (keeps the courier-friendly text, drops stray spaces). */
+export function normalizeAddress(input: string): string {
+  return input
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/\s+/g, " ").replace(/\s*,$/, ""))
+    .filter(Boolean)
+    .join(", ");
+}
+
+/** The 4 fields of the checkout, in display order (docs/SPEC-V2.md › Checkout v2). */
+export type CheckoutField = "customerName" | "phone" | "governorate" | "address";
 export type CheckoutErrors = Partial<Record<CheckoutField, string>>;
-export const CHECKOUT_FIELDS: readonly CheckoutField[] = ["customerName", "phone", "governorate"];
+export const CHECKOUT_FIELDS: readonly CheckoutField[] = ["customerName", "phone", "governorate", "address"];
 
 export interface CheckoutValues {
   customerName: string;
   phone: string;
   governorate: string;
+  address: string;
 }
 
 export function validateCheckout(values: CheckoutValues): CheckoutErrors {
@@ -86,9 +115,11 @@ export function validateCheckout(values: CheckoutValues): CheckoutErrors {
   const name = validateName(values.customerName);
   const phone = validateTnPhone(values.phone);
   const gov = validateGovernorate(values.governorate);
+  const address = validateAddress(values.address);
   if (name) errors.customerName = name;
   if (phone) errors.phone = phone;
   if (gov) errors.governorate = gov;
+  if (address) errors.address = address;
   return errors;
 }
 

@@ -24,11 +24,14 @@ export class OrdersApi {
     if (query.month) params = params.set('month', query.month);
     if (query.page != null) params = params.set('page', query.page);
     if (query.size != null) params = params.set('size', query.size);
+    if (query.productId != null) params = params.set('productId', query.productId);
     return this.http.get<Page<OrderSummary>>(ORDERS_URL, { params });
   }
 
-  counts(month?: string): Observable<OrderCounts> {
-    const params = month ? new HttpParams().set('month', month) : undefined;
+  counts(month?: string, productId?: number | null): Observable<OrderCounts> {
+    let params = new HttpParams();
+    if (month) params = params.set('month', month);
+    if (productId != null) params = params.set('productId', productId);
     return this.http.get<OrderCounts>(`${ORDERS_URL}/counts`, { params });
   }
 

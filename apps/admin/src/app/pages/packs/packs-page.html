@@ -1,0 +1,130 @@
+<div class="flex flex-col gap-6">
+  <p class="sc-sr" aria-live="polite">{{ announce() }}</p>
+  <header class="flex flex-wrap items-end gap-4">
+    <!-- Téléphone : la barre du haut affiche déjà ce titre ; il reste pour les lecteurs d'écran. -->
+    <div class="max-md:sr-only flex flex-col gap-1 min-w-0">
+      <h1 class="m-0 text-kpi">Packs</h1>
+      <p class="m-0 text-sm text-ink-muted font-semibold">
+        @if (!loading() && !error()) {
+          {{ summary() }} ·
+        }
+        Glisse une carte pour changer l'ordre sur la boutique
+      </p>
+    </div>
+    <div class="ml-auto flex items-center gap-3">
+      @if (savingOrder()) {
+        <span class="inline-flex items-center gap-1.5 text-xs font-bold text-ink-muted" role="status">
+          <sc-icon name="loader" [size]="14" class="animate-spin" />Enregistrement…
+        </span>
+      }
+      <a scButton variant="primary" icon="plus" routerLink="/packs/new">Nouveau pack</a>
+    </div>
+  </header>
+
+  @if (error(); as err) {
+    <sc-error-state [message]="err" (retry)="load()" />
+  } @else if (loading()) {
+    <div class="grid gap-5 grid-cols-[repeat(auto-fill,minmax(min(100%,--spacing(68)),1fr))]" aria-busy="true">
+      <span class="sc-sr">Chargement des packs…</span>
+      @for (i of [0, 1, 2, 3]; track i) {
+        <div class="rounded-lg bg-surface-raised shadow-card overflow-hidden" aria-hidden="true">
+          <div class="sc-skeleton aspect-[16/10] rounded-none"></div>
+          <div class="p-4 flex flex-col gap-3">
+            <div class="sc-skeleton h-5 w-3/4"></div>
+            <div class="sc-skeleton h-4 w-full"></div>
+            <div class="sc-skeleton h-10 w-full"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (packs().length === 0) {
+    <div class="p-10 rounded-lg bg-surface-raised shadow-card flex flex-col items-center gap-4 text-center">
+      <span class="size-14 rounded-pill bg-surface-sunken grid place-items-center text-ink">
+        <sc-icon name="package" [size]="26" />
+      </span>
+      <div class="flex flex-col gap-1">
+        <h2 class="m-0 text-heading">Aucun pack pour l'instant</h2>
+        <p class="m-0 text-body-sm text-ink-muted">Crée ton premier pack : nom, prix, photos et composition.</p>
+      </div>
+      <a scButton variant="dark" icon="plus" routerLink="/packs/new">Créer un pack</a>
+    </div>
+  } @else {
+    <ul
+      cdkDropList
+      cdkDropListOrientation="mixed"
+      [cdkDropListData]="packs()"
+      (cdkDropListDropped)="onDrop($event)"
+      class="m-0 p-0 list-none flex flex-wrap gap-5"
+      aria-label="Packs, dans l'ordre d'affichage de la boutique"
+    >
+      @for (p of packs(); track p.id; let i = $index) {
+        <li
+          cdkDrag
+          [cdkDragData]="p"
+          class="relative w-full sm:w-[calc((100%-var(--spacing)*5)/2)] xl:w-[calc((100%-var(--spacing)*10)/3)] min-w-0 rounded-lg bg-surface-raised shadow-card overflow-hidden flex flex-col transition-shadow duration-120 hover:shadow-lift focus-within:shadow-lift motion-reduce:transition-none"
+        >
+          <div class="relative aspect-[16/10]">
+            <sc-pack-visual class="absolute inset-0" [media]="p.cover" [name]="p.name" />
+            <div class="absolute left-3 top-3 flex gap-1.5 z-10">
+              <sc-pack-status [active]="p.active" class="shadow-card" />
+              @if (p.featured) {
+                <span
+                  class="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-surface-raised text-ink text-xs font-extrabold tracking-[0.04em] uppercase shadow-card"
+                  ><sc-icon name="star" [size]="12" [strokeWidth]="2.5" />Phare</span
+                >
+              }
+            </div>
+            <button
+              type="button"
+              cdkDragHandle
+              class="absolute right-2 top-2 z-10 size-11 grid place-items-center rounded-sm border-0 bg-surface-raised/90 text-ink cursor-grab active:cursor-grabbing shadow-card hover:bg-surface-raised"
+              [attr.data-handle]="p.id"
+              [attr.aria-label]="'Déplacer ' + p.name + ' (position ' + (i + 1) + '). Flèches pour changer de place.'"
+              (keydown)="onHandleKey($event, i)"
+            >
+              <sc-icon name="grip" [size]="18" />
+            </button>
+          </div>
+
+          <div class="p-4 pt-3.5 flex flex-col gap-3 flex-1">
+            <div class="flex items-start gap-3">
+              <div class="min-w-0 flex-1 flex flex-col gap-0.5">
+                <h2 class="m-0 text-title leading-6">
+                  <a
+                    [routerLink]="['/packs', p.id]"
+                    class="text-ink no-underline after:absolute after:inset-0 after:content-[''] hover:text-orange-ink"
+                    >{{ p.name }}</a
+                  >
+                </h2>
+                <p class="m-0 text-body-sm text-ink-muted line-clamp-2">{{ p.tagline }}</p>
+              </div>
+              @if (p.priceTnd > 0) {
+                <span class="shrink-0 font-display font-extrabold text-heading whitespace-nowrap">{{ price(p) }}</span>
+              } @else {
+                <span class="shrink-0 inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-warning-soft text-warning text-xs font-extrabold whitespace-nowrap"
+                  ><sc-icon name="alert" [size]="12" [strokeWidth]="2.5" />Prix [À DÉFINIR]</span
+                >
+              }
+            </div>
+            <dl class="m-0 mt-auto grid grid-cols-2 gap-2">
+              <div class="p-2.5 rounded-md bg-surface-sunken flex flex-col gap-0.5">
+                <dt class="text-xs font-bold uppercase tracking-[0.06em] text-ink-muted">Packs complets</dt>
+                <dd class="m-0 flex items-baseline gap-1.5">
+                  <span class="font-display font-extrabold text-heading">{{ num(p.completePacks) }}</span>
+                  <span class="text-xs font-semibold text-ink-muted">+ {{ num(p.assemblablePacks) }} assemblables</span>
+                </dd>
+              </div>
+              <div class="p-2.5 rounded-md bg-surface-sunken flex flex-col gap-0.5">
+                <dt class="text-xs font-bold uppercase tracking-[0.06em] text-ink-muted">Ce mois-ci</dt>
+                <dd class="m-0 flex items-baseline gap-1.5">
+                  <span class="font-display font-extrabold text-heading">{{ num(p.ordersThisMonth) }}</span>
+                  <span class="text-xs font-semibold text-ink-muted">commande{{ p.ordersThisMonth > 1 ? 's' : '' }}</span>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

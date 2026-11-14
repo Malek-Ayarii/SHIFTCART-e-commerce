@@ -44,6 +44,10 @@ public class CustomerOrder {
     @Column(nullable = false)
     private String governorate;
 
+    /** Adresse exacte de livraison : donnée personnelle (admin + bon de livraison uniquement). */
+    @Column(nullable = false)
+    private String address;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrderStatus status;
@@ -89,7 +93,7 @@ public class CustomerOrder {
     protected CustomerOrder() {}
 
     public CustomerOrder(String ref, Product product, int quantity, String customerName, String phoneE164,
-            String governorate, Instant now) {
+            String governorate, String address, Instant now) {
         this.ref = ref;
         this.product = product;
         this.quantity = quantity;
@@ -97,6 +101,7 @@ public class CustomerOrder {
         this.customerName = customerName;
         this.phoneE164 = phoneE164;
         this.governorate = governorate;
+        this.address = address;
         this.status = OrderStatus.NEW;
         this.createdAt = now;
         this.updatedAt = now;
@@ -166,6 +171,10 @@ public class CustomerOrder {
 
     public String getGovernorate() {
         return governorate;
+    }
+
+    public String getAddress() {
+        return address;
     }
 
     public OrderStatus getStatus() {

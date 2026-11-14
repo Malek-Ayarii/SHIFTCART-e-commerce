@@ -49,6 +49,8 @@ public class TrackingService {
                 o.getRef(),
                 o.getStatus().name(),
                 o.getProduct().getName(),
+                o.getProduct().getSlug(),
+                com.shiftcart.media.MediaDto.urlOf(o.getProduct().getCoverMediaId()),
                 Money.toTnd(o.getAmountMillimes()),
                 o.getGovernorate(),
                 o.firstName(),

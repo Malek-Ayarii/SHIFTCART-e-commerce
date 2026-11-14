@@ -12,6 +12,7 @@ shiftcart:
     admin-password: ${ADMIN_PASSWORD:shiftcart-dev}
     cookie-secure: ${COOKIE_SECURE:false}
   whatsapp:
+    shop-number: ${WHATSAPP_SHOP_NUMBER:21692184592}   # numéro public de la boutique (+216 92 184 592)
     verify-token: ${WHATSAPP_VERIFY_TOKEN:dev-verify-token}
     app-secret: ${WHATSAPP_APP_SECRET:dev-app-secret}
 

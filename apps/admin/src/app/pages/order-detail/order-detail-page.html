@@ -53,16 +53,52 @@
           class="bg-surface-raised rounded-lg shadow-card p-5 flex flex-col gap-3.5"
         >
           <h2 id="client-title" class="m-0 text-label font-extrabold uppercase text-ink-muted">Client</h2>
-          <dl class="m-0 grid grid-cols-[--spacing(35)_1fr] gap-x-4 gap-y-2.5 text-base">
+          <dl class="m-0 grid grid-cols-[--spacing(28)_minmax(0,1fr)] sm:grid-cols-[--spacing(35)_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-base">
             <dt class="text-ink-muted font-semibold">Nom</dt>
             <dd class="m-0 font-bold">{{ o.customerName }}</dd>
             <dt class="text-ink-muted font-semibold">Téléphone</dt>
             <dd class="m-0 font-bold">{{ o.phone }}</dd>
             <dt class="text-ink-muted font-semibold">Gouvernorat</dt>
             <dd class="m-0 font-bold">{{ o.governorate }}</dd>
+            <dt class="col-span-2 sm:col-span-1 text-ink-muted font-semibold">Adresse exacte</dt>
+            <dd class="col-span-2 sm:col-span-1 -mt-1.5 sm:mt-0 m-0 font-bold whitespace-pre-line break-words select-all" data-testid="order-address">
+              @if (v.address) {
+                {{ v.address }}
+              } @else {
+                <span class="text-ink-muted font-semibold">Non renseignée (commande passée avant l'ajout de l'adresse)</span>
+              }
+            </dd>
             <dt class="text-ink-muted font-semibold">Source</dt>
             <dd class="m-0 font-bold break-words">{{ o.source || '—' }}</dd>
           </dl>
+          @if (v.address) {
+            <div class="flex flex-wrap gap-2 pt-3.5 border-t border-line">
+              <button
+                scButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                [icon]="addressCopied() ? 'check' : 'copy'"
+                (click)="copyAddress()"
+              >
+                {{ addressCopied() ? 'Adresse copiée' : "Copier l'adresse" }}
+              </button>
+              <a
+                scButton
+                variant="ghost"
+                size="sm"
+                icon="map"
+                iconRight="external"
+                [href]="v.mapsUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                referrerpolicy="no-referrer"
+              >
+                Ouvrir dans Maps
+              </a>
+            </div>
+            <span class="sc-sr" role="status">{{ addressCopied() ? 'Adresse copiée dans le presse-papiers.' : '' }}</span>
+          }
         </section>
 
         <section
@@ -70,12 +106,19 @@
           class="bg-surface-raised rounded-lg shadow-card p-5 flex flex-col gap-3.5"
         >
           <h2 id="order-title" class="m-0 text-label font-extrabold uppercase text-ink-muted">Commande</h2>
-          <div class="flex items-center gap-3">
-            <span class="size-11 shrink-0 rounded-sm bg-ink text-orange grid place-items-center">
-              <sc-icon name="coffee" [size]="22" />
-            </span>
-            <div class="flex flex-col min-w-0">
-              <span class="font-extrabold">{{ o.productName }} × {{ o.quantity }}</span>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <sc-pack-visual
+              class="size-14 shrink-0 rounded-md"
+              [url]="o.productCoverUrl"
+              [name]="o.productName"
+              [compact]="true"
+            />
+            <div class="flex flex-col min-w-0 flex-[1_1_12rem]">
+              @if (o.productId !== null && o.productId !== undefined) {
+                <a [routerLink]="['/packs', o.productId]" class="font-extrabold text-ink hover:text-orange-ink">{{ o.productName }} × {{ o.quantity }}</a>
+              } @else {
+                <span class="font-extrabold">{{ o.productName }} × {{ o.quantity }}</span>
+              }
               @if (v.contents) {
                 <span class="text-label tracking-normal font-semibold text-ink-muted">{{ v.contents }}</span>
               }

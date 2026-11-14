@@ -26,7 +26,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Sécurité : API sans état. Public : commandes boutique, webhooks, login/refresh/logout, santé.
+ * Sécurité : API sans état. Public : commandes boutique, catalogue et photos (GET), webhooks, login/refresh/logout, santé.
  * Tout {@code /api/admin/**} et {@code /api/auth/me} exige un JWT ({@code Authorization: Bearer}).
  *
  * <p>CSRF désactivé : l'authentification passe par un en-tête (pas de cookie de session) ; le seul cookie,
@@ -59,6 +59,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/orders/*/tracking").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/*", "/api/media/*")
+                        .permitAll()
                         .requestMatchers("/api/webhooks/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh", "/api/auth/logout")
                         .permitAll()

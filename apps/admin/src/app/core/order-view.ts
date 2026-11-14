@@ -1,5 +1,5 @@
 import { formatTnd, refNumber, relativeAge } from './format';
-import { OrderSummary } from './models';
+import { OrderDetail, OrderSummary } from './models';
 import { OrderStatus, carrierLabel, toUiStatus } from './status';
 
 /**
@@ -17,6 +17,8 @@ export interface Order {
   status: OrderStatus;
   phone?: string;
   product?: string;
+  /** Vignette du pack (`/api/media/{id}`), v2. */
+  productCover?: string | null;
   age?: string;
   carrier?: string;
   tracking?: string;
@@ -33,6 +35,7 @@ export function toOrderView(s: OrderSummary, now: number = Date.now()): Order {
     status: toUiStatus(s.status),
     phone: s.phone,
     product: s.productName,
+    productCover: s.productCoverUrl ?? null,
     age: relativeAge(s.createdAt, now),
     carrier: carrierLabel(s.carrier),
     tracking: s.trackingNumber ?? undefined,
@@ -43,4 +46,27 @@ export function toOrderView(s: OrderSummary, now: number = Date.now()): Order {
 /** Libellé accessible d'une carte (sans téléphone). */
 export function orderAriaLabel(o: Order): string {
   return `Commande #${o.id}, ${o.name}, ${formatTnd(o.amount)}, ${o.city}`;
+}
+
+/** Réduit un OrderDetail (réponse du PATCH) à la forme OrderSummary des listes. */
+export function toSummary(d: OrderDetail): OrderSummary {
+  return {
+    id: d.id,
+    ref: d.ref,
+    customerName: d.customerName,
+    phone: d.phone,
+    governorate: d.governorate,
+    productName: d.productName,
+    quantity: d.quantity,
+    amountTnd: d.amountTnd,
+    status: d.status,
+    carrier: d.carrier,
+    trackingNumber: d.trackingNumber,
+    source: d.source,
+    createdAt: d.createdAt,
+    productId: d.productId ?? null,
+    productSlug: d.productSlug ?? null,
+    productCoverUrl: d.productCoverUrl ?? null,
+    address: d.address ?? null,
+  };
 }

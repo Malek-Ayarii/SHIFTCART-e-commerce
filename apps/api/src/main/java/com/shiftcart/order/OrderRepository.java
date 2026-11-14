@@ -50,6 +50,13 @@ public interface OrderRepository extends JpaRepository<CustomerOrder, Long>, Jpa
             """)
     List<StatusCount> countByStatus(Instant start, Instant end);
 
+    @Query("""
+            select o.status as status, count(o) as total from CustomerOrder o
+            where o.createdAt >= :start and o.createdAt < :end and o.product.id = :productId
+            group by o.status
+            """)
+    List<StatusCount> countByStatusForProduct(Instant start, Instant end, Long productId);
+
     interface StatusCount {
         OrderStatus getStatus();
 

@@ -1,13 +1,18 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import { Suspense } from "react";
+import { PackFallback } from "@/components/catalog/PackVisual";
 import { LogoHeader, PageColumn } from "@/components/layout/PageColumn";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { decodeOrderCookie, ORDER_COOKIE } from "@/lib/order-cookie";
-import { PRODUCT } from "@/lib/product";
+import { getCatalog } from "@/lib/catalog";
+import { packHref } from "@/lib/catalog-map";
+import { coverPosition } from "@/lib/focus";
 import { parseRef } from "@/lib/types";
 import { confirmOrderUrl, isSafeWhatsAppUrl } from "@/lib/whatsapp";
 
@@ -37,15 +42,19 @@ async function Confirmation({ params }: { params: Promise<{ ref: string }> }) {
   const saved = decodeOrderCookie(jar.get(ORDER_COOKIE)?.value);
   const order = saved && saved.ref === ref ? saved : null;
 
-  const amount = order?.amountTnd ?? PRODUCT.priceTnd;
-  const productName = order?.productName ?? PRODUCT.name;
+  const amount = order?.amountTnd;
+  // Crop the thumbnail on the pack's products (cached catalogue read, no personal data involved).
+  const catalog = order?.productSlug && order.productCoverSrc ? await getCatalog() : null;
+  const cover = catalog?.ok ? catalog.packs.find((p) => p.slug === order?.productSlug)?.cover : null;
+  const coverPos = cover?.focus ? coverPosition(cover.focus, cover.width / cover.height, 4 / 3) : null;
+  const productName = order?.productName;
   const whatsappUrl = order?.whatsappConfirmUrl && isSafeWhatsAppUrl(order.whatsappConfirmUrl) ? order.whatsappConfirmUrl : confirmOrderUrl(ref);
   const trackingHref = order ? `/suivi/${encodeURIComponent(ref)}?t=${encodeURIComponent(order.trackingToken)}` : "/suivi";
 
   const steps = [
     "Réponds OUI sur WhatsApp pour confirmer.",
     order?.governorate ? `Livraison à ${order.governorate} sous 24 à 48 h.` : "Livraison sous 24 à 48 h.",
-    `Tu paies ${amount} TND en espèces au livreur.`,
+    amount !== undefined ? `Tu paies ${amount} TND en espèces au livreur.` : "Tu paies en espèces au livreur.",
   ];
 
   return (
@@ -59,7 +68,7 @@ async function Confirmation({ params }: { params: Promise<{ ref: string }> }) {
         {order && order.phoneDisplay ? (
           <p className="m-0 text-body text-ink-muted">
             Merci{order.customerFirstName ? ` ${order.customerFirstName}` : ""} ! On t&apos;envoie un message WhatsApp au{" "}
-            <strong className="text-ink">{order.phoneDisplay}</strong>.
+            <strong className="whitespace-nowrap text-ink">{order.phoneDisplay}</strong>.
           </p>
         ) : (
           <p className="m-0 text-body text-ink-muted">Merci ! On t&apos;envoie un message WhatsApp pour confirmer ta commande.</p>
@@ -84,20 +93,47 @@ async function Confirmation({ params }: { params: Promise<{ ref: string }> }) {
         ))}
       </ol>
 
-      <dl className="mx-5 mt-5 mb-0 flex flex-col gap-2 rounded-md bg-surface-raised p-4 text-sm leading-5 ring-inset-line">
-        <div className="flex justify-between">
-          <dt className="font-semibold text-ink-muted">Pack</dt>
-          <dd className="m-0 font-bold">{productName}</dd>
+      {order ? (
+        // One recap card: what you ordered, then what you pay (was two stacked cards).
+        <div className="mx-5 mt-5 overflow-hidden rounded-md bg-surface-raised ring-inset-line">
+          {productName ? (
+            <div className="flex items-center gap-3 p-3" data-testid="merci-pack">
+              <span className="relative aspect-4/3 w-20 flex-none overflow-hidden rounded-sm bg-surface-sunken">
+                {order.productCoverSrc ? (
+                  <Image src={order.productCoverSrc} alt="" fill sizes="80px" className="object-cover" style={coverPos ? { objectPosition: coverPos } : undefined} />
+                ) : (
+                  <PackFallback name={productName} compact />
+                )}
+              </span>
+              <div className="flex min-w-0 flex-col gap-0.5">
+                {order.productSlug ? (
+                  <Link href={packHref(order.productSlug)} className="text-item text-ink underline-offset-4 hover:underline">
+                    {productName}
+                  </Link>
+                ) : (
+                  <span className="text-item">{productName}</span>
+                )}
+                {order.governorate ? (
+                  <span className="flex items-center gap-1 text-meta text-ink-muted">
+                    <Icon name="pin" size={14} />
+                    Livraison à {order.governorate}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          <dl className={`m-0 flex flex-col gap-2 p-4 text-sm leading-5 ${productName ? "border-t border-line" : ""}`}>
+            <div className="flex items-baseline justify-between">
+              <dt className="font-semibold text-ink-muted">Livraison</dt>
+              <dd className="m-0 font-bold text-success">Gratuite</dd>
+            </div>
+            <div className="flex items-baseline justify-between">
+              <dt className="font-bold">À payer à la livraison</dt>
+              <dd className="m-0 font-display text-xl font-extrabold">{amount !== undefined ? `${amount} TND` : "—"}</dd>
+            </div>
+          </dl>
         </div>
-        <div className="flex justify-between">
-          <dt className="font-semibold text-ink-muted">Livraison</dt>
-          <dd className="m-0 font-bold text-success">Gratuite</dd>
-        </div>
-        <div className="flex justify-between border-t border-line pt-2">
-          <dt className="font-bold">À payer à la livraison</dt>
-          <dd className="m-0 font-display text-lg font-extrabold">{amount} TND</dd>
-        </div>
-      </dl>
+      ) : null}
 
       <div className="mt-auto flex flex-col gap-3 p-5">
         {whatsappUrl ? (
