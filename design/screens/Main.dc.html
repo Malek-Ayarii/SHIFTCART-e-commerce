@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Landing mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components-reference/bundle.css">
+<script src="../components-reference/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#C24400}a:hover{color:#1A1A1A}
+</style>
+</helmet>
+<div style="width: 390px; min-height: 3200px; background: var(--surface); color: var(--ink); font-family: var(--font-body); display: flex; flex-direction: column">
+<x-import component-from-global-scope="ShiftCart.Navbar" logo-src="/_blob/90f38a8a5b493e756b98d65dfc426c91" logo-height="{{logoH}}" count="{{one}}"></x-import>
+
+<section style="padding: 24px 16px 16px; display: flex; flex-direction: column">
+<p style="margin: 0 0 12px; display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange-ink)">
+<x-import component-from-global-scope="ShiftCart.Icon" name="zap" size="{{s14}}"></x-import>
+Pour les étudiants qui bossent dur
+</p>
+<h1 style="margin: 0 0 20px; font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 40px; letter-spacing: -0.02em; text-transform: uppercase">Booste ta routine, <span style="color: var(--orange-ink)">sauve ton budget</span></h1>
+<x-import component-from-global-scope="ShiftCart.StoryVideo" author="Sarra K" handle="@sarra.shift" caption="Pourquoi j'ai arrêté de jeter 120 DT/mois"></x-import>
+</section>
+
+<section style="padding: 24px 16px; border-top: 1px solid var(--line)">
+<x-import component-from-global-scope="ShiftCart.ProductCard" name="Le Pack Barista" pitch="Le coffee shop chez toi, pour le prix de 3 semaines de buvette." price="{{price}}"></x-import>
+</section>
+
+<section style="padding: 24px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">
+<x-import component-from-global-scope="ShiftCart.Icon" name="banknote" size="{{s22}}"></x-import>
+Calcule tes économies
+</h2>
+<x-import component-from-global-scope="ShiftCart.SavingsCalculator" default-value="{{daily}}" pack-price="{{price}}"></x-import>
+</section>
+
+<section style="padding: 24px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">
+<x-import component-from-global-scope="ShiftCart.Icon" name="package" size="{{s22}}"></x-import>
+Qu'y a-t-il dans ton pack ?
+</h2>
+<x-import component-from-global-scope="ShiftCart.IncludedList"></x-import>
+</section>
+
+<section style="padding: 24px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
+<h2 style="margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">Comment ça marche</h2>
+<ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px">
+<li style="display: flex; gap: 12px; align-items: flex-start">
+<span style="width: 32px; height: 32px; flex: none; border-radius: 999px; background: var(--ink); color: var(--ink-inverse); display: grid; place-items: center; font-weight: 800; font-size: 14px">1</span>
+<div><p style="margin: 0; font-weight: 700; font-size: 17px; line-height: 24px">Commande en 30 secondes</p><p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--ink-muted)">Nom, téléphone, gouvernorat. Pas de compte, pas de carte.</p></div>
+</li>
+<li style="display: flex; gap: 12px; align-items: flex-start">
+<span style="width: 32px; height: 32px; flex: none; border-radius: 999px; background: var(--ink); color: var(--ink-inverse); display: grid; place-items: center; font-weight: 800; font-size: 14px">2</span>
+<div><p style="margin: 0; font-weight: 700; font-size: 17px; line-height: 24px">Confirme sur WhatsApp</p><p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--ink-muted)">Tu reçois un message : réponds OUI et on lance la livraison.</p></div>
+</li>
+<li style="display: flex; gap: 12px; align-items: flex-start">
+<span style="width: 32px; height: 32px; flex: none; border-radius: 999px; background: var(--orange); color: var(--on-orange); display: grid; place-items: center; font-weight: 800; font-size: 14px">3</span>
+<div><p style="margin: 0; font-weight: 700; font-size: 17px; line-height: 24px">Paie à la livraison</p><p style="margin: 0; font-size: 14px; line-height: 20px; color: var(--ink-muted)">En espèces, au livreur, sous 24 à 48 h partout en Tunisie.</p></div>
+</li>
+</ol>
+</section>
+
+<section style="padding: 24px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px">
+<h2 style="margin: 0 0 4px; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">Ils ont choisi de changer</h2>
+<x-import component-from-global-scope="ShiftCart.ReviewCard" name="Yasmine" city="Sousse" text="Livré en 24h à Sousse, top !" rating="{{five}}" verified="{{yes}}"></x-import>
+<x-import component-from-global-scope="ShiftCart.ReviewCard" name="Aziz" city="Tunis" text="Fini le café froid en TD." rating="{{five}}" verified="{{yes}}"></x-import>
+<x-import component-from-global-scope="ShiftCart.ReviewCard" name="Ines" city="Sfax" text="[AVIS CLIENT RÉEL À INSÉRER]" rating="{{five}}"></x-import>
+</section>
+
+<section style="padding: 24px 16px 32px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
+<p style="margin: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 28px; line-height: 30px">89 TND, livré chez toi.</p>
+<x-import component-from-global-scope="ShiftCart.Button" variant="primary" size="xl" block="{{yes}}" icon-right="zap">Obtenir mon pack</x-import>
+<p style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--ink-muted)">
+<x-import component-from-global-scope="ShiftCart.Icon" name="shield" size="{{s16}}"></x-import>
+Paiement en espèces à la livraison
+</p>
+</section>
+
+<footer style="margin-top: auto; background: var(--ink); color: var(--ink-inverse); padding: 32px 16px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; gap: 12px">
+<span style="width: 48px; height: 48px; border-radius: 999px; background: var(--surface-raised); display: grid; place-items: center; flex: none"><img src="/_blob/831dc0b6bed920db21f3005f2fb97bd9" alt="" style="width: 34px; height: 34px"></span>
+<span style="font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: 0.1em">SHIFT CART</span>
+</div>
+<nav aria-label="Liens utiles" style="display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; font-weight: 600">
+<a href="Suivi.dc.html" style="color: var(--ink-inverse)">Suivre ma commande</a>
+<a href="#" style="color: var(--ink-inverse)">Livraison &amp; retours</a>
+<a href="#" style="color: var(--ink-inverse)">Nous contacter sur WhatsApp</a>
+</nav>
+<p style="margin: 0; font-size: 12px; line-height: 16px; opacity: 0.7">© 2026 SHIFT CART · Paiement à la livraison partout en Tunisie</p>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":3200}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, one: 1, five: 5, price: 89, daily: 6, logoH: 20, s14: 14, s16: 16, s22: 22 };
+  }
+}
+</script>
+</body>
+</html>

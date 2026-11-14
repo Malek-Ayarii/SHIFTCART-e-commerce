@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: shiftcart-postgres
+    environment:
+      POSTGRES_DB: shiftcart
+      POSTGRES_USER: shiftcart
+      POSTGRES_PASSWORD: shiftcart
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shiftcart -d shiftcart"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  pgdata:

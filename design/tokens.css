@@ -1,0 +1,95 @@
+/* SHIFT CART — generated from tokens.json */
+@font-face { font-family: "Syne"; src: url("fonts/Syne-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Syne"; src: url("fonts/Syne-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/PlusJakartaSans-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/PlusJakartaSans-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/PlusJakartaSans-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/PlusJakartaSans-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/PlusJakartaSans-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+:root, [data-theme="light"] {
+  --surface: #F8F9FA;
+  --surface-raised: #FFFFFF;
+  --surface-sunken: #EEF0F2;
+  --ink: #1A1A1A;
+  --ink-muted: #5C6066;
+  --ink-inverse: #FFFFFF;
+  --line: #E3E5E8;
+  --line-strong: #8A8F96;
+  --orange: #FF5A00;
+  --orange-hover: #FF6E1F;
+  --on-orange: #1A1A1A;
+  --orange-ink: #C24400;
+  --orange-soft: #FFE8DB;
+  --success: #1E7A46;
+  --success-soft: #E3F4EA;
+  --on-success: #FFFFFF;
+  --warning: #8A5A00;
+  --warning-soft: #FFF3D6;
+  --info: #1D5FD1;
+  --info-soft: #E3ECFC;
+  --danger: #C0262D;
+  --danger-soft: #FCE4E4;
+  --scrim: rgba(26, 26, 26, 0.56);
+  --focus-ring: #1A1A1A;
+  --shadow-card: 0 1px 2px rgba(26,26,26,0.06), 0 4px 12px rgba(26,26,26,0.06);
+  --shadow-lift: 0 12px 28px rgba(26,26,26,0.18);
+  --shadow-sheet: 0 -12px 40px rgba(26,26,26,0.22);
+  --shadow-phone: 0 24px 80px rgba(26,26,26,0.22);
+}
+[data-theme="dark"] {
+  --surface: #121212;
+  --surface-raised: #1E1E1E;
+  --surface-sunken: #0B0B0B;
+  --ink: #F5F5F5;
+  --ink-muted: #A3A3A3;
+  --ink-inverse: #1A1A1A;
+  --line: #2C2C2C;
+  --line-strong: #6B6B6B;
+  --orange: #FF5A00;
+  --orange-hover: #FF7424;
+  --on-orange: #1A1A1A;
+  --orange-ink: #FF8A4C;
+  --orange-soft: #3A1E0E;
+  --success: #4ADE80;
+  --success-soft: #12301F;
+  --on-success: #0B0B0B;
+  --warning: #FBBF24;
+  --warning-soft: #33270A;
+  --info: #7AA7FF;
+  --info-soft: #14223D;
+  --danger: #F87171;
+  --danger-soft: #3A1414;
+  --scrim: rgba(0, 0, 0, 0.72);
+  --focus-ring: #FF8A4C;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.5);
+  --shadow-lift: 0 12px 28px rgba(0,0,0,0.6);
+  --shadow-sheet: 0 -12px 40px rgba(0,0,0,0.7);
+  --shadow-phone: 0 24px 80px rgba(0,0,0,0.8);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-sheet: 28px;
+  --radius-pill: 999px;
+  --font-display: "Syne", "Arial Black", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+.display-xl { font-family: var(--font-display); font-size: 40px; line-height: 40px; font-weight: 800; letter-spacing: -0.02em; }
+.display-lg { font-family: var(--font-display); font-size: 28px; line-height: 30px; font-weight: 800; letter-spacing: -0.01em; }
+.price { font-family: var(--font-display); font-size: 36px; line-height: 36px; font-weight: 800; letter-spacing: -0.02em; }
+.kpi { font-family: var(--font-display); font-size: 32px; line-height: 36px; font-weight: 800; }
+.heading { font-family: var(--font-display); font-size: 20px; line-height: 24px; font-weight: 700; }
+.cta { font-family: var(--font-body); font-size: 18px; line-height: 24px; font-weight: 800; letter-spacing: 0.02em; }
+.title { font-family: var(--font-body); font-size: 17px; line-height: 24px; font-weight: 700; }
+.body { font-family: var(--font-body); font-size: 16px; line-height: 24px; font-weight: 400; }
+.body-sm { font-family: var(--font-body); font-size: 14px; line-height: 20px; font-weight: 500; }
+.label { font-family: var(--font-body); font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: 0.06em; }

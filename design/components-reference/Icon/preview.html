@@ -1,0 +1,12 @@
+<!-- @dsCard group="Marque" height=104 -->
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body>
+<div id="root"></div>
+<script>
+  var S = window.ShiftCart, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h('div', { className: 'sc-row', style: { gap: 18 } }, ['menu','cart','zap','coffee','thermo','gift','banknote','truck','whatsapp','clock','printer','refresh','pin','package','star','shield','check','x'].map(function (n) { return h(S.Icon, { key: n, name: n, size: 24 }); })));
+</script>
+</body>
+</html>

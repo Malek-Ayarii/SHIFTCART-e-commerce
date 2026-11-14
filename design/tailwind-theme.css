@@ -1,0 +1,61 @@
+/* SHIFT CART — thème Tailwind CSS v4 (généré depuis tokens.json : régénérer plutôt qu'éditer).
+   Ordre d'import dans le CSS global de chaque app :
+     @import "tailwindcss";
+     @import "<chemin>/design/tokens.css";          variables, @font-face, thème sombre [data-theme="dark"]
+     @import "<chemin>/design/tailwind-theme.css";  utilitaires : bg-surface, text-ink, bg-orange, text-on-orange,
+                                                    rounded-md, shadow-card, font-display, text-display-xl…
+   Les couleurs et ombres passent par les variables de tokens.css : le thème sombre suit automatiquement. */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-orange: var(--orange);
+  --color-orange-hover: var(--orange-hover);
+  --color-on-orange: var(--on-orange);
+  --color-orange-ink: var(--orange-ink);
+  --color-orange-soft: var(--orange-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-on-success: var(--on-success);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-scrim: var(--scrim);
+  --color-focus-ring: var(--focus-ring);
+}
+
+@theme {
+  --font-display: "Syne", "Arial Black", system-ui, sans-serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-sheet: 28px;
+  --radius-pill: 999px;
+}
+
+/* Ombres (varient selon le thème) */
+@utility shadow-card { box-shadow: var(--shadow-card); }
+@utility shadow-lift { box-shadow: var(--shadow-lift); }
+@utility shadow-sheet { box-shadow: var(--shadow-sheet); }
+@utility shadow-phone { box-shadow: var(--shadow-phone); }
+
+/* Styles typographiques : class="text-display-xl", "text-price", "text-cta", "text-label"… */
+@utility text-display-xl { font-family: var(--font-display); font-size: 40px; line-height: 40px; font-weight: 800; letter-spacing: -0.02em; }
+@utility text-display-lg { font-family: var(--font-display); font-size: 28px; line-height: 30px; font-weight: 800; letter-spacing: -0.01em; }
+@utility text-price { font-family: var(--font-display); font-size: 36px; line-height: 36px; font-weight: 800; letter-spacing: -0.02em; }
+@utility text-kpi { font-family: var(--font-display); font-size: 32px; line-height: 36px; font-weight: 800; }
+@utility text-heading { font-family: var(--font-display); font-size: 20px; line-height: 24px; font-weight: 700; }
+@utility text-cta { font-family: var(--font-body); font-size: 18px; line-height: 24px; font-weight: 800; letter-spacing: 0.02em; }
+@utility text-title { font-family: var(--font-body); font-size: 17px; line-height: 24px; font-weight: 700; }
+@utility text-body { font-family: var(--font-body); font-size: 16px; line-height: 24px; font-weight: 400; }
+@utility text-body-sm { font-family: var(--font-body); font-size: 14px; line-height: 20px; font-weight: 500; }
+@utility text-label { font-family: var(--font-body); font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: 0.06em; }

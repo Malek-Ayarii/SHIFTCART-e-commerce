@@ -1,0 +1,13 @@
+<!-- @dsCard group="Client · Checkout" height=120 width=440 -->
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body>
+<div id="root"></div>
+<script>
+  var S = window.ShiftCart, h = React.createElement;
+  function Demo() { var s = React.useState('Sousse'); return h('div', { className: 'sc-col' }, h(S.GovernorateSelect, { value: s[0], onChange: s[1] })); }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
+</script>
+</body>
+</html>

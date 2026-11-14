@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Back-office — stock et marges</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components-reference/bundle.css">
+<script src="../components-reference/bundle.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#1A1A1A}a:hover{color:#C24400}
+</style>
+</helmet>
+<div style="min-height: 1000px; display: flex; flex-wrap: wrap; background: var(--surface); color: var(--ink); font-family: var(--font-body)">
+<aside style="flex: 1 1 240px; max-width: 100%; background: var(--surface-raised); border-right: 1px solid var(--line); padding: 20px 16px; display: flex; flex-direction: column; gap: 24px">
+<a href="AdminDashboard.dc.html" aria-label="SHIFT CART, tableau de bord" style="display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 0 8px">
+<img src="/_blob/831dc0b6bed920db21f3005f2fb97bd9" alt="" style="width: 36px; height: 36px">
+<img src="/_blob/90f38a8a5b493e756b98d65dfc426c91" alt="SHIFT CART" style="height: 16px; width: auto">
+</a>
+<nav aria-label="Back-office" style="display: flex; flex-direction: column; gap: 4px; font-size: 15px; font-weight: 700">
+<a href="AdminDashboard.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="ShiftCart.Icon" name="package" size="{{s20}}"></x-import>Commandes</a>
+<a href="AdminCommande.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="ShiftCart.Icon" name="whatsapp" size="{{s20}}"></x-import>Messages IA</a>
+<a href="AdminFinances.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="ShiftCart.Icon" name="banknote" size="{{s20}}"></x-import>Finances</a>
+<a href="AdminStock.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none; background: var(--ink); color: var(--ink-inverse)"><x-import component-from-global-scope="ShiftCart.Icon" name="coffee" size="{{s20}}"></x-import>Stock &amp; marges</a>
+</nav>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 0 8px">
+<span style="width: 32px; height: 32px; border-radius: 999px; background: var(--ink); color: var(--ink-inverse); display: grid; place-items: center; font-size: 12px; font-weight: 800">AD</span>
+<div style="display: flex; flex-direction: column"><span style="font-size: 14px; font-weight: 700">Admin</span><span style="font-size: 12px; color: var(--ink-muted)">Agent commercial</span></div>
+</div>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 28px 32px; display: flex; flex-direction: column; gap: 24px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div style="display: flex; flex-direction: column">
+<h1 style="margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 32px; line-height: 36px">Stock &amp; marges</h1>
+<span style="font-size: 14px; color: var(--ink-muted); font-weight: 600">Pack Barista · coût de revient (COGS) et seuils d'alerte</span>
+</div>
+<span style="margin-left: auto; display: inline-flex; align-items: center; height: 28px; padding: 0 10px; border-radius: 8px; background: var(--warning-soft); color: var(--warning); font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase">Données de démo</span>
+</div>
+
+<div role="alert" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 20px; border-radius: 20px; background: var(--warning-soft); color: var(--ink)">
+<span style="width: 44px; height: 44px; border-radius: 999px; background: var(--warning); color: var(--surface-raised); display: grid; place-items: center; flex: none"><x-import component-from-global-scope="ShiftCart.Icon" name="alert" size="{{s22}}"></x-import></span>
+<div style="flex: 1 1 320px; display: flex; flex-direction: column">
+<strong style="font-size: 17px; line-height: 24px">Plus que 4 packs complets en stock (seuil : 5)</strong>
+<span style="font-size: 14px; line-height: 20px; color: var(--ink-muted); font-weight: 600">Tu peux en assembler 9 de plus avec les pièces en stock : les thermos limitent.</span>
+</div>
+<x-import component-from-global-scope="ShiftCart.Button" variant="dark" size="md" icon="whatsapp">Alerter l'agent</x-import>
+<x-import component-from-global-scope="ShiftCart.Button" variant="primary" size="md" icon="package">Assembler 9 packs</x-import>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+<section aria-labelledby="parts-title" style="flex: 999 1 520px; min-width: 0; background: var(--surface-raised); border-radius: 20px; box-shadow: var(--shadow-card); padding: 24px; display: flex; flex-direction: column; gap: 16px">
+<h2 id="parts-title" style="margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">Pièces du pack</h2>
+<div style="overflow-x: auto">
+<table style="width: 100%; min-width: 560px; border-collapse: collapse; font-size: 15px">
+<thead>
+<tr style="text-align: left; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-muted)">
+<th scope="col" style="padding: 10px 12px; border-bottom: 1.5px solid var(--line-strong)">Pièce</th>
+<th scope="col" style="padding: 10px 12px; border-bottom: 1.5px solid var(--line-strong); text-align: right">Coût unitaire</th>
+<th scope="col" style="padding: 10px 12px; border-bottom: 1.5px solid var(--line-strong); text-align: right">En stock</th>
+<th scope="col" style="padding: 10px 12px; border-bottom: 1.5px solid var(--line-strong); text-align: right">Seuil</th>
+<th scope="col" style="padding: 10px 12px; border-bottom: 1.5px solid var(--line-strong)">État</th>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{parts}}" as="p" hint-placeholder-count="5">
+<tr>
+<th scope="row" style="padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: left; font-weight: 700">{{p.name}}</th>
+<td style="padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: right">{{p.cost}}</td>
+<td style="padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: right; font-weight: 800">{{p.stock}}</td>
+<td style="padding: 14px 12px; border-bottom: 1px solid var(--line); text-align: right; color: var(--ink-muted)">{{p.min}}</td>
+<td style="padding: 14px 12px; border-bottom: 1px solid var(--line)">
+<sc-if value="{{p.low}}" hint-placeholder-val="{{p.low}}"><span class="sc-badge sc-badge--pending">À réassortir</span></sc-if>
+<sc-if value="{{p.ok}}" hint-placeholder-val="{{p.ok}}"><span class="sc-badge sc-badge--confirmed">OK</span></sc-if>
+</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section aria-labelledby="margin-title" style="flex: 1 1 320px; min-width: 0; background: var(--ink); color: var(--ink-inverse); border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 12px">
+<h2 id="margin-title" style="margin: 0; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">Marge par pack</h2>
+<div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 600"><span style="opacity: 0.8">Prix de vente</span><strong>89 TND</strong></div>
+<div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 600"><span style="opacity: 0.8">− Pièces (COGS)</span><strong>53 TND</strong></div>
+<div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.2)"><span style="opacity: 0.8">− Livraison offerte (transporteur)</span><strong>7 TND</strong></div>
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 700">Marge brute</span><strong style="font-family: var(--font-display); font-size: 32px; color: var(--orange)">29 TND</strong></div>
+<div style="height: 10px; border-radius: 999px; background: rgba(255,255,255,0.16); overflow: hidden"><div style="width: 33%; height: 100%; background: var(--orange)"></div></div>
+<span style="font-size: 13px; font-weight: 700; opacity: 0.8">33 % du prix · avant pub Meta et retours</span>
+</section>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var rows = [['Packs complets (assemblés)', '53 TND', 4, 5], ['Cafetière Moka 6 tasses', '24 TND', 12, 10], ['Thermos intelligent LED', '21 TND', 9, 10], ['Café tunisien moulu 250 g', '6 TND', 30, 15], ['Emballage & carte', '2 TND', 40, 20]];
+    var parts = rows.map(function (r) { var low = r[2] < r[3]; return { name: r[0], cost: r[1], stock: r[2], min: r[3], low: low, ok: !low }; });
+    return { s20: 20, s22: 22, parts: parts };
+  }
+}
+</script>
+</body>
+</html>

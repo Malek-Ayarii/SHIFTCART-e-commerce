@@ -1,0 +1,12 @@
+<!-- @dsCard group="Admin" height=170 -->
+<!doctype html>
+<html lang="fr">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body>
+<div id="root"></div>
+<script>
+  var S = window.ShiftCart, h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('root')).render(h('div', { className: 'sc-row', style: { alignItems: 'stretch' } }, h('div', { style: { width: 260 } }, h(S.KpiCard, { label: 'Commandes', value: '142', icon: 'package', delta: '+18 %', trend: 'up', accent: true })), h('div', { style: { width: 260 } }, h(S.KpiCard, { label: 'Taux de retour', value: '8 %', icon: 'undo', delta: '−2 pts', trend: 'down', good: true }))));
+</script>
+</body>
+</html>
