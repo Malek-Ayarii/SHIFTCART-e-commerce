@@ -1,0 +1,163 @@
+<div class="md:flex md:min-h-dvh">
+  <!-- Barre latérale (≥ 768px) -->
+  <aside
+    class="hidden md:flex md:sticky md:top-0 md:h-dvh w-60 shrink-0 flex-col gap-6 py-5 px-4 bg-surface-raised border-r border-line overflow-y-auto"
+  >
+    <a
+      routerLink="/"
+      aria-label="SHIFT CART, tableau de bord"
+      class="flex items-center gap-2.5 px-2 no-underline rounded-md dark:bg-ink dark:py-1.5 dark:rounded-pill"
+    >
+      <img [src]="markSrc" alt="" class="size-9" />
+      <sc-wordmark [src]="wordmarkSrc" [height]="16" />
+    </a>
+
+    <nav aria-label="Back-office" class="flex flex-col gap-1 text-base font-bold">
+      @for (item of nav; track item.path) {
+        <a
+          [routerLink]="item.path"
+          [attr.aria-current]="isActive(item) ? 'page' : null"
+          class="flex items-center gap-3 h-11 px-3 rounded-md no-underline transition-colors duration-120"
+          [class]="isActive(item) ? 'bg-ink text-ink-inverse' : 'text-ink hover:bg-surface-sunken'"
+        >
+          <sc-icon [name]="item.icon" [size]="20" />{{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <div class="mt-auto flex flex-col gap-4">
+      @if (stockAlert(); as s) {
+        <div
+          class="p-3.5 rounded-md bg-warning-soft text-warning flex gap-2.5 items-start text-label tracking-normal leading-4.5"
+          role="status"
+        >
+          <sc-icon name="alert" [size]="18" />
+          <span
+            >Stock bas : plus que {{ s.completePacks }} packs complets.
+            <a routerLink="/stock" class="text-warning underline">Voir le stock</a></span
+          >
+        </div>
+      }
+
+      <button
+        type="button"
+        class="flex items-center gap-3 h-11 px-3 rounded-md bg-transparent border-0 cursor-pointer text-ink text-sm font-bold hover:bg-surface-sunken"
+        [attr.aria-pressed]="theme.theme() === 'dark'"
+        (click)="theme.toggle()"
+      >
+        <sc-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" [size]="18" />
+        {{ theme.theme() === 'dark' ? 'Thème clair' : 'Thème sombre' }}
+      </button>
+
+      <div class="flex items-center gap-2.5 px-2">
+        <span
+          class="size-8 rounded-pill bg-ink text-ink-inverse grid place-items-center text-xs font-extrabold shrink-0"
+          aria-hidden="true"
+          >{{ userInitials() }}</span
+        >
+        <div class="flex flex-col min-w-0">
+          <span class="text-sm font-bold truncate">{{ userName() }}</span>
+          <span class="text-xs text-ink-muted">{{ roleLabel() }}</span>
+        </div>
+        <button
+          type="button"
+          class="ml-auto size-11 grid place-items-center rounded-md bg-transparent border-0 cursor-pointer text-ink-muted hover:text-ink hover:bg-surface-sunken"
+          aria-label="Se déconnecter"
+          title="Se déconnecter"
+          (click)="logout()"
+        >
+          <sc-icon name="logout" [size]="18" />
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Barre du haut (< 768px) -->
+  <header
+    class="md:hidden sticky top-0 z-30 h-16 px-4 flex items-center gap-3 bg-surface-raised border-b border-line"
+  >
+    <a routerLink="/" aria-label="SHIFT CART, commandes" class="shrink-0 rounded-pill dark:bg-ink dark:p-1">
+      <img [src]="markSrc" alt="SHIFT CART" class="size-9" />
+    </a>
+    <div class="flex flex-col min-w-0">
+      <span class="text-heading font-extrabold truncate">{{ mobileTitle() }}</span>
+      @if (state.mobileSubtitle()) {
+        <span class="text-xs leading-4 font-semibold text-ink-muted truncate">{{
+          state.mobileSubtitle()
+        }}</span>
+      }
+    </div>
+    <div class="ml-auto relative">
+      <button
+        type="button"
+        class="size-11 grid place-items-center rounded-pill bg-transparent border-0 cursor-pointer"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="account-menu"
+        aria-label="Compte et réglages"
+        (click)="toggleMenu()"
+      >
+        <span
+          class="size-8 rounded-pill bg-ink text-ink-inverse grid place-items-center text-xs font-extrabold"
+          >{{ userInitials() }}</span
+        >
+      </button>
+      @if (menuOpen()) {
+        <div
+          id="account-menu"
+          class="absolute right-0 top-12 w-60 p-2 rounded-md bg-surface-raised shadow-lift flex flex-col gap-1"
+        >
+          <div class="px-3 py-2">
+            <p class="m-0 text-sm font-bold">{{ userName() }}</p>
+            <p class="m-0 text-xs text-ink-muted">{{ roleLabel() }}</p>
+          </div>
+          @if (stockAlert(); as s) {
+            <a
+              routerLink="/stock"
+              class="flex items-center gap-2 px-3 py-2.5 rounded-sm bg-warning-soft text-warning text-sm font-bold no-underline"
+            >
+              <sc-icon name="alert" [size]="16" />Stock bas : {{ s.completePacks }} packs
+            </a>
+          }
+          <button
+            type="button"
+            class="flex items-center gap-3 h-11 px-3 rounded-sm bg-transparent border-0 cursor-pointer text-ink text-sm font-bold hover:bg-surface-sunken"
+            (click)="theme.toggle()"
+          >
+            <sc-icon [name]="theme.theme() === 'dark' ? 'sun' : 'moon'" [size]="18" />
+            {{ theme.theme() === 'dark' ? 'Thème clair' : 'Thème sombre' }}
+          </button>
+          <button
+            type="button"
+            class="flex items-center gap-3 h-11 px-3 rounded-sm bg-transparent border-0 cursor-pointer text-ink text-sm font-bold hover:bg-surface-sunken"
+            (click)="logout()"
+          >
+            <sc-icon name="logout" [size]="18" />Se déconnecter
+          </button>
+        </div>
+      }
+    </div>
+  </header>
+
+  <main class="flex-1 min-w-0 px-4 pt-4 pb-28 md:px-8 md:py-7">
+    <router-outlet />
+  </main>
+
+  <!-- Barre d'onglets (< 768px) -->
+  <nav
+    aria-label="Navigation équipe"
+    class="md:hidden fixed inset-x-0 bottom-0 z-30 h-18 grid grid-cols-4 bg-surface-raised border-t border-line"
+  >
+    @for (item of nav; track item.path) {
+      <a
+        [routerLink]="item.path"
+        [attr.aria-current]="isActive(item) ? 'page' : null"
+        class="flex flex-col items-center justify-center gap-1 no-underline text-xs"
+        [class]="isActive(item) ? 'text-orange-ink font-extrabold' : 'text-ink-muted font-bold'"
+      >
+        <sc-icon [name]="item.icon" [size]="22" />{{ item.short }}
+      </a>
+    }
+  </nav>
+</div>
+
+<sc-toast-outlet />

@@ -1,0 +1,130 @@
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { LogoHeader, PageColumn } from "@/components/layout/PageColumn";
+import { Button } from "@/components/ui/Button";
+import { Icon } from "@/components/ui/Icon";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { decodeOrderCookie, ORDER_COOKIE } from "@/lib/order-cookie";
+import { PRODUCT } from "@/lib/product";
+import { parseRef } from "@/lib/types";
+import { confirmOrderUrl, isSafeWhatsAppUrl } from "@/lib/whatsapp";
+
+export const metadata: Metadata = {
+  title: "Commande reçue",
+  robots: { index: false, follow: false },
+};
+
+/** A6 — Commande confirmée (Confirmation.dc.html). */
+export default function MerciPage({ params }: PageProps<"/merci/[ref]">) {
+  return (
+    <PageColumn>
+      <LogoHeader />
+      <Suspense fallback={<ConfirmationSkeleton />}>
+        <Confirmation params={params} />
+      </Suspense>
+    </PageColumn>
+  );
+}
+
+async function Confirmation({ params }: { params: Promise<{ ref: string }> }) {
+  const { ref: rawRef } = await params;
+  const ref = parseRef(rawRef);
+  if (!ref) notFound();
+
+  const jar = await cookies();
+  const saved = decodeOrderCookie(jar.get(ORDER_COOKIE)?.value);
+  const order = saved && saved.ref === ref ? saved : null;
+
+  const amount = order?.amountTnd ?? PRODUCT.priceTnd;
+  const productName = order?.productName ?? PRODUCT.name;
+  const whatsappUrl = order?.whatsappConfirmUrl && isSafeWhatsAppUrl(order.whatsappConfirmUrl) ? order.whatsappConfirmUrl : confirmOrderUrl(ref);
+  const trackingHref = order ? `/suivi/${encodeURIComponent(ref)}?t=${encodeURIComponent(order.trackingToken)}` : "/suivi";
+
+  const steps = [
+    "Réponds OUI sur WhatsApp pour confirmer.",
+    order?.governorate ? `Livraison à ${order.governorate} sous 24 à 48 h.` : "Livraison sous 24 à 48 h.",
+    `Tu paies ${amount} TND en espèces au livreur.`,
+  ];
+
+  return (
+    <main className="flex flex-1 flex-col">
+      <section className="flex flex-col items-center gap-3 px-5 pt-8 pb-5 text-center">
+        <span className="grid size-20 place-items-center rounded-pill bg-success-soft text-success">
+          <Icon name="check" size={40} strokeWidth={3} />
+        </span>
+        <StatusBadge status="new" />
+        <h1 className="m-0 text-display-lg">Commande #{ref} reçue&nbsp;🚀</h1>
+        {order && order.phoneDisplay ? (
+          <p className="m-0 text-body text-ink-muted">
+            Merci{order.customerFirstName ? ` ${order.customerFirstName}` : ""} ! On t&apos;envoie un message WhatsApp au{" "}
+            <strong className="text-ink">{order.phoneDisplay}</strong>.
+          </p>
+        ) : (
+          <p className="m-0 text-body text-ink-muted">Merci ! On t&apos;envoie un message WhatsApp pour confirmer ta commande.</p>
+        )}
+      </section>
+
+      <ol className="m-0 flex list-none flex-col gap-2 px-5">
+        {steps.map((text, i) => (
+          <li
+            key={text}
+            className={`flex items-center gap-3 rounded-md p-3 text-sm leading-5 ${i === 0 ? "bg-orange-soft font-bold" : "bg-surface-sunken font-semibold"}`}
+          >
+            <span
+              className={`grid size-7 flex-none place-items-center rounded-pill text-meta font-extrabold ${
+                i === 0 ? "bg-orange text-on-orange" : "bg-ink text-ink-inverse"
+              }`}
+            >
+              {i + 1}
+            </span>
+            {text}
+          </li>
+        ))}
+      </ol>
+
+      <dl className="mx-5 mt-5 mb-0 flex flex-col gap-2 rounded-md bg-surface-raised p-4 text-sm leading-5 ring-inset-line">
+        <div className="flex justify-between">
+          <dt className="font-semibold text-ink-muted">Pack</dt>
+          <dd className="m-0 font-bold">{productName}</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="font-semibold text-ink-muted">Livraison</dt>
+          <dd className="m-0 font-bold text-success">Gratuite</dd>
+        </div>
+        <div className="flex justify-between border-t border-line pt-2">
+          <dt className="font-bold">À payer à la livraison</dt>
+          <dd className="m-0 font-display text-lg font-extrabold">{amount} TND</dd>
+        </div>
+      </dl>
+
+      <div className="mt-auto flex flex-col gap-3 p-5">
+        {whatsappUrl ? (
+          <Button variant="whatsapp" size="xl" block icon="whatsapp" href={whatsappUrl} target="_blank">
+            Ouvrir WhatsApp
+          </Button>
+        ) : (
+          <p className="m-0 rounded-md bg-warning-soft p-3 text-sm leading-5 font-semibold text-warning" role="note">
+            Numéro WhatsApp de la boutique : [À DÉFINIR] (NEXT_PUBLIC_WHATSAPP_NUMBER)
+          </p>
+        )}
+        <Button variant="ghost" size="md" block href={trackingHref}>
+          Suivre ma commande
+        </Button>
+      </div>
+    </main>
+  );
+}
+
+function ConfirmationSkeleton() {
+  return (
+    <div className="flex flex-1 flex-col items-center gap-3 px-5 pt-8" aria-busy="true" aria-label="Chargement">
+      <span className="size-20 animate-pulse rounded-pill bg-surface-sunken" />
+      <span className="h-6 w-24 animate-pulse rounded-sm bg-surface-sunken" />
+      <span className="h-8 w-4/5 animate-pulse rounded-sm bg-surface-sunken" />
+      <span className="h-12 w-full animate-pulse rounded-md bg-surface-sunken" />
+      <span className="mt-2 h-38 w-full animate-pulse rounded-md bg-surface-sunken" />
+    </div>
+  );
+}

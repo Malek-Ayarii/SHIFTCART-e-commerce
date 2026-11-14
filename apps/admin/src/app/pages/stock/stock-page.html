@@ -1,0 +1,238 @@
+<div class="flex flex-col gap-6">
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-col">
+      <h1 class="m-0 text-kpi">Stock &amp; marges</h1>
+      <span class="text-sm text-ink-muted font-semibold"
+        >Pack Barista · coût de revient (COGS) et seuils d'alerte</span
+      >
+    </div>
+    @if (demo) {
+      <div class="ml-auto"><sc-demo-badge /></div>
+    }
+  </div>
+
+  @if (error(); as err) {
+    <sc-error-state [message]="err" (retry)="load()" />
+  } @else if (loading() && !stock()) {
+    <div class="flex flex-col gap-6" aria-busy="true">
+      <span class="sc-sr">Chargement du stock…</span>
+      <div class="sc-skeleton h-22 rounded-lg" aria-hidden="true"></div>
+      <div class="flex flex-wrap gap-6">
+        <div class="flex-[999_1_32rem] sc-skeleton h-96 rounded-lg" aria-hidden="true"></div>
+        <div class="flex-[1_1_20rem] sc-skeleton h-80 rounded-lg" aria-hidden="true"></div>
+      </div>
+    </div>
+  } @else if (stock(); as s) {
+    @if (s.alert) {
+      <div role="alert" class="flex flex-wrap items-center gap-4 py-4.5 px-5 rounded-lg bg-warning-soft text-ink">
+        <span class="size-11 rounded-pill bg-warning text-surface-raised grid place-items-center shrink-0">
+          <sc-icon name="alert" [size]="22" />
+        </span>
+        <div class="flex-[1_1_20rem] flex flex-col">
+          <strong class="text-title">Plus que {{ s.completePacks }} packs complets en stock (seuil : {{ s.packThreshold }})</strong>
+          <span class="text-body-sm text-ink-muted font-semibold">
+            Tu peux en assembler {{ s.assemblablePacks }} de plus avec les pièces en stock{{
+              limiting() ? ' : la pièce « ' + limiting()!.name + ' » limite.' : '.'
+            }}
+          </span>
+        </div>
+        @if (alertWhatsappUrl(); as url) {
+          <a scButton variant="dark" icon="whatsapp" [href]="url" target="_blank" rel="noopener noreferrer">
+            Alerter l'agent
+          </a>
+        } @else {
+          <button scButton type="button" variant="dark" icon="whatsapp" (click)="alertAgentMissing()">
+            Alerter l'agent
+          </button>
+        }
+        <button
+          scButton
+          type="button"
+          variant="primary"
+          icon="package"
+          [disabled]="s.assemblablePacks <= 0 || assembling()"
+          (click)="assemble()"
+        >
+          {{ assembling() ? 'Assemblage…' : 'Assembler ' + s.assemblablePacks + ' packs' }}
+        </button>
+      </div>
+    } @else {
+      <div class="flex flex-wrap items-center gap-4 py-4.5 px-5 rounded-lg bg-success-soft text-ink" role="status">
+        <span class="size-11 rounded-pill bg-success text-on-success grid place-items-center shrink-0">
+          <sc-icon name="check" [size]="22" />
+        </span>
+        <div class="flex-[1_1_20rem] flex flex-col">
+          <strong class="text-title">{{ s.completePacks }} packs complets en stock (seuil : {{ s.packThreshold }})</strong>
+          <span class="text-body-sm text-ink-muted font-semibold">
+            Tu peux en assembler {{ s.assemblablePacks }} de plus avec les pièces en stock.
+          </span>
+        </div>
+        <button
+          scButton
+          type="button"
+          variant="primary"
+          icon="package"
+          [disabled]="s.assemblablePacks <= 0 || assembling()"
+          (click)="assemble()"
+        >
+          {{ assembling() ? 'Assemblage…' : 'Assembler ' + s.assemblablePacks + ' packs' }}
+        </button>
+      </div>
+    }
+
+    <div class="flex flex-wrap gap-6 items-start">
+      <section
+        aria-labelledby="parts-title"
+        class="flex-[999_1_32rem] min-w-0 bg-surface-raised rounded-lg shadow-card p-6 flex flex-col gap-4"
+      >
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h2 id="parts-title" class="m-0 text-heading">Pièces du pack</h2>
+          <span class="text-sm text-ink-muted font-semibold">Clique sur un chiffre pour le modifier.</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-140 border-collapse text-base">
+            <thead>
+              <tr class="text-left text-xs tracking-[0.06em] uppercase text-ink-muted">
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong">Pièce</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong text-right">Coût unitaire</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong text-right">En stock</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong text-right">Seuil</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong">État</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row" class="py-3.5 px-3 border-b border-line text-left font-bold">Packs complets (assemblés)</th>
+                <td class="py-3.5 px-3 border-b border-line text-right">{{ tnd(s.cogsTnd) }}</td>
+                <td class="py-3.5 px-3 border-b border-line text-right font-extrabold">{{ num(s.completePacks) }}</td>
+                <td class="py-3.5 px-3 border-b border-line text-right text-ink-muted">{{ num(s.packThreshold) }}</td>
+                <td class="py-3.5 px-3 border-b border-line">
+                  @if (s.completePacks < s.packThreshold) {
+                    <span class="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-warning-soft text-warning text-xs font-extrabold tracking-[0.04em] uppercase whitespace-nowrap"
+                      ><sc-icon name="alert" [size]="12" [strokeWidth]="2.5" />À réassortir</span
+                    >
+                  } @else {
+                    <span class="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-success-soft text-success text-xs font-extrabold tracking-[0.04em] uppercase"
+                      ><sc-icon name="check" [size]="12" [strokeWidth]="2.5" />OK</span
+                    >
+                  }
+                </td>
+              </tr>
+              @for (it of s.items; track it.id) {
+                <tr>
+                  <th scope="row" class="py-3.5 px-3 border-b border-line text-left font-bold">
+                    {{ it.name }}
+                    @if (it.perPack > 1) {
+                      <span class="text-xs text-ink-muted font-semibold"> × {{ it.perPack }} par pack</span>
+                    }
+                  </th>
+                  <td class="py-2 px-3 border-b border-line text-right">
+                    <label class="inline-flex items-center gap-1 justify-end">
+                      <span class="sc-sr">Coût unitaire de {{ it.name }} (TND)</span>
+                      <input
+                        #cost
+                        type="text"
+                        inputmode="decimal"
+                        class="w-20 h-11 px-2 rounded-sm border border-transparent hover:border-line-strong focus:border-ink bg-transparent text-right text-base text-ink"
+                        [class.opacity-60]="saving() === it.id + ':unitCostTnd'"
+                        [value]="it.unitCostTnd"
+                        (change)="save(it, 'unitCostTnd', cost)"
+                        (keydown.enter)="cost.blur()"
+                      />
+                      <span class="text-sm text-ink-muted">TND</span>
+                    </label>
+                    @if (it.unitCostTnd === 0) {
+                      <span class="block text-xs font-bold text-warning">[À DÉFINIR]</span>
+                    }
+                  </td>
+                  <td class="py-2 px-3 border-b border-line text-right">
+                    <label>
+                      <span class="sc-sr">Quantité en stock de {{ it.name }}</span>
+                      <input
+                        #qty
+                        type="text"
+                        inputmode="numeric"
+                        class="w-18 h-11 px-2 rounded-sm border border-transparent hover:border-line-strong focus:border-ink bg-transparent text-right text-base font-extrabold text-ink"
+                        [class.opacity-60]="saving() === it.id + ':quantity'"
+                        [value]="it.quantity"
+                        (change)="save(it, 'quantity', qty)"
+                        (keydown.enter)="qty.blur()"
+                      />
+                    </label>
+                  </td>
+                  <td class="py-2 px-3 border-b border-line text-right">
+                    <label>
+                      <span class="sc-sr">Seuil d'alerte de {{ it.name }}</span>
+                      <input
+                        #thr
+                        type="text"
+                        inputmode="numeric"
+                        class="w-18 h-11 px-2 rounded-sm border border-transparent hover:border-line-strong focus:border-ink bg-transparent text-right text-base text-ink-muted"
+                        [class.opacity-60]="saving() === it.id + ':threshold'"
+                        [value]="it.threshold"
+                        (change)="save(it, 'threshold', thr)"
+                        (keydown.enter)="thr.blur()"
+                      />
+                    </label>
+                  </td>
+                  <td class="py-3.5 px-3 border-b border-line">
+                    @if (it.status === 'LOW') {
+                      <span class="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-warning-soft text-warning text-xs font-extrabold tracking-[0.04em] uppercase whitespace-nowrap"
+                        ><sc-icon name="alert" [size]="12" [strokeWidth]="2.5" />À réassortir</span
+                      >
+                    } @else {
+                      <span class="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-success-soft text-success text-xs font-extrabold tracking-[0.04em] uppercase"
+                        ><sc-icon name="check" [size]="12" [strokeWidth]="2.5" />OK</span
+                      >
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="py-6 text-center text-body-sm text-ink-muted">
+                    Aucune pièce enregistrée pour ce pack.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      @if (margin(); as m) {
+        <section
+          aria-labelledby="margin-title"
+          class="flex-[1_1_20rem] min-w-0 bg-ink text-ink-inverse rounded-lg p-6 flex flex-col gap-3"
+        >
+          <h2 id="margin-title" class="m-0 text-heading">Marge par pack</h2>
+          <div class="flex justify-between gap-4 text-base font-semibold">
+            <span class="opacity-80">Prix de vente</span><strong>{{ m.price }}</strong>
+          </div>
+          <div class="flex justify-between gap-4 text-base font-semibold">
+            <span class="opacity-80">− Pièces (COGS)</span>
+            <strong>{{ m.cogs }}{{ m.costsUndefined ? ' [À DÉFINIR]' : '' }}</strong>
+          </div>
+          <div class="flex justify-between gap-4 text-base font-semibold pb-3 border-b border-ink-inverse/20">
+            <span class="opacity-80">− Livraison offerte (transporteur)</span>
+            <strong>{{ m.carrier }}{{ m.carrierUndefined ? ' [À DÉFINIR]' : '' }}</strong>
+          </div>
+          <div class="flex justify-between gap-4 items-baseline">
+            <span class="font-bold">Marge brute</span>
+            <strong class="font-display text-kpi text-orange">{{ m.margin }}</strong>
+          </div>
+          <div
+            class="h-2.5 rounded-pill bg-ink-inverse/16 overflow-hidden"
+            role="meter"
+            aria-label="Marge brute en pourcentage du prix"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="m.gauge"
+          >
+            <div class="h-full bg-orange" [style.width.%]="m.gauge"></div>
+          </div>
+          <span class="text-label tracking-normal opacity-80">{{ m.pct }} du prix · avant pub Meta et retours</span>
+        </section>
+      }
+    </div>
+  }
+</div>

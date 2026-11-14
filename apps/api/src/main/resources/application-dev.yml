@@ -1,0 +1,20 @@
+# Profil de développement local : SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
+# Ajoute les données de démo (classpath:db/dev) — JAMAIS en production.
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/dev
+
+shiftcart:
+  tracking:
+    secret: ${TRACKING_TOKEN_SECRET:dev-only-tracking-secret-change-me-0123456789}
+  auth:
+    jwt-secret: ${JWT_SECRET:dev-only-jwt-secret-change-me-0123456789abcdef}
+    admin-password: ${ADMIN_PASSWORD:shiftcart-dev}
+    cookie-secure: ${COOKIE_SECURE:false}
+  whatsapp:
+    verify-token: ${WHATSAPP_VERIFY_TOKEN:dev-verify-token}
+    app-secret: ${WHATSAPP_APP_SECRET:dev-app-secret}
+
+logging:
+  level:
+    com.shiftcart: DEBUG

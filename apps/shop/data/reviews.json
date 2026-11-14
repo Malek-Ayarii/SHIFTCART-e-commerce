@@ -1,0 +1,9 @@
+{
+  "_comment": "PLACEHOLDER — textes des maquettes, PAS de vrais avis. À remplacer par de vrais avis clients (prénom + gouvernorat, avec leur accord) avant la mise en ligne. 'verified' = true uniquement si l'avis est rattaché à une commande livrée. Tant que 'placeholder' vaut true, la section Avis n'est pas affichée en production.",
+  "placeholder": true,
+  "reviews": [
+    { "name": "Yasmine", "city": "Sousse", "text": "Livré en 24h à Sousse, top !", "rating": 5, "verified": false },
+    { "name": "Aziz", "city": "Tunis", "text": "Fini le café froid en TD.", "rating": 5, "verified": false },
+    { "name": "Ines", "city": "Sfax", "text": "[AVIS CLIENT RÉEL À INSÉRER]", "rating": 5, "verified": false }
+  ]
+}

@@ -1,0 +1,19 @@
+shiftcart:
+  tracking:
+    secret: test-tracking-secret-0123456789abcdef0123
+  auth:
+    jwt-secret: test-jwt-secret-0123456789abcdef0123456789
+    cookie-secure: false
+    admin-email: admin@test.tn
+    admin-password: test-password
+  whatsapp:
+    verify-token: test-verify-token
+    app-secret: test-app-secret
+    shop-number: "21612345678"
+  llm:
+    api-key: ""
+logging:
+  level:
+    root: WARN
+    com.shiftcart: INFO
+    org.springframework.boot.test: WARN

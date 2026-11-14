@@ -1,0 +1,95 @@
+server:
+  port: ${PORT:8090}
+  # native = Tomcat RemoteIpValve : X-Forwarded-For n'est cru que s'il vient d'un proxy interne
+  # (127.x, 10.x, 192.168.x, 172.16-31.x, ::1… : la boutique Next.js sur le même hôte/réseau).
+  # Un client public ne peut donc pas falsifier son IP. Autres proxies : SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES.
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:native}
+  error:
+    include-message: never
+    include-stacktrace: never
+  servlet:
+    encoding:
+      charset: UTF-8
+      force-request: true
+
+spring:
+  application:
+    name: shiftcart-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5600/shiftcart}
+    username: ${DATABASE_USER:shiftcart}
+    password: ${DATABASE_PASSWORD:shiftcart}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    locations: classpath:db/migration
+  jackson:
+    default-property-inclusion: always
+    serialization:
+      write-dates-as-timestamps: false
+    generator:
+      write-bigdecimal-as-plain: true
+    time-zone: UTC
+  mvc:
+    problemdetails:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+shiftcart:
+  shop-public-url: ${SHOP_PUBLIC_URL:http://localhost:3000}
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4300}
+  carrier-fee-tnd: ${CARRIER_FEE_TND:7}            # [À DÉFINIR] — 7 TND dans les maquettes = exemple
+  pack-alert-threshold: ${PACK_ALERT_THRESHOLD:5}
+  auto-pending-after-hours: ${ORDER_AUTO_PENDING_HOURS:0}   # 0 = désactivé ; délai [À DÉFINIR] (ex. 6)
+  tracking:
+    secret: ${TRACKING_TOKEN_SECRET:}                # obligatoire hors dev/test (≥ 32 caractères)
+  auth:
+    jwt-secret: ${JWT_SECRET:}                       # obligatoire hors dev/test (≥ 32 octets)
+    access-token-ttl: ${JWT_ACCESS_TTL:15m}
+    refresh-token-ttl: ${JWT_REFRESH_TTL:14d}
+    cookie-secure: ${COOKIE_SECURE:true}
+    admin-email: ${ADMIN_EMAIL:admin@shiftcart.tn}
+    admin-password: ${ADMIN_PASSWORD:}               # défaut « shiftcart-dev » uniquement en profil dev
+    admin-name: ${ADMIN_NAME:Admin}
+    login-max-attempts: ${LOGIN_RATE_LIMIT_MAX:10}
+    login-window: ${LOGIN_RATE_LIMIT_WINDOW:10m}
+  rate-limit:
+    ip-max: ${ORDER_RATE_LIMIT_IP_MAX:5}
+    ip-window: ${ORDER_RATE_LIMIT_IP_WINDOW:10m}
+    phone-max: ${ORDER_RATE_LIMIT_PHONE_MAX:3}
+    phone-window: ${ORDER_RATE_LIMIT_PHONE_WINDOW:30m}
+  duplicate-window: ${ORDER_DUPLICATE_WINDOW:30m}
+  whatsapp:
+    shop-number: ${WHATSAPP_SHOP_NUMBER:}         # [À DÉFINIR] format 216XXXXXXXX
+    token: ${WHATSAPP_TOKEN:}
+    phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:}
+    verify-token: ${WHATSAPP_VERIFY_TOKEN:}
+    app-secret: ${WHATSAPP_APP_SECRET:}
+    graph-base-url: ${WHATSAPP_GRAPH_BASE_URL:https://graph.facebook.com}
+    graph-version: ${WHATSAPP_GRAPH_VERSION:v24.0}
+    template-name: ${WHATSAPP_TEMPLATE_NAME:order_confirmation}
+    template-language: ${WHATSAPP_TEMPLATE_LANGUAGE:fr}
+    timeout: ${WHATSAPP_TIMEOUT:10s}
+  llm:
+    api-key: ${LLM_API_KEY:}
+    model: ${LLM_MODEL:claude-haiku-5-5}
+    base-url: ${LLM_BASE_URL:https://api.anthropic.com}
+    timeout: ${LLM_TIMEOUT:10s}
+
+logging:
+  level:
+    root: INFO

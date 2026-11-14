@@ -1,0 +1,94 @@
+@import "tailwindcss";
+@import "../../../design/tokens.css";
+@import "../../../design/tailwind-theme.css";
+
+/*
+  Fonts: the WOFF2 files of design/fonts are copied to public/fonts so they have stable URLs.
+  That lets the landing preload exactly Syne 800 + Jakarta 400/700 (docs/STACK.md budget),
+  which next/font cannot do per weight (one call = one family = one preload setting).
+  These rules come after tokens.css, so for identical descriptors they are the ones used.
+*/
+@font-face { font-family: "Syne"; src: url("/fonts/Syne-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Syne"; src: url("/fonts/Syne-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+
+/* Motion tokens (design/BRAND.md › Mouvement et états). */
+@theme {
+  --ease-sc: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --breakpoint-lg: 64rem;
+}
+
+/*
+  Extra type styles used by the reference components (design/components-reference/bundle.css)
+  that have no entry in tailwind-theme.css. Same families/weights as the token styles.
+*/
+@utility text-micro { font-family: var(--font-body); font-size: 11px; line-height: 16px; font-weight: 800; }
+@utility text-caption { font-family: var(--font-body); font-size: 12px; line-height: 16px; font-weight: 600; }
+@utility text-body-md { font-family: var(--font-body); font-size: 15px; line-height: 22px; font-weight: 400; }
+@utility text-item { font-family: var(--font-body); font-size: 15px; line-height: 20px; font-weight: 800; }
+@utility text-small { font-family: var(--font-body); font-size: 13px; line-height: 18px; font-weight: 400; }
+@utility text-meta { font-family: var(--font-body); font-size: 13px; line-height: 18px; font-weight: 700; }
+@utility text-sheet-title { font-family: var(--font-display); font-size: 24px; line-height: 28px; font-weight: 800; }
+@utility text-story { font-family: var(--font-display); font-size: 22px; line-height: 26px; font-weight: 800; }
+@utility text-display-md { font-family: var(--font-display); font-size: 40px; line-height: 42px; font-weight: 800; }
+@utility text-display-2xl { font-family: var(--font-display); font-size: 72px; line-height: 70px; font-weight: 800; letter-spacing: -0.03em; }
+@utility text-display-band { font-family: var(--font-display); font-size: 44px; line-height: 46px; font-weight: 800; }
+@utility text-step-num { font-family: var(--font-display); font-size: 48px; line-height: 48px; font-weight: 800; }
+@utility text-lead { font-family: var(--font-body); font-size: 19px; line-height: 30px; font-weight: 400; }
+
+/* Hard ink shadow of the giant CTA (6px, squashed to 2px on tap). */
+@utility shadow-cta { box-shadow: 0 6px 0 0 var(--ink); }
+@utility shadow-cta-pressed { box-shadow: 0 2px 0 0 var(--ink); }
+/* Story play button halo + avatar ring. */
+@utility shadow-play { box-shadow: 0 0 0 8px color-mix(in srgb, var(--orange) 25%, transparent); }
+@utility shadow-avatar { box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--orange); }
+@utility ring-inset-line { box-shadow: inset 0 0 0 1px var(--line); }
+@utility ring-inset-strong { box-shadow: inset 0 0 0 1px var(--line-strong); }
+@utility ring-inset-strong-2 { box-shadow: inset 0 0 0 2px var(--line-strong); }
+
+@utility story-stripes {
+  background-image: repeating-linear-gradient(135deg, transparent 0 22px, color-mix(in srgb, var(--orange) 14%, transparent) 22px 24px);
+}
+@utility story-fade {
+  background-image: linear-gradient(to top, color-mix(in srgb, var(--ink) 92%, transparent), transparent);
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Native range slider of the SavingsCalculator (pseudo-elements cannot be expressed as utilities). */
+.sc-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 44px; background: transparent; cursor: pointer; margin: 0; }
+.sc-slider::-webkit-slider-runnable-track { height: 10px; border-radius: var(--radius-pill); background: linear-gradient(to right, var(--orange) 0 var(--fill, 0%), color-mix(in srgb, var(--ink-inverse) 22%, transparent) var(--fill, 0%) 100%); }
+.sc-slider::-moz-range-track { height: 10px; border-radius: var(--radius-pill); background: color-mix(in srgb, var(--ink-inverse) 22%, transparent); }
+.sc-slider::-moz-range-progress { height: 10px; border-radius: var(--radius-pill); background: var(--orange); }
+.sc-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; margin-top: -11px; border-radius: var(--radius-pill); background: var(--orange); border: 4px solid var(--ink-inverse); box-shadow: var(--shadow-lift); }
+.sc-slider::-moz-range-thumb { width: 24px; height: 24px; border-radius: var(--radius-pill); background: var(--orange); border: 4px solid var(--ink-inverse); }
+
+/* Tunisian flag of the PhoneInput prefix: brand-neutral national colours (not a theme colour). */
+.sc-flag { width: 20px; height: 14px; border-radius: 2px; background: #E70013; position: relative; flex: none; }
+.sc-flag::after { content: ""; position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: #FFFFFF; }

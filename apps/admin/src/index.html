@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <title>Back-office · SHIFT CART</title>
+    <base href="/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/png" href="assets/logos/shiftcart-mark.png" />
+    <script>
+      // Thème mémorisé appliqué avant le premier rendu (évite le flash clair → sombre).
+      try {
+        var t = localStorage.getItem('sc-admin-theme');
+        if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <app-root></app-root>
+  </body>
+</html>

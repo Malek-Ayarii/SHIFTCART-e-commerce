@@ -1,0 +1,202 @@
+<div class="flex flex-col gap-6">
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-col">
+      <h1 class="m-0 text-kpi">Finances</h1>
+      <span class="text-sm text-ink-muted font-semibold">{{ subtitle() }}</span>
+    </div>
+    <div class="ml-auto flex flex-wrap items-center gap-3">
+      @if (demo) {
+        <sc-demo-badge />
+      }
+      <sc-month-picker [(value)]="state.month" />
+    </div>
+  </div>
+
+  @if (error(); as err) {
+    <sc-error-state [message]="err" (retry)="reload()" />
+  } @else if (loading() && !data()) {
+    <div class="flex flex-col gap-6" aria-busy="true">
+      <span class="sc-sr">Chargement des finances…</span>
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(--spacing(55),1fr))] gap-4">
+        @for (i of [0, 1, 2, 3]; track i) {
+          <div class="sc-skeleton h-34 rounded-lg" aria-hidden="true"></div>
+        }
+      </div>
+      <div class="flex flex-wrap gap-6">
+        <div class="flex-[1_1_26rem] sc-skeleton h-96 rounded-lg" aria-hidden="true"></div>
+        <div class="flex-[1_1_18rem] sc-skeleton h-96 rounded-lg" aria-hidden="true"></div>
+      </div>
+      <div class="sc-skeleton h-80 rounded-lg" aria-hidden="true"></div>
+    </div>
+  } @else {
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(--spacing(55),1fr))] gap-4" [attr.aria-busy]="loading()">
+      @for (k of kpis(); track k.label) {
+        <sc-kpi-card
+          [label]="k.label"
+          [value]="k.value"
+          [icon]="k.icon"
+          [delta]="k.delta"
+          [trend]="k.trend"
+          [good]="k.good"
+          [period]="k.period ?? ' vs mois dernier'"
+          [accent]="!!k.accent"
+        />
+      }
+    </div>
+
+    <div class="flex flex-wrap gap-6 items-stretch">
+      <section
+        aria-labelledby="chart-title"
+        class="flex-[1_1_26rem] min-w-0 bg-surface-raised rounded-lg shadow-card p-6 flex flex-col gap-5"
+      >
+        <div class="flex flex-wrap gap-3 items-center">
+          <h2 id="chart-title" class="m-0 text-heading">CA par semaine</h2>
+          <div class="ml-auto flex gap-4 text-label tracking-normal">
+            <span class="inline-flex items-center gap-1.5"
+              ><span class="size-3 rounded-xs bg-ink" aria-hidden="true"></span>Commandé</span
+            >
+            <span class="inline-flex items-center gap-1.5"
+              ><span class="size-3 rounded-xs bg-orange" aria-hidden="true"></span>Encaissé</span
+            >
+          </div>
+        </div>
+        @if (chart(); as c) {
+          @if (c.bars.length === 0) {
+            <p class="m-0 py-10 text-center text-body-sm text-ink-muted">Pas encore de commande ce mois-ci.</p>
+          } @else {
+            <div
+              aria-hidden="true"
+              class="h-65 grid gap-6 items-end border-b-[1.5px] border-line-strong px-2"
+              [style.grid-template-columns]="'repeat(' + c.bars.length + ', minmax(0, 1fr))'"
+            >
+              @for (b of c.bars; track b.label) {
+                <div class="h-full flex flex-col items-center justify-end gap-1.5 min-w-0">
+                  <span class="text-xs font-bold text-ink-muted whitespace-nowrap">{{ b.collectedText }}</span>
+                  <div class="w-full h-[calc(100%-var(--spacing)*6)] flex gap-1.5 items-end justify-center">
+                    <span
+                      class="block w-[36%] max-w-11 rounded-t-sm bg-ink"
+                      [style.height.%]="b.orderedPct"
+                      [attr.title]="'Commandé ' + b.orderedText"
+                    ></span>
+                    <span
+                      class="block w-[36%] max-w-11 rounded-t-sm bg-orange"
+                      [style.height.%]="b.collectedPct"
+                      [attr.title]="'Encaissé ' + b.collectedText"
+                    ></span>
+                  </div>
+                </div>
+              }
+            </div>
+            <div
+              class="grid gap-6 px-2 text-label tracking-normal text-ink-muted text-center"
+              [style.grid-template-columns]="'repeat(' + c.bars.length + ', minmax(0, 1fr))'"
+              aria-hidden="true"
+            >
+              @for (b of c.bars; track b.label) {
+                <span>{{ b.label }}</span>
+              }
+            </div>
+            <table class="sc-sr">
+              <caption>CA par semaine (TND)</caption>
+              <thead>
+                <tr><th scope="col">Semaine</th><th scope="col">Commandé</th><th scope="col">Encaissé</th></tr>
+              </thead>
+              <tbody>
+                @for (b of c.bars; track b.label) {
+                  <tr><th scope="row">{{ b.label }}</th><td>{{ b.orderedText }}</td><td>{{ b.collectedText }}</td></tr>
+                }
+              </tbody>
+            </table>
+          }
+        }
+      </section>
+
+      @if (funnel(); as f) {
+        <section
+          aria-labelledby="funnel-title"
+          class="flex-[1_1_18rem] min-w-0 bg-ink text-ink-inverse rounded-lg p-6 flex flex-col gap-3.5"
+        >
+          <h2 id="funnel-title" class="m-0 text-heading">Du commandé au réel</h2>
+          <div class="flex justify-between gap-4 text-base font-semibold">
+            <span class="opacity-80">CA commandé</span><strong>{{ f.ordered }}</strong>
+          </div>
+          <div class="flex justify-between gap-4 text-base font-semibold">
+            <span class="opacity-80"
+              >− Retours &amp; refus{{ f.returnsCount !== null ? ' (' + f.returnsCount + ')' : '' }}</span
+            ><strong>{{ f.returns }}</strong>
+          </div>
+          <div class="flex justify-between gap-4 text-base font-semibold">
+            <span class="opacity-80"
+              >− En cours de livraison{{
+                f.inProgressCount !== null ? ' (' + f.inProgressCount + ')' : ''
+              }}</span
+            ><strong>{{ f.inProgress }}</strong>
+          </div>
+          <div class="flex justify-between gap-4 text-base font-semibold pb-3.5 border-b border-ink-inverse/20">
+            <span class="opacity-80">− Frais transporteur</span><strong>{{ f.fees }}</strong>
+          </div>
+          <div class="flex justify-between gap-4 items-baseline">
+            <span class="font-bold">CA net encaissé</span>
+            <strong class="font-display text-display-lg text-orange">{{ f.net }}</strong>
+          </div>
+        </section>
+      }
+    </div>
+
+    <section
+      aria-labelledby="gov-title"
+      class="bg-surface-raised rounded-lg shadow-card p-6 flex flex-col gap-4"
+    >
+      <div class="flex flex-wrap gap-3 items-baseline">
+        <h2 id="gov-title" class="m-0 text-heading">Rapport par gouvernorat</h2>
+        <span class="text-sm text-ink-muted font-semibold">Où intensifier les pubs Meta</span>
+      </div>
+      @if (govRows().length === 0) {
+        <p class="m-0 py-6 text-center text-body-sm text-ink-muted">Aucune commande sur ce mois.</p>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-160 border-collapse text-base">
+            <thead>
+              <tr class="text-left text-xs tracking-[0.06em] uppercase text-ink-muted">
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong">Gouvernorat</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong">Part des commandes</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong text-right">Commandes</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong text-right">Livrées</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong text-right">Retours</th>
+                <th scope="col" class="py-2.5 px-3 border-b-[1.5px] border-line-strong text-right">CA encaissé</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (g of govRows(); track g.name) {
+                <tr>
+                  <th scope="row" class="p-3 border-b border-line text-left font-bold">
+                    {{ g.name }}
+                    @if (g.highlight) {
+                      <span class="sc-sr">(gouvernorat prioritaire)</span>
+                    }
+                  </th>
+                  <td class="p-3 border-b border-line">
+                    <div class="flex items-center gap-2.5">
+                      <span class="flex-1 max-w-50 h-2 rounded-pill bg-surface-sunken overflow-hidden block">
+                        <span
+                          class="block h-full rounded-pill"
+                          [class]="g.highlight ? 'bg-orange' : 'bg-ink'"
+                          [style.width.%]="g.barPct"
+                        ></span>
+                      </span>
+                      <span class="text-label tracking-normal text-ink-muted">{{ g.share }}</span>
+                    </div>
+                  </td>
+                  <td class="p-3 border-b border-line text-right font-bold">{{ g.orders }}</td>
+                  <td class="p-3 border-b border-line text-right">{{ g.delivered }}</td>
+                  <td class="p-3 border-b border-line text-right">{{ g.returned }}</td>
+                  <td class="p-3 border-b border-line text-right font-extrabold whitespace-nowrap">{{ g.collected }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>
