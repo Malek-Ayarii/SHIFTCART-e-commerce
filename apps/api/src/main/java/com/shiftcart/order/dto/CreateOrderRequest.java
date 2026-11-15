@@ -12,14 +12,14 @@ public record CreateOrderRequest(
         @CustomerName String customerName,
         @TnPhoneNumber String phone,
         @Governorate String governorate,
-        /** Adresse exacte (rue, n°, quartier, ville) : donnée personnelle, jamais loggée ni renvoyée au public. */
+        /* Adresse exacte (rue, n°, quartier, ville) : donnée personnelle, jamais loggée ni renvoyée au public. */
         @Address String address,
         String productSku,
         @Min(value = 1, message = "La quantité doit être comprise entre 1 et 10.")
         @Max(value = 10, message = "La quantité doit être comprise entre 1 et 10.")
         Integer quantity,
         Source source,
-        /** Honeypot : doit rester vide. */
+        /* Honeypot : doit rester vide. */
         String website) {
 
     /** Attribution marketing (tronquée à 100 caractères, jamais bloquante). */
