@@ -15,13 +15,12 @@ import { Wordmark } from '../../ui/wordmark';
   host: { class: 'min-h-dvh grid place-items-center bg-surface text-ink font-sans px-4 py-10' },
   template: `
     <main class="w-full max-w-md flex flex-col gap-6">
-      <div class="flex items-center justify-center gap-2.5 self-center px-3 py-1.5 rounded-pill dark:bg-ink">
-        <img src="assets/logos/shiftcart-mark.png" alt="" class="size-9" />
-        <sc-wordmark src="assets/logos/shiftcart-wordmark.png" [height]="16" />
+      <div class="flex items-center justify-center self-center sc-enter">
+        <sc-wordmark [height]="40" />
       </div>
 
       <form
-        class="bg-surface-raised rounded-lg shadow-card p-6 md:p-8 flex flex-col gap-5"
+        class="bg-surface-raised rounded-lg shadow-lift ring-1 ring-line p-6 md:p-8 flex flex-col gap-5 sc-enter [--d:80ms]"
         [formGroup]="form"
         (ngSubmit)="submit()"
         novalidate
@@ -29,7 +28,7 @@ import { Wordmark } from '../../ui/wordmark';
       >
         <div class="flex flex-col gap-1">
           <h1 id="login-title" class="m-0 text-display-lg">Connexion</h1>
-          <p class="m-0 text-body-sm text-ink-muted">Back-office de l'équipe SHIFT CART.</p>
+          <p class="m-0 text-body-sm text-ink-muted">Back-office de l'équipe NEXO SHIFT.</p>
         </div>
 
         @if (serverError()) {

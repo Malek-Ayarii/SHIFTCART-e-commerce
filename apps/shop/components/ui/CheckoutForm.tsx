@@ -195,7 +195,10 @@ export function CheckoutForm({
           <span className="text-item">{productName}</span>
           {/* Two units that wrap whole (no dangling « · » on a narrow sheet). */}
           <span className="flex flex-wrap items-center gap-x-2 text-meta">
-            <span className="text-success">Livraison gratuite</span>
+            <span className="inline-flex items-center gap-1 text-ink-muted">
+              <Icon name="banknote" size={14} />
+              Paiement à la livraison
+            </span>
             <span className="inline-flex items-center gap-1 text-ink-muted">
               <Icon name="clock" size={14} />
               24–48 h

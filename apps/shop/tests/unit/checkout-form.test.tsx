@@ -21,7 +21,7 @@ describe("CheckoutForm", () => {
   it("renders the pack summary, 4 fields and the COD note", () => {
     setup();
     expect(screen.getByText("Le Pack Barista")).toBeInTheDocument();
-    expect(screen.getByText("Livraison gratuite")).toBeInTheDocument();
+    expect(screen.getByText("Paiement à la livraison")).toBeInTheDocument();
     expect(screen.getByText("24–48 h")).toBeInTheDocument();
     expect(screen.getByText("89 TND")).toBeInTheDocument();
     expect(screen.getByText(/\* Pas de carte, paiement en espèces\./)).toBeInTheDocument();

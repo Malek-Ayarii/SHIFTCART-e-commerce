@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { ReviewCard, type ReviewCardProps } from "@/components/ui/ReviewCard";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { HowItWorksStepper } from "./HowItWorks";
 import { packHref, type PackSummary } from "@/lib/catalog-map";
 import { cx } from "@/lib/cx";
 import { SHOP_PHONE_DISPLAY } from "@/lib/whatsapp";
@@ -23,7 +24,7 @@ export function SectionHeading({ eyebrow, title, intro, id, className }: { eyebr
 }
 
 export const GUARANTEES: Array<{ icon: IconName; title: string; text: string }> = [
-  { icon: "truck", title: "Livraison gratuite", text: "Partout en Tunisie, les 24 gouvernorats." },
+  { icon: "pin", title: "Livré partout", text: "Les 24 gouvernorats de Tunisie." },
   { icon: "banknote", title: "Paiement en espèces", text: "Tu paies au livreur, à la réception." },
   { icon: "clock", title: "24–48 h partout", text: "Le livreur t'appelle avant de passer." },
   { icon: "whatsapp", title: "Confirmation WhatsApp", text: "Un message, tu réponds OUI, c'est parti." },
@@ -34,14 +35,14 @@ export function GuaranteesBand({ className }: { className?: string }) {
   return (
     <section aria-label="Nos garanties" className={cx("bg-ink text-ink-inverse", className)}>
       <ul className={cx(container, "m-0 grid list-none grid-cols-2 gap-x-4 gap-y-6 py-8 lg:grid-cols-4 lg:gap-8 lg:py-10")}>
-        {GUARANTEES.map((g) => (
-          <li key={g.title} className="flex flex-col gap-2 lg:flex-row lg:items-start lg:gap-3">
-            <span className="text-orange">
-              <Icon name={g.icon} size={26} />
+        {GUARANTEES.map((g, i) => (
+          <li key={g.title} className="group flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4 enter" style={{ ["--d" as string]: `${i * 90}ms` }}>
+            <span className="grid size-11 flex-none place-items-center rounded-md bg-ink-inverse/10 text-orange transition-transform duration-300 ease-sc group-hover:-translate-y-0.5 group-hover:scale-105 motion-reduce:transition-none">
+              <Icon name={g.icon} size={22} />
             </span>
             <span className="flex flex-col gap-0.5">
               <span className="text-title">{g.title}</span>
-              <span className="text-small opacity-75">{g.text}</span>
+              <span className="text-small opacity-70">{g.text}</span>
             </span>
           </li>
         ))}
@@ -50,35 +51,23 @@ export function GuaranteesBand({ className }: { className?: string }) {
   );
 }
 
-export const STEPS = [
-  { title: "Commande en 30 secondes", text: "Nom, téléphone, gouvernorat et adresse. Pas de compte, pas de carte bancaire." },
-  { title: "Confirme sur WhatsApp", text: "Un message arrive sur ton téléphone : réponds OUI, on prépare ton colis." },
-  { title: "Paie à la livraison", text: "En espèces, au livreur, sous 24 à 48 h partout en Tunisie. Rien à payer avant." },
-];
+export { STEPS } from "./HowItWorks";
 
-/** The 3 steps (a real sequence, hence the numbers). */
-export function HowItWorks({ id = "comment-ca-marche", className }: { id?: string; className?: string }) {
+/** The 3 steps: an interactive stepper with a live preview of each step. */
+export function HowItWorks({ id = "comment-ca-marche", className, example }: { id?: string; className?: string; example?: { name: string; price: number } }) {
   return (
     <section id={id} aria-labelledby={`${id}-t`} className={cx("scroll-mt-20", className)}>
       <div className={cx(container, "flex flex-col gap-8 lg:gap-12")}>
-        <SectionHeading id={`${id}-t`} title="Comment ça marche" intro="Pas de compte, pas de panier, pas de carte : tu choisis ton pack, on te l'apporte." />
-        <ol className="m-0 grid list-none gap-4 p-0 md:grid-cols-3 lg:gap-6">
-          {STEPS.map((s, i) => {
-            const last = i === STEPS.length - 1;
-            return (
-              <li
-                key={s.title}
-                className={cx("flex flex-col gap-3 rounded-lg p-6 lg:p-8", last ? "bg-ink text-ink-inverse" : "bg-surface-raised shadow-card")}
-              >
-                <span className={cx("text-step-num", last ? "text-orange" : "text-orange-ink")} aria-hidden="true">
-                  {i + 1}
-                </span>
-                <p className="text-heading">{s.title}</p>
-                <p className={cx("text-body-md", last ? "opacity-80" : "text-ink-muted")}>{s.text}</p>
-              </li>
-            );
-          })}
-        </ol>
+        <SectionHeading
+          id={`${id}-t`}
+          eyebrow="3 étapes, zéro prise de tête"
+          title="Comment ça marche"
+          intro="Pas de compte, pas de panier, pas de carte : tu choisis ton pack, on te l'apporte."
+          className="reveal"
+        />
+        <div className="reveal">
+          <HowItWorksStepper example={example} />
+        </div>
       </div>
     </section>
   );
@@ -90,10 +79,10 @@ export function ReviewsSection({ reviews, className }: { reviews: ReviewCardProp
   return (
     <section id="avis" aria-labelledby="avis-t" className={cx("scroll-mt-20", className)}>
       <div className={cx(container, "flex flex-col gap-8")}>
-        <SectionHeading id="avis-t" title="Ils ont choisi de changer" />
+        <SectionHeading id="avis-t" title="Ils ont choisi de changer" className="reveal" />
         <div className="grid gap-4 md:grid-cols-3">
           {reviews.map((r) => (
-            <ReviewCard key={`${r.name}-${r.city}`} {...r} />
+            <ReviewCard key={`${r.name}-${r.city}`} {...r} className="reveal" />
           ))}
         </div>
       </div>
@@ -109,15 +98,7 @@ export function SiteFooter({ packs, contactHref, socials = [] }: { packs: PackSu
     <footer className="bg-ink pb-28 text-ink-inverse lg:pb-0">
       <div className={cx(container, "grid gap-10 py-12 md:grid-cols-[1.4fr_1fr_1fr] lg:py-16")}>
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <span className="grid size-12 flex-none place-items-center rounded-pill bg-surface-raised">
-              <Wordmark src="mark" height={34} decorative />
-            </span>
-            <span className="flex flex-col">
-              <span className="font-display text-lg font-extrabold tracking-[0.1em]">SHIFT CART</span>
-              <span className="text-xs font-bold tracking-[0.12em] opacity-70">E-SHOP &amp; ROUTINE</span>
-            </span>
-          </div>
+          <Wordmark src="wordmarkLight" height={34} className="self-start" />
           <p className="max-w-80 text-small opacity-75">Des packs routine pour bosser, réviser et vivre mieux, livrés partout en Tunisie. Tu paies à la livraison.</p>
           <a
             href={contactHref}
@@ -158,7 +139,7 @@ export function SiteFooter({ packs, contactHref, socials = [] }: { packs: PackSu
         </nav>
       </div>
       <div className="border-t border-ink-inverse/15">
-        <p className={cx(container, "py-5 text-xs opacity-70")}>© 2026 SHIFT CART · Paiement à la livraison partout en Tunisie</p>
+        <p className={cx(container, "py-5 text-xs opacity-70")}>© 2026 NEXO SHIFT · Paiement à la livraison partout en Tunisie</p>
       </div>
     </footer>
   );

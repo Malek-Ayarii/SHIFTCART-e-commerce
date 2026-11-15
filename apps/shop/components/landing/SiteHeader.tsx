@@ -18,7 +18,9 @@ export interface SiteHeaderProps {
   className?: string;
 }
 
-const navLink = "inline-flex min-h-11 items-center text-body-md font-bold text-ink no-underline hover:text-orange-ink";
+const navLink =
+  "relative inline-flex min-h-11 items-center text-body-md font-semibold text-ink no-underline transition-colors hover:text-orange-ink " +
+  "after:absolute after:inset-x-0 after:bottom-2 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-pill after:bg-orange after:transition-transform after:duration-300 after:content-[''] hover:after:scale-x-100";
 
 /**
  * v2 header: no cart (one order = one pack, from its page). Mobile: menu · logo · WhatsApp.
@@ -35,7 +37,9 @@ export function SiteHeader({ packs, contactHref, compact, className }: SiteHeade
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
     >
-      <Icon name="whatsapp" size={24} />
+      <span className="grid size-9 place-items-center rounded-pill bg-whatsapp text-on-whatsapp">
+        <Icon name="whatsapp" size={20} />
+      </span>
     </a>
   );
 
@@ -49,11 +53,10 @@ export function SiteHeader({ packs, contactHref, compact, className }: SiteHeade
         end={whatsapp}
       />
       {compact ? null : (
-        <header className="sticky top-0 z-30 hidden border-b border-line bg-surface/95 backdrop-blur-sm lg:block">
+        <header className="sticky top-0 z-30 hidden border-b border-line bg-surface/85 backdrop-blur-md lg:block">
           <div className="mx-auto flex max-w-container items-center gap-10 px-8 py-3">
-            <Link href="/" aria-label="SHIFT CART, accueil" className="flex min-h-11 items-center gap-2.5 rounded-sm no-underline">
-              <Wordmark src="mark" height={36} decorative priority />
-              <Wordmark src="wordmark" height={18} decorative priority />
+            <Link href="/" aria-label="NEXO SHIFT, accueil" className="flex min-h-11 items-center gap-2.5 rounded-sm no-underline">
+              <Wordmark src="wordmark" height={34} decorative priority />
             </Link>
             <nav aria-label="Menu principal" className="flex flex-wrap gap-7">
               <Link href="/#packs" className={navLink}>
@@ -67,7 +70,7 @@ export function SiteHeader({ packs, contactHref, compact, className }: SiteHeade
               </Link>
             </nav>
             <div className="ml-auto">
-              <Button variant="ghost" size="md" icon="whatsapp" href={contactHref} target={external ? "_blank" : undefined}>
+              <Button variant="whatsapp" size="md" icon="whatsapp" href={contactHref} target={external ? "_blank" : undefined}>
                 Une question ?
               </Button>
             </div>

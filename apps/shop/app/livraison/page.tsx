@@ -6,7 +6,7 @@ import { shopWhatsAppNumber, waLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = {
   title: "Livraison & retours",
-  description: "Livraison gratuite partout en Tunisie sous 24 à 48 h, paiement en espèces à la livraison.",
+  description: "Livraison partout en Tunisie sous 24 à 48 h, paiement en espèces à la livraison.",
 };
 
 const BLOCKS: Array<{ icon: IconName; title: string; lines: string[] }> = [
@@ -14,7 +14,7 @@ const BLOCKS: Array<{ icon: IconName; title: string; lines: string[] }> = [
     icon: "truck",
     title: "Livraison",
     lines: [
-      "Gratuite, partout en Tunisie (les 24 gouvernorats).",
+      "Partout en Tunisie (les 24 gouvernorats).",
       "Chez toi en 24 à 48 h après ta confirmation sur WhatsApp.",
       "Le livreur t'appelle avant de passer.",
       "Transporteur et zones particulières : [À DÉFINIR]",

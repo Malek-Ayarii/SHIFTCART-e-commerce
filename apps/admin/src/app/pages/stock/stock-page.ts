@@ -106,7 +106,7 @@ export class StockPage {
     const lines = packs
       .map((p) => `• ${p.name} : ${p.completePacks} complets (seuil ${p.packThreshold}), ${p.assemblablePacks} assemblables`)
       .join('\n');
-    const text = `Stock bas SHIFT CART :\n${lines}`;
+    const text = `Stock bas NEXO SHIFT :\n${lines}`;
     return `https://wa.me/${this.agentNumber}?text=${encodeURIComponent(text)}`;
   });
 

@@ -5,7 +5,7 @@ export type ButtonVariant = 'primary' | 'dark' | 'ghost' | 'whatsapp';
 export type ButtonSize = 'sm' | 'md' | 'xl';
 
 const BASE =
-  'appearance-none border-0 cursor-pointer font-sans font-bold inline-flex items-center justify-center gap-2 rounded-md no-underline transition-[transform,background-color,box-shadow] duration-120 ease-out active:scale-97 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 motion-reduce:transition-none motion-reduce:active:scale-100 select-none';
+  'appearance-none border-0 cursor-pointer font-sans font-semibold inline-flex items-center justify-center gap-2 rounded-md no-underline transition-[transform,background-color,box-shadow] duration-200 ease-out active:scale-97 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 motion-reduce:transition-none motion-reduce:active:scale-100 select-none';
 
 const SIZES: Record<ButtonSize, string> = {
   // 36px visuels (référence sc-btn--sm), zone de tap étendue à 44px (règle d'accessibilité).
@@ -16,9 +16,9 @@ const SIZES: Record<ButtonSize, string> = {
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-orange text-on-orange hover:bg-orange-hover',
-  dark: 'bg-ink text-ink-inverse',
+  dark: 'bg-ink text-ink-inverse hover:opacity-90',
   ghost: 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)] hover:bg-surface-sunken',
-  whatsapp: 'bg-success text-on-success',
+  whatsapp: 'bg-whatsapp text-on-whatsapp hover:bg-whatsapp-hover',
 };
 
 /**
@@ -59,7 +59,7 @@ export class Button {
     const s = this.size();
     const xlPrimary =
       v === 'primary' && s === 'xl'
-        ? 'shadow-[0_6px_0_0_var(--ink)] active:translate-y-1 active:scale-100 active:shadow-[0_2px_0_0_var(--ink)]'
+        ? 'shadow-[0_10px_24px_-10px_var(--orange)] hover:-translate-y-0.5 active:translate-y-0.5 active:scale-100'
         : '';
     return [BASE, SIZES[s], VARIANTS[v], xlPrimary, this.block() ? 'flex w-full' : '']
       .filter(Boolean)

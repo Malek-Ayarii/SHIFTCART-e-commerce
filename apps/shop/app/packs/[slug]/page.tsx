@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: PageProps<"/packs/[slug]">): 
   const images = p.cover ? [{ url: p.cover.src, width: p.cover.width, height: p.cover.height, alt: p.cover.alt }] : undefined;
   return {
     title,
-    description: `${p.tagline} Livraison gratuite partout en Tunisie, paiement à la livraison.`,
+    description: `${p.tagline} Livraison partout en Tunisie, paiement à la livraison.`,
     alternates: { canonical: `/packs/${p.slug}` },
     openGraph: { type: "website", title, description: p.tagline, url: `/packs/${p.slug}`, images },
     twitter: { card: "summary_large_image", title, description: p.tagline, images: images?.map((i) => i.url) },
@@ -180,7 +180,7 @@ async function PackContent({ params }: { params: Promise<{ slug: string }> }) {
           </section>
         ) : null}
 
-        <HowItWorks className="py-section" />
+        <HowItWorks className="py-section" example={{ name: pack.name.replace(/^(le|la|les)\s+/i, ""), price: pack.priceTnd }} />
 
         <section aria-labelledby="faq-t" className="pb-section">
           <div className={cx(container, "grid gap-8 lg:grid-cols-12 lg:gap-12")}>
@@ -194,7 +194,7 @@ async function PackContent({ params }: { params: Promise<{ slug: string }> }) {
         {related.length > 0 ? (
           <section aria-labelledby="related-t" className="border-t border-line py-section">
             <div className={cx(container, "flex flex-col gap-8")}>
-              <SectionHeading id="related-t" title="Complète ta routine" intro="Les autres packs, même promesse : livrés gratuitement, payés à la livraison." />
+              <SectionHeading id="related-t" title="Complète ta routine" intro="Les autres packs, même promesse : livrés chez toi, payés à la livraison." />
               <ul className="m-0 grid list-none gap-5 p-0 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
                 {related.map((p) => (
                   <li key={p.slug} className="flex">
@@ -212,7 +212,7 @@ async function PackContent({ params }: { params: Promise<{ slug: string }> }) {
 }
 
 const FAQ: Array<{ q: string; a: ReactNode }> = [
-  { q: "Combien coûte la livraison ?", a: "Rien : la livraison est gratuite partout en Tunisie, sous 24 à 48 h après ta confirmation sur WhatsApp." },
+  { q: "En combien de temps je suis livré ?", a: "Sous 24 à 48 h partout en Tunisie, après ta confirmation sur WhatsApp. Le livreur t'appelle avant de passer." },
   { q: "Comment je paie ?", a: "En espèces, au livreur, à la réception du colis. Pas de carte, pas de paiement en ligne, rien à payer avant." },
   {
     q: "Pourquoi une adresse exacte ?",
@@ -255,7 +255,7 @@ function ProductJsonLd({ pack }: { pack: Pack }) {
     name: pack.name,
     sku: pack.sku,
     description: pack.tagline,
-    brand: { "@type": "Brand", name: "SHIFT CART" },
+    brand: { "@type": "Brand", name: "NEXO SHIFT" },
     ...(pack.images.length > 0 ? { image: pack.images.map((i) => `${siteUrl}${i.src}`) } : {}),
     url: `${siteUrl}/packs/${pack.slug}`,
     offers: {

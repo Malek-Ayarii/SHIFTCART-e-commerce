@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { Icon, IconName } from './icon';
 
 /**
- * KpiCard — libellé en capitales, valeur en Syne 32px, variation colorée.
+ * KpiCard — libellé en capitales, grande valeur (Inter), variation colorée.
  * La couleur suit le sens métier (`good`), pas la flèche (`trend`).
  */
 @Component({
@@ -10,7 +10,7 @@ import { Icon, IconName } from './icon';
   imports: [Icon],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    class: '@container grid gap-2 min-w-0 bg-surface-raised rounded-lg p-5 shadow-card',
+    class: '@container grid gap-2 min-w-0 bg-surface-raised rounded-lg p-5 shadow-card ring-1 ring-line',
   },
   template: `
     <div class="flex items-center justify-between gap-2 text-label uppercase text-ink-muted">

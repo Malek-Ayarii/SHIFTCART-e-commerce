@@ -56,7 +56,7 @@ export function PackFallback({ name, compact, items }: { name: string; compact?:
   const short = name.replace(/^(le|la|les)\s+pack\s+/i, "").trim() || name;
   if (compact) {
     return (
-      <div className="absolute inset-0 grid place-items-center bg-ink story-stripes" role="img" aria-label={`${name} : visuel SHIFT CART`} data-testid="pack-fallback">
+      <div className="absolute inset-0 grid place-items-center bg-ink story-stripes" role="img" aria-label={`${name} : visuel NEXO SHIFT`} data-testid="pack-fallback">
         <span className="grid size-[60%] max-h-10 max-w-10 place-items-center rounded-pill bg-surface-raised" aria-hidden="true">
           <Wordmark src="mark" height={24} decorative className="max-h-[75%] w-auto" />
         </span>
@@ -67,7 +67,7 @@ export function PackFallback({ name, compact, items }: { name: string; compact?:
     <div
       className="@container absolute inset-0 flex flex-col justify-between bg-ink p-[8%] text-ink-inverse story-stripes"
       role="img"
-      aria-label={`${name} : visuel SHIFT CART en attendant la photo`}
+      aria-label={`${name} : visuel NEXO SHIFT en attendant la photo`}
       data-testid="pack-fallback"
     >
       <span className="grid size-10 place-items-center rounded-pill bg-surface-raised" aria-hidden="true">

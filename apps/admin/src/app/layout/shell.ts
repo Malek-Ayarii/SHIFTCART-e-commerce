@@ -97,8 +97,7 @@ export class Shell {
   protected readonly theme = inject(ThemeService);
 
   protected readonly nav = NAV;
-  protected readonly markSrc = 'assets/logos/shiftcart-mark.png';
-  protected readonly wordmarkSrc = 'assets/logos/shiftcart-wordmark.png';
+  protected readonly markSrc = 'assets/logos/nexoshift-mark.svg';
   protected readonly menuOpen = signal(false);
 
   protected readonly url = toSignal(

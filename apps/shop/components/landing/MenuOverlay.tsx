@@ -23,7 +23,7 @@ export interface MenuOverlayProps {
 }
 
 const TILES: Array<{ icon: IconName; label: string }> = [
-  { icon: "truck", label: "Livraison gratuite" },
+  { icon: "pin", label: "Les 24 gouvernorats" },
   { icon: "banknote", label: "Paiement en espèces" },
   { icon: "clock", label: "24–48 h partout" },
 ];
@@ -51,7 +51,7 @@ export function MenuOverlay({ id = "sc-menu", open, onClose, packs, contactHref 
         <button type="button" data-dialog-close className={iconButtonClass} aria-label="Fermer le menu" onClick={onClose}>
           <Icon name="x" size={24} />
         </button>
-        <Wordmark src="wordmark" height={20} />
+        <Wordmark src="wordmark" height={26} />
         <span className="size-11" aria-hidden="true" />
       </header>
 

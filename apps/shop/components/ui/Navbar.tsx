@@ -23,7 +23,7 @@ export const iconButtonClass =
   "relative inline-grid size-11 flex-none cursor-pointer place-items-center rounded-md text-ink no-underline hover:bg-surface-sunken";
 
 /** Discreet sticky bar (56px): menu · centred wordmark · cart that opens the checkout. 44×44 targets. */
-export function Navbar({ logoSrc = "wordmark", logoHeight = 20, count, onMenu, onCart, menuExpanded, menuControls, end, className }: NavbarProps) {
+export function Navbar({ logoSrc = "wordmark", logoHeight = 26, count, onMenu, onCart, menuExpanded, menuControls, end, className }: NavbarProps) {
   return (
     <header className={cx("sticky top-0 z-30 flex h-14 items-center justify-between border-b border-line bg-surface px-2", className)}>
       <button
@@ -37,7 +37,7 @@ export function Navbar({ logoSrc = "wordmark", logoHeight = 20, count, onMenu, o
       >
         <Icon name="menu" size={24} />
       </button>
-      <Link href="/" aria-label="SHIFT CART, accueil" className="inline-flex min-h-11 items-center rounded-sm">
+      <Link href="/" aria-label="NEXO SHIFT, accueil" className="inline-flex min-h-11 items-center rounded-sm">
         <Wordmark src={logoSrc} height={logoHeight} priority decorative />
       </Link>
       {end ?? (

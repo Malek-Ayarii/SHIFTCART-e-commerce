@@ -12,8 +12,8 @@ export function PageColumn({ children, className }: { children: ReactNode; class
 export function LogoHeader() {
   return (
     <header className="flex h-14 flex-none items-center justify-center border-b border-line">
-      <Link href="/" aria-label="SHIFT CART, accueil" className="inline-flex min-h-11 items-center rounded-sm">
-        <Wordmark src="wordmark" height={20} decorative priority />
+      <Link href="/" aria-label="NEXO SHIFT, accueil" className="inline-flex min-h-11 items-center rounded-sm">
+        <Wordmark src="wordmark" height={26} decorative priority />
       </Link>
     </header>
   );

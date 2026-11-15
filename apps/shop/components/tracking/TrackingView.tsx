@@ -8,6 +8,7 @@ import { mediaSrc, packHref } from "@/lib/catalog-map";
 import { cx } from "@/lib/cx";
 import { formatEta, formatStepDate } from "@/lib/format";
 import { toUiStatus, type ApiOrderStatus, type TrackingResponse, type TrackingStep } from "@/lib/types";
+import { confirmOrderUrl, SHOP_PHONE_DISPLAY } from "@/lib/whatsapp";
 
 const TITLES: Record<ApiOrderStatus, string> = {
   NEW: "On attend ta confirmation",
@@ -26,38 +27,47 @@ const STEP_ICONS: Record<string, IconName> = {
   DELIVERED: "banknote",
 };
 
+/** What the step means, shown when the API gives no date or detail. */
+const STEP_HINTS: Record<string, string> = {
+  RECEIVED: "On a bien reçu ta commande",
+  CONFIRMED: "Réponds OUI à notre message WhatsApp",
+  SHIPPED: "Ton colis est confié au livreur",
+  DELIVERED: "Le livreur t'appelle avant de passer",
+};
+
 function stepMeta(step: TrackingStep): string {
   const parts = [step.at ? formatStepDate(step.at) : "", step.detail ?? ""].filter(Boolean);
   if (parts.length) return parts.join(" · ");
-  if (step.state === "upcoming" && step.key === "DELIVERED") return "Le livreur t'appelle avant de passer";
-  return "";
+  if (step.state === "cancelled") return "";
+  return STEP_HINTS[step.key] ?? "";
 }
 
 function StepDot({ step }: { step: TrackingStep }) {
-  const base = "grid size-7 flex-none place-items-center rounded-pill";
+  const base = "relative grid size-10 flex-none place-items-center rounded-pill";
   switch (step.state) {
     case "done":
       return (
         <span className={cx(base, "bg-success text-on-success")}>
-          <Icon name="check" size={16} strokeWidth={3} />
+          <Icon name="check" size={18} strokeWidth={3} />
         </span>
       );
     case "current":
       return (
         <span className={cx(base, "bg-orange text-on-orange")}>
-          <Icon name={STEP_ICONS[step.key] ?? "clock"} size={16} />
+          <span className="absolute inset-0 animate-ping-soft rounded-pill bg-orange motion-reduce:hidden" aria-hidden="true" />
+          <Icon name={STEP_ICONS[step.key] ?? "clock"} size={18} className="relative" />
         </span>
       );
     case "cancelled":
       return (
         <span className={cx(base, "bg-danger-soft text-danger")}>
-          <Icon name="x" size={16} strokeWidth={3} />
+          <Icon name="x" size={18} strokeWidth={3} />
         </span>
       );
     default:
       return (
-        <span className={cx(base, "text-ink-muted ring-inset-strong-2")}>
-          <Icon name={STEP_ICONS[step.key] ?? "clock"} size={16} />
+        <span className={cx(base, "bg-surface-sunken text-ink-muted")}>
+          <Icon name={STEP_ICONS[step.key] ?? "clock"} size={18} />
         </span>
       );
   }
@@ -83,93 +93,181 @@ export function TrackingView({
   coverPosition?: string | null;
 }) {
   const status = tracking.status;
-  const etaText = tracking.eta ? `Arrivée prévue ${formatEta(tracking.eta, now)}, ${tracking.governorate}` : tracking.governorate;
   const showCash = status !== "DELIVERED" && status !== "CANCELLED" && status !== "RETURNED";
-  const whatsapp = contactHref.startsWith("http");
+  const awaiting = status === "NEW" || status === "PENDING";
+  const confirmHref = awaiting ? confirmOrderUrl(tracking.ref) : null;
+  const total = tracking.steps.length || 1;
+  const done = tracking.steps.filter((s) => s.state === "done").length;
+  const hasCurrent = tracking.steps.some((s) => s.state === "current");
+  const progress = status === "DELIVERED" ? 100 : Math.round(((done + (hasCurrent ? 0.5 : 0)) / total) * 100);
+  const stopped = status === "CANCELLED" || status === "RETURNED";
 
   return (
-    <>
-      <section className="flex flex-col gap-2 px-4 pt-6 pb-4">
-        <p className="m-0 text-label uppercase text-ink-muted">Commande #{tracking.ref}</p>
-        <h1 className="m-0 text-display-lg">{TITLES[status] ?? TITLES.NEW}</h1>
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge status={toUiStatus(status)} />
-          <span className="text-sm font-semibold text-ink-muted">{etaText}</span>
+    <div className="flex flex-1 flex-col gap-4 px-4 pt-5 pb-6">
+      {/* Status hero */}
+      <section className="relative overflow-hidden rounded-lg bg-ink p-5 text-ink-inverse enter">
+        <span className="pointer-events-none absolute -top-16 -right-16 size-48 rounded-pill bg-orange/30 blur-3xl" aria-hidden="true" />
+        <div className="relative flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="m-0 text-label uppercase opacity-70">Commande #{tracking.ref}</p>
+            <StatusBadge status={toUiStatus(status)} />
+          </div>
+          <h1 className="m-0 text-display-lg text-balance">{TITLES[status] ?? TITLES.NEW}</h1>
+          <p className="m-0 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium opacity-80">
+            {tracking.eta && !stopped && status !== "DELIVERED" ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Icon name="calendar" size={15} />
+                Arrivée prévue {formatEta(tracking.eta, now)}
+              </span>
+            ) : null}
+            <span className="inline-flex items-center gap-1.5">
+              <Icon name="pin" size={15} />
+              Livraison à {tracking.governorate}
+            </span>
+          </p>
+          {!stopped ? (
+            <div className="mt-1 flex items-center gap-3" aria-hidden="true">
+              <span className="h-2 flex-1 overflow-hidden rounded-pill bg-ink-inverse/15">
+                <span className="block h-full origin-left rounded-pill bg-orange transition-[width] duration-700 ease-sc" style={{ width: `${progress}%` }} />
+              </span>
+              <span className="text-xs font-bold tabular-nums">{progress}%</span>
+            </div>
+          ) : null}
         </div>
       </section>
 
-      <PackRow tracking={tracking} coverPosition={coverPosition} />
-
-      <ol className="mx-4 my-0 flex list-none flex-col rounded-lg bg-surface-raised px-4 py-5 shadow-card" aria-label="Étapes de la commande">
-        {tracking.steps.map((step, i) => {
-          const last = i === tracking.steps.length - 1;
-          const meta = stepMeta(step);
-          return (
-            <li key={step.key} className="flex gap-3" aria-current={step.state === "current" ? "step" : undefined}>
-              <div className="flex flex-col items-center">
-                <StepDot step={step} />
-                {!last ? <span className={cx("min-h-7 w-0.5 flex-1", step.state === "done" ? "bg-success" : "bg-line-strong")} /> : null}
-              </div>
-              <div className={cx(!last && "pb-4")}>
-                <p
-                  className={cx(
-                    "m-0 text-base leading-6",
-                    step.state === "current" ? "font-extrabold" : "font-bold",
-                    step.state === "upcoming" && "text-ink-muted",
-                    step.state === "cancelled" && "text-danger",
-                  )}
-                >
-                  {step.label}
-                  <span className="sr-only"> ({STATE_LABEL[step.state]})</span>
-                </p>
-                {meta ? <p className="m-0 text-small text-ink-muted">{meta}</p> : null}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-
-      {showCash ? (
-        <div className="mx-4 mt-4 flex items-center gap-3 rounded-md bg-ink p-4 text-ink-inverse">
-          <span className="grid size-11 flex-none place-items-center rounded-sm bg-orange text-on-orange">
-            <Icon name="banknote" size={22} />
-          </span>
-          <div className="flex flex-col">
-            <span className="text-label uppercase opacity-80">Prépare en espèces</span>
-            <span className="text-sheet-title">{tracking.amountTnd} TND</span>
+      {/* Confirm now: the one action that moves a NEW order forward. */}
+      {confirmHref ? (
+        <section className="flex flex-col gap-3 rounded-lg bg-surface-raised p-4 shadow-card ring-2 ring-whatsapp enter" style={{ ["--d" as string]: "80ms" }}>
+          <div className="flex items-start gap-3">
+            <span className="grid size-11 flex-none place-items-center rounded-md bg-whatsapp text-on-whatsapp">
+              <Icon name="whatsapp" size={24} />
+            </span>
+            <div className="flex flex-col">
+              <p className="m-0 text-title">Confirme ta commande</p>
+              <p className="m-0 text-small text-ink-muted">Envoie-nous « OUI » sur WhatsApp : on prépare ton colis dès ta réponse.</p>
+            </div>
           </div>
-        </div>
+          <Button variant="whatsapp" size="md" block icon="whatsapp" href={confirmHref} target="_blank" className="h-13 text-base">
+            Confirmer sur WhatsApp
+          </Button>
+        </section>
       ) : null}
 
-      <div className="mt-auto flex flex-col gap-3 p-4">
-        <Button variant={whatsapp ? "whatsapp" : "ghost"} size="md" block icon="whatsapp" href={contactHref} target={whatsapp ? "_blank" : undefined}>
-          Une question ? Écris-nous
-        </Button>
+      <PackRow tracking={tracking} coverPosition={coverPosition} />
+
+      <section className="rounded-lg bg-surface-raised p-5 shadow-card ring-inset-line enter" style={{ ["--d" as string]: "160ms" }}>
+        <h2 className="m-0 mb-4 text-label text-ink-muted uppercase">Suivi de ta commande</h2>
+        <ol className="m-0 flex list-none flex-col p-0" aria-label="Étapes de la commande">
+          {tracking.steps.map((step, i) => {
+            const last = i === tracking.steps.length - 1;
+            const meta = stepMeta(step);
+            return (
+              <li key={step.key} className="flex gap-4" aria-current={step.state === "current" ? "step" : undefined}>
+                <div className="flex flex-col items-center">
+                  <StepDot step={step} />
+                  {!last ? (
+                    <span className="relative my-1 min-h-6 w-0.5 flex-1 overflow-hidden rounded-pill bg-line">
+                      {step.state === "done" ? <span className="absolute inset-0 bg-success" /> : null}
+                    </span>
+                  ) : null}
+                </div>
+                <div className={cx("flex min-w-0 flex-col justify-center pt-2", !last && "pb-5")}>
+                  <p
+                    className={cx(
+                      "m-0 text-base leading-6",
+                      step.state === "current" ? "font-bold text-ink" : "font-semibold",
+                      step.state === "upcoming" && "text-ink-muted",
+                      step.state === "cancelled" && "text-danger",
+                    )}
+                  >
+                    {step.label}
+                    <span className="sr-only"> ({STATE_LABEL[step.state]})</span>
+                    {step.state === "current" ? (
+                      <span className="ml-2 inline-flex h-5 items-center rounded-pill bg-orange-soft px-2 align-middle text-micro text-orange-ink uppercase">En cours</span>
+                    ) : null}
+                  </p>
+                  {meta ? <p className="m-0 text-small text-ink-muted">{meta}</p> : null}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+
+      {showCash ? (
+        <section className="flex items-center gap-4 rounded-lg bg-surface-raised p-4 shadow-card ring-inset-line enter" style={{ ["--d" as string]: "220ms" }}>
+          <span className="grid size-12 flex-none place-items-center rounded-md bg-success-soft text-success">
+            <Icon name="banknote" size={24} />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="text-label text-ink-muted uppercase">Prépare en espèces</span>
+            <span className="font-display text-3xl leading-9 font-extrabold tracking-tight tabular-nums">
+              {tracking.amountTnd}
+              <span className="ml-1 text-base font-bold">TND</span>
+            </span>
+          </div>
+          <span className="hidden text-right text-xs leading-4 text-ink-muted min-[380px]:block">
+            À remettre
+            <br />
+            au livreur
+          </span>
+        </section>
+      ) : null}
+
+      <HelpCard contactHref={contactHref} className="mt-auto" />
+    </div>
+  );
+}
+
+/** WhatsApp help: the brand-green button people recognise, with the number spelled out. */
+export function HelpCard({ contactHref, className }: { contactHref: string; className?: string }) {
+  const whatsapp = contactHref.startsWith("http");
+  return (
+    <section className={cx("flex flex-col gap-3 rounded-lg bg-surface-sunken p-4", className)}>
+      <div className="flex items-center gap-3">
+        <span className="relative grid size-11 flex-none place-items-center rounded-pill bg-whatsapp text-on-whatsapp">
+          <Icon name="whatsapp" size={22} />
+          <span className="absolute -top-0.5 -right-0.5 size-3 rounded-pill bg-success ring-2 ring-surface-sunken" aria-hidden="true" />
+        </span>
+        <div className="flex flex-col">
+          <p className="m-0 text-title">Une question sur ta commande ?</p>
+          <p className="m-0 text-small text-ink-muted">On répond vite sur WhatsApp{whatsapp ? ` · ${SHOP_PHONE_DISPLAY}` : ""}</p>
+        </div>
       </div>
-    </>
+      <Button
+        variant={whatsapp ? "whatsapp" : "ghost"}
+        size="md"
+        block
+        icon="whatsapp"
+        iconRight={whatsapp ? "arrowRight" : undefined}
+        href={contactHref}
+        target={whatsapp ? "_blank" : undefined}
+        className="h-13 text-base"
+      >
+        Écris-nous sur WhatsApp
+      </Button>
+    </section>
   );
 }
 
 export function TrackingProblem({ title, text, contactHref }: { title: string; text: string; contactHref: string }) {
-  const whatsapp = contactHref.startsWith("http");
   return (
-    <>
-      <section className="flex flex-col gap-3 px-4 pt-6 pb-4">
-        <span className="grid size-12 place-items-center rounded-pill bg-warning-soft text-warning">
+    <div className="flex flex-1 flex-col gap-4 px-4 pt-5 pb-6">
+      <section className="flex flex-col gap-3 rounded-lg bg-surface-raised p-5 shadow-card ring-inset-line enter">
+        <span className="grid size-12 place-items-center rounded-md bg-warning-soft text-warning">
           <Icon name="alert" size={24} />
         </span>
         <h1 className="m-0 text-display-lg">{title}</h1>
         <p className="m-0 text-body text-ink-muted">{text}</p>
       </section>
-      <div className="mt-auto flex flex-col gap-3 p-4">
-        <Button variant={whatsapp ? "whatsapp" : "ghost"} size="md" block icon="whatsapp" href={contactHref} target={whatsapp ? "_blank" : undefined}>
-          Une question ? Écris-nous
-        </Button>
-        <Button variant="ghost" size="md" block href="/">
+      <div className="mt-auto flex flex-col gap-3">
+        <HelpCard contactHref={contactHref} />
+        <Button variant="ghost" size="md" block icon="home" href="/">
           Revenir à la boutique
         </Button>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -178,24 +276,25 @@ function PackRow({ tracking, coverPosition }: { tracking: TrackingResponse; cove
   const cover = mediaSrc(tracking.productCoverUrl);
   const slug = tracking.productSlug && /^[a-z0-9-]{1,100}$/.test(tracking.productSlug) ? tracking.productSlug : null;
   return (
-    <div className="mx-4 mb-4 flex items-center gap-3 rounded-md bg-surface-raised p-3 ring-inset-line" data-testid="tracking-pack">
-      <span className="relative aspect-4/3 w-20 flex-none overflow-hidden rounded-sm bg-surface-sunken">
+    <div className="flex items-center gap-4 rounded-lg bg-surface-raised p-3 shadow-card ring-inset-line enter" style={{ ["--d" as string]: "120ms" }} data-testid="tracking-pack">
+      <span className="relative aspect-4/3 w-24 flex-none overflow-hidden rounded-md bg-surface-sunken">
         {cover ? (
-          <Image src={cover} alt="" fill sizes="80px" className="object-cover" style={coverPosition ? { objectPosition: coverPosition } : undefined} />
+          <Image src={cover} alt="" fill sizes="96px" className="object-cover" style={coverPosition ? { objectPosition: coverPosition } : undefined} />
         ) : (
           <PackFallback name={tracking.productName} compact />
         )}
       </span>
-      <div className="flex min-w-0 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         {slug ? (
-          <Link href={packHref(slug)} className="text-item text-ink underline-offset-4 hover:underline">
+          <Link href={packHref(slug)} className="text-item text-ink no-underline underline-offset-4 hover:underline">
             {tracking.productName}
           </Link>
         ) : (
           <span className="text-item">{tracking.productName}</span>
         )}
-        <span className="text-meta text-ink-muted">{tracking.amountTnd} TND · paiement à la livraison</span>
+        <span className="text-meta text-ink-muted">1 pack · paiement à la livraison</span>
       </div>
+      <span className="pr-2 font-display text-lg font-extrabold tracking-tight whitespace-nowrap tabular-nums">{tracking.amountTnd} TND</span>
     </div>
   );
 }

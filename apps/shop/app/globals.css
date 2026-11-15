@@ -3,44 +3,73 @@
 @import "../../../design/tailwind-theme.css";
 
 /*
-  Fonts: the WOFF2 files of design/fonts are copied to public/fonts so they have stable URLs.
-  That lets the landing preload exactly Syne 800 + Jakarta 400/700 (docs/STACK.md budget),
-  which next/font cannot do per weight (one call = one family = one preload setting).
-  These rules come after tokens.css, so for identical descriptors they are the ones used.
+  Font: a single variable Inter file (copy of design/fonts/Inter-Variable.woff2) at a stable URL,
+  preloaded by the root layout. One family, every weight, simple sans-serif everywhere.
 */
-@font-face { font-family: "Syne"; src: url("/fonts/Syne-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "Syne"; src: url("/fonts/Syne-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
-@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-400.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-500.woff2") format("woff2"); font-weight: 500; font-style: normal; font-display: swap; }
-@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-600.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
-@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-700.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "Plus Jakarta Sans"; src: url("/fonts/PlusJakartaSans-800.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Inter"; src: url("/fonts/Inter-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; }
 
 /* Motion tokens (design/BRAND.md › Mouvement et états). */
 @theme {
   --ease-sc: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --breakpoint-lg: 64rem;
+  --animate-fade-up: fade-up 0.7s var(--ease-sc) both;
+  --animate-fade-in: fade-in 0.5s var(--ease-sc) both;
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-ping-soft: ping-soft 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-shine: shine 3.2s ease-in-out infinite;
+  --animate-progress: progress var(--step-ms, 4500ms) linear both;
 }
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes ping-soft { 0% { transform: scale(1); opacity: 0.55; } 80%, 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes shine { 0%, 55% { transform: translateX(-120%) skewX(-18deg); } 100% { transform: translateX(260%) skewX(-18deg); } }
+@keyframes progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes drive { from { left: 1rem; } to { left: calc(100% - 3.5rem - 2.75rem); } }
+@keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); } }
+
+/*
+  Scroll reveal without JavaScript: browsers with scroll-driven animations fade sections in as they
+  enter the viewport; others (and reduced motion) simply show them.
+*/
+@utility reveal {
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      animation: fade-up linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+  }
+}
+/* Staggered entrance on load (delay through --d, e.g. style={{ "--d": "120ms" }}). */
+@utility enter { animation: var(--animate-fade-up); animation-delay: var(--d, 0ms); }
+@utility pop-in { animation: pop 0.5s var(--ease-spring) both; animation-delay: var(--d, 0ms); }
 
 /*
   Extra type styles used by the reference components (design/components-reference/bundle.css)
-  that have no entry in tailwind-theme.css. Same families/weights as the token styles.
+  that have no entry in tailwind-theme.css. One family (Inter), weight and tracking carry hierarchy.
 */
-@utility text-micro { font-family: var(--font-body); font-size: 11px; line-height: 16px; font-weight: 800; }
+@utility text-micro { font-family: var(--font-body); font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: 0.02em; }
 @utility text-caption { font-family: var(--font-body); font-size: 12px; line-height: 16px; font-weight: 600; }
 @utility text-body-md { font-family: var(--font-body); font-size: 15px; line-height: 22px; font-weight: 400; }
-@utility text-item { font-family: var(--font-body); font-size: 15px; line-height: 20px; font-weight: 800; }
+@utility text-item { font-family: var(--font-body); font-size: 15px; line-height: 20px; font-weight: 650; letter-spacing: -0.01em; }
 @utility text-small { font-family: var(--font-body); font-size: 13px; line-height: 18px; font-weight: 400; }
-@utility text-meta { font-family: var(--font-body); font-size: 13px; line-height: 18px; font-weight: 700; }
-@utility text-sheet-title { font-family: var(--font-display); font-size: 24px; line-height: 28px; font-weight: 800; }
-@utility text-story { font-family: var(--font-display); font-size: 22px; line-height: 26px; font-weight: 800; }
-@utility text-display-md { font-family: var(--font-display); font-size: 40px; line-height: 42px; font-weight: 800; }
-@utility text-display-band { font-family: var(--font-display); font-size: 44px; line-height: 46px; font-weight: 800; }
-@utility text-step-num { font-family: var(--font-display); font-size: 48px; line-height: 48px; font-weight: 800; }
+@utility text-meta { font-family: var(--font-body); font-size: 13px; line-height: 18px; font-weight: 600; }
+@utility text-sheet-title { font-family: var(--font-display); font-size: 22px; line-height: 28px; font-weight: 750; letter-spacing: -0.025em; }
+@utility text-story { font-family: var(--font-display); font-size: 20px; line-height: 26px; font-weight: 750; letter-spacing: -0.02em; }
+@utility text-display-md { font-family: var(--font-display); font-size: 34px; line-height: 40px; font-weight: 800; letter-spacing: -0.035em; }
+@utility text-display-band { font-family: var(--font-display); font-size: 40px; line-height: 44px; font-weight: 800; letter-spacing: -0.035em; }
+@utility text-step-num { font-family: var(--font-display); font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: 0.08em; }
+/* Hero price: the number carries the page, the currency stays readable but secondary. */
+@utility text-price-xl { font-family: var(--font-display); font-size: clamp(3rem, 2.4rem + 2.4vw, 4rem); line-height: 1; font-weight: 800; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; }
 
-/* Hard ink shadow of the giant CTA (6px, squashed to 2px on tap). */
-@utility shadow-cta { box-shadow: 0 6px 0 0 var(--ink); }
-@utility shadow-cta-pressed { box-shadow: 0 2px 0 0 var(--ink); }
+/* Primary CTA: soft orange glow that tightens on tap (replaces the hard 6px ink shadow). */
+@utility shadow-cta { box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--orange) 75%, transparent), 0 2px 0 0 color-mix(in srgb, var(--ink) 18%, transparent); }
+@utility shadow-cta-pressed { box-shadow: 0 4px 10px -6px color-mix(in srgb, var(--orange) 75%, transparent); }
+@utility shadow-hover { box-shadow: 0 2px 4px rgba(26, 26, 26, 0.04), 0 18px 40px -12px rgba(26, 26, 26, 0.22); }
+@utility shadow-whatsapp { box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--whatsapp) 80%, transparent); }
 /* Story play button halo + avatar ring. */
 @utility shadow-play { box-shadow: 0 0 0 8px color-mix(in srgb, var(--orange) 25%, transparent); }
 @utility shadow-avatar { box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--orange); }

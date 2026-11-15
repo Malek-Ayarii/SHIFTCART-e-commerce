@@ -4,29 +4,27 @@ import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const description =
-  "Des packs routine pour bosser, réviser et vivre mieux : Pack Barista, Espace Autonome et plus. Livraison gratuite partout en Tunisie, paiement à la livraison.";
+  "Des packs routine pour bosser, réviser et vivre mieux : Pack Barista, Espace Autonome et plus. Livraison partout en Tunisie, paiement à la livraison.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "SHIFT CART · Packs routine livrés chez toi, payés à la livraison",
-    template: "%s · SHIFT CART",
+    default: "NEXO SHIFT · Packs routine livrés chez toi, payés à la livraison",
+    template: "%s · NEXO SHIFT",
   },
   description,
-  applicationName: "SHIFT CART",
+  applicationName: "NEXO SHIFT",
   openGraph: {
     type: "website",
     locale: "fr_TN",
-    siteName: "SHIFT CART",
-    title: "Booste ta routine, sauve ton budget · SHIFT CART",
+    siteName: "NEXO SHIFT",
+    title: "Booste ta routine, sauve ton budget · NEXO SHIFT",
     description,
-    images: [{ url: "/logos/shiftcart-logo.png", width: 1045, height: 688, alt: "SHIFT CART — E-SHOP & ROUTINE" }],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Booste ta routine, sauve ton budget · SHIFT CART",
+    card: "summary",
+    title: "Booste ta routine, sauve ton budget · NEXO SHIFT",
     description,
-    images: ["/logos/shiftcart-logo.png"],
   },
   formatDetection: { telephone: false },
 };
@@ -40,6 +38,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" data-theme="light">
+      <head>
+        {/* One variable font file for the whole shop (app/globals.css). */}
+        <link rel="preload" href="/fonts/Inter-Variable.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+      </head>
       <body className="min-h-dvh bg-surface font-sans text-ink antialiased">
         <SourceCapture />
         {children}
