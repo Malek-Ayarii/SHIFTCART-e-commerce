@@ -13,8 +13,8 @@ import { MenuOverlay } from "./MenuOverlay";
 export interface SiteHeaderProps {
   packs: PackSummary[];
   contactHref: string;
-  /** Mobile-only header (the 480px tracking column). */
-  compact?: boolean;
+  /** Render only the desktop header (the page brings its own mobile header). */
+  desktopOnly?: boolean;
   className?: string;
 }
 
@@ -26,7 +26,7 @@ const navLink =
  * v2 header: no cart (one order = one pack, from its page). Mobile: menu · logo · WhatsApp.
  * Desktop (≥ 1024px): logo · packs / how it works / tracking · WhatsApp.
  */
-export function SiteHeader({ packs, contactHref, compact, className }: SiteHeaderProps) {
+export function SiteHeader({ packs, contactHref, desktopOnly, className }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const external = contactHref.startsWith("http");
   const whatsapp = (
@@ -45,39 +45,39 @@ export function SiteHeader({ packs, contactHref, compact, className }: SiteHeade
 
   return (
     <>
-      <Navbar
-        className={cx(!compact && "lg:hidden", className)}
-        onMenu={() => setMenuOpen(true)}
-        menuExpanded={menuOpen}
-        menuControls="sc-menu"
-        end={whatsapp}
-      />
-      {compact ? null : (
-        <header className="sticky top-0 z-30 hidden border-b border-line bg-surface/85 backdrop-blur-md lg:block">
-          <div className="mx-auto flex max-w-container items-center gap-10 px-8 py-3">
-            <Link href="/" aria-label="NEXO SHIFT, accueil" className="flex min-h-11 items-center gap-2.5 rounded-sm no-underline">
-              <Wordmark src="wordmark" height={34} decorative priority />
-            </Link>
-            <nav aria-label="Menu principal" className="flex flex-wrap gap-7">
-              <Link href="/#packs" className={navLink}>
-                Les packs
-              </Link>
-              <Link href="/#comment-ca-marche" className={navLink}>
-                Comment ça marche
-              </Link>
-              <Link href="/suivi" className={navLink}>
-                Suivre ma commande
-              </Link>
-            </nav>
-            <div className="ml-auto">
-              <Button variant="whatsapp" size="md" icon="whatsapp" href={contactHref} target={external ? "_blank" : undefined}>
-                Une question ?
-              </Button>
-            </div>
-          </div>
-        </header>
+      {desktopOnly ? null : (
+        <Navbar
+          className={cx("lg:hidden", className)}
+          onMenu={() => setMenuOpen(true)}
+          menuExpanded={menuOpen}
+          menuControls="sc-menu"
+          end={whatsapp}
+        />
       )}
-      <MenuOverlay open={menuOpen} onClose={() => setMenuOpen(false)} packs={packs} contactHref={contactHref} />
+      <header className="sticky top-0 z-30 hidden border-b border-line bg-surface/85 backdrop-blur-md lg:block">
+        <div className="mx-auto flex max-w-container items-center gap-10 px-8 py-3">
+          <Link href="/" aria-label="NEXO SHIFT, accueil" className="flex min-h-11 items-center gap-2.5 rounded-sm no-underline">
+            <Wordmark src="wordmark" height={34} decorative priority />
+          </Link>
+          <nav aria-label="Menu principal" className="flex flex-wrap gap-7">
+            <Link href="/#packs" className={navLink}>
+              Les packs
+            </Link>
+            <Link href="/#comment-ca-marche" className={navLink}>
+              Comment ça marche
+            </Link>
+            <Link href="/suivi" className={navLink}>
+              Suivre ma commande
+            </Link>
+          </nav>
+          <div className="ml-auto">
+            <Button variant="whatsapp" size="md" icon="whatsapp" href={contactHref} target={external ? "_blank" : undefined}>
+              Une question ?
+            </Button>
+          </div>
+        </div>
+      </header>
+      {desktopOnly ? null : <MenuOverlay open={menuOpen} onClose={() => setMenuOpen(false)} packs={packs} contactHref={contactHref} />}
     </>
   );
 }

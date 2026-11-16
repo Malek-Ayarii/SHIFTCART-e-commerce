@@ -88,7 +88,8 @@ test("home → pack page → checkout (4 fields) → order → confirmation → 
     source: { utmSource: "tiktok", utmCampaign: "nov", utmContent: "reel-3" },
   });
 
-  await page.getByRole("link", { name: "Suivre ma commande" }).filter({ visible: true }).last().click();
+  // The page's own button (with the tracking key), not the header/footer links to /suivi.
+  await page.getByRole("main").getByRole("link", { name: "Suivre ma commande" }).click();
   await page.waitForURL(/\/suivi\/SC-\d+\?t=good-token$/);
   await expect(page.getByRole("heading", { name: "Ton pack est en route" })).toBeVisible();
   await expect(page.getByTestId("tracking-pack")).toContainText("Le Pack Barista");
@@ -138,5 +139,6 @@ test("confirmation without cookie: graceful fallback, no phone", async ({ page }
   await page.goto("/merci/SC-1234");
   await expect(page.getByRole("heading", { name: /Commande #SC-1234 reçue/ })).toBeVisible();
   await expect(page.getByText(/On t'envoie un message WhatsApp pour confirmer ta commande/)).toBeVisible();
-  await expect(page.getByText(/\+216/)).toHaveCount(0);
+  // No customer phone in the page content (the footer shows the shop's own WhatsApp number).
+  await expect(page.getByRole("main").getByText(/\+216/)).toHaveCount(0);
 });
