@@ -41,7 +41,7 @@ export function buildWhatsAppMessage(order: Pick<Order, 'name' | 'product' | 'ci
 }
 
 /**
- * OrderCard — ID, client, montant, ville, ancienneté et UNE action contextuelle :
+ * OrderCard (façon Trello) — étiquette pack, client, badges (réf., ancienneté, ville), montant, ville, ancienneté et UNE action contextuelle :
  * Nouvelles → WhatsApp, En attente → Relancer, Confirmées → Imprimer ; Expédiées → transporteur + n° de suivi.
  */
 @Component({
@@ -51,7 +51,7 @@ export function buildWhatsAppMessage(order: Pick<Order, 'name' | 'product' | 'ci
   host: { class: 'block' },
   template: `
     <article
-      class="grid gap-2 bg-surface-raised rounded-md pt-3 px-4 pb-4 shadow-card relative transition-[transform,box-shadow,opacity] duration-120 hover:shadow-lift motion-reduce:transition-none"
+      class="group grid gap-2 bg-surface-raised rounded-md p-3 shadow-card relative transition-[box-shadow,opacity] duration-120 hover:shadow-[0_0_0_2px_var(--line-strong)] motion-reduce:transition-none"
       [class.cursor-grab]="draggable()"
       [class.cursor-pointer]="!draggable()"
       [class.opacity-45]="dragging()"
@@ -61,55 +61,62 @@ export function buildWhatsAppMessage(order: Pick<Order, 'name' | 'product' | 'ci
       (click)="open.emit(order())"
       (keydown.enter)="onEnter($event)"
     >
-      <div class="flex items-center gap-2">
-        @if (draggable()) {
-          <span class="text-line-strong -ml-1"><sc-icon name="grip" [size]="16" /></span>
-        }
-        <span class="font-display font-extrabold text-base">#{{ order().id }}</span>
-        @if (showStatus()) {
-          <sc-status-badge [status]="order().status" />
-        }
-        @if (order().age) {
-          <span class="ml-auto text-xs font-semibold text-ink-muted">{{ order().age }}</span>
-        }
-      </div>
-      <p class="m-0 text-title font-bold">{{ order().name }}</p>
-      @if (order().product) {
-        <div class="flex items-center gap-2 min-w-0 text-sm font-semibold text-ink" data-testid="order-product">
-          <sc-pack-visual
-            class="size-7 shrink-0 rounded-xs"
-            [url]="order().productCover"
-            [name]="order().product!"
-            [compact]="true"
-          />
-          <span class="truncate">{{ order().product }}</span>
+      <!-- Étiquettes (façon Trello) : pack commandé, statut hors Kanban -->
+      @if (order().product || showStatus()) {
+        <div class="flex flex-wrap items-center gap-1.5 min-w-0">
+          @if (order().product) {
+            <span
+              class="inline-flex items-center gap-1.5 max-w-full h-6 pl-0.5 pr-2 rounded-sm bg-surface-sunken text-xs font-bold text-ink"
+              data-testid="order-product"
+            >
+              <sc-pack-visual
+                class="size-5 shrink-0 rounded-xs"
+                [url]="order().productCover"
+                [name]="order().product!"
+                [compact]="true"
+              />
+              <span class="truncate">{{ order().product }}</span>
+            </span>
+          }
+          @if (showStatus()) {
+            <sc-status-badge [status]="order().status" />
+          }
         </div>
       }
-      <div class="flex items-center gap-3 text-sm font-semibold text-ink-muted">
-        <span class="text-ink font-extrabold">{{ amount() }}</span>
-        <span class="inline-flex items-center gap-1"><sc-icon name="pin" [size]="14" />{{ order().city }}</span>
+
+      <p class="m-0 text-title font-bold leading-5">{{ order().name }}</p>
+
+      <!-- Badges : référence, ancienneté, ville — montant à droite -->
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-ink-muted">
+        <span class="font-display font-extrabold text-ink">#{{ order().id }}</span>
+        @if (order().age) {
+          <span class="inline-flex items-center gap-1"><sc-icon name="clock" [size]="13" />{{ order().age }}</span>
+        }
+        <span class="inline-flex items-center gap-1 min-w-0"><sc-icon name="pin" [size]="13" /><span class="truncate">{{ order().city }}</span></span>
+        <span class="ml-auto text-sm font-extrabold text-ink whitespace-nowrap">{{ amount() }}</span>
       </div>
+
       @if (order().status === 'shipped') {
-        <span class="inline-flex items-center gap-1.5 text-label tracking-normal text-info">
-          <sc-icon name="truck" [size]="16" />{{ order().carrier || 'Yalidine' }}{{
+        <span
+          class="inline-flex items-center gap-1.5 h-7 px-2 rounded-sm bg-info-soft text-xs font-bold text-info justify-self-start"
+        >
+          <sc-icon name="truck" [size]="14" />{{ order().carrier || 'Yalidine' }}{{
             order().tracking ? ' · ' + order().tracking : ''
           }}
         </span>
       } @else if (act(); as a) {
-        <div class="flex gap-2 mt-1">
-          <button
-            scButton
-            type="button"
-            size="sm"
-            class="flex-1"
-            [variant]="a.variant"
-            [icon]="done() ? 'check' : a.icon"
-            (click)="run($event)"
-            (keydown.enter)="$event.stopPropagation()"
-          >
-            {{ done() ? a.doneLabel : a.label }}
-          </button>
-        </div>
+        <button
+          scButton
+          type="button"
+          size="sm"
+          class="w-full mt-0.5"
+          [variant]="a.variant"
+          [icon]="done() ? 'check' : a.icon"
+          (click)="run($event)"
+          (keydown.enter)="$event.stopPropagation()"
+        >
+          {{ done() ? a.doneLabel : a.label }}
+        </button>
       }
     </article>
   `,

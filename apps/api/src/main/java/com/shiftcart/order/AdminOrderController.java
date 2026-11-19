@@ -43,9 +43,10 @@ public class AdminOrderController {
             @RequestParam(name = "q", required = false) String q,
             @RequestParam(name = "month", required = false) String month,
             @RequestParam(name = "productId", required = false) Long productId,
+            @RequestParam(name = "day", required = false) String day,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "50") int size) {
-        return service.list(status, q, month, productId, page, size);
+        return service.list(status, q, month, productId, day, page, size);
     }
 
     @GetMapping("/counts")

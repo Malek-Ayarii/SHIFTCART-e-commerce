@@ -172,6 +172,7 @@ class StatsApiTest extends IntegrationTest {
         assertThat(p.get(0).get("returned").asLong()).isEqualTo(1);
         assertThat(p.get(0).get("collectedTnd").decimalValue()).isEqualByComparingTo("79");
         assertThat(p.get(0).get("sharePct").asInt()).isEqualTo(75);
+        assertThat(p.get(0).get("orderedTnd").decimalValue()).isEqualByComparingTo("237");
         assertThat(p.get(1).get("productId").asLong()).isEqualTo(barista);
         assertThat(p.get(1).get("sharePct").asInt()).isEqualTo(25);
         // Les packs actifs sans commande apparaissent à 0 (Meal Prep est actif depuis V4).
@@ -180,6 +181,64 @@ class StatsApiTest extends IntegrationTest {
             hasMealPrep |= row.get("name").asText().contains("Meal Prep");
         }
         assertThat(hasMealPrep).isTrue();
+    }
+
+    @Test
+    void dailyCoversEveryDayOfTheMonth() throws Exception {
+        JsonNode d = getJson("/api/admin/stats/daily", "2030-03");
+        assertThat(d).hasSize(31);
+        // 00:30 le 1er mars à Tunis compte le 1er mars.
+        assertThat(d.get(0).get("date").asText()).isEqualTo("2030-03-01");
+        assertThat(d.get(0).get("orders").asLong()).isEqualTo(1);
+        assertThat(d.get(0).get("orderedTnd").decimalValue()).isEqualByComparingTo("89");
+        assertThat(d.get(2).get("orders").asLong()).isZero();
+        // Annulée : comptée en commandes, pas dans le CA.
+        assertThat(d.get(4).get("orders").asLong()).isEqualTo(1);
+        assertThat(d.get(4).get("orderedTnd").decimalValue()).isEqualByComparingTo("0");
+        long total = 0;
+        for (JsonNode row : d) {
+            total += row.get("orders").asLong();
+        }
+        assertThat(total).isEqualTo(8);
+        assertThat(getJson("/api/admin/stats/daily", "2030-02")).hasSize(28);
+    }
+
+    @Test
+    void calendarCoversTheWholeYearInTunisTime() throws Exception {
+        JsonNode c = body(mvc.perform(get("/api/admin/stats/calendar").param("year", "2030")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(c.get("year").asInt()).isEqualTo(2030);
+        JsonNode days = c.get("days");
+        assertThat(days).hasSize(365);
+        // 1er mars 2030 = 60e jour ; SC-T7 (00:30 à Tunis) y compte.
+        JsonNode mar1 = days.get(59);
+        assertThat(mar1.get("date").asText()).isEqualTo("2030-03-01");
+        assertThat(mar1.get("orders").asLong()).isEqualTo(1);
+        JsonNode mar5 = days.get(63);
+        assertThat(mar5.get("cancelled").asLong()).isEqualTo(1);
+        assertThat(mar5.get("orderedTnd").decimalValue()).isEqualByComparingTo("0");
+        long total = 0;
+        long delivered = 0;
+        for (JsonNode d : days) {
+            total += d.get("orders").asLong();
+            delivered += d.get("delivered").asLong();
+        }
+        assertThat(total).isEqualTo(15);
+        assertThat(delivered).isEqualTo(6);
+        mvc.perform(get("/api/admin/stats/calendar").param("year", "1999").header(HttpHeaders.AUTHORIZATION,
+                bearer(token))).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void ordersCanBeListedForOneDay() throws Exception {
+        JsonNode page = body(mvc.perform(get("/api/admin/orders").param("day", "2030-03-01")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(token)))
+                .andExpect(status().isOk()).andReturn());
+        assertThat(page.get("totalElements").asLong()).isEqualTo(1);
+        assertThat(page.get("content").get(0).get("ref").asText()).isEqualTo("SC-T7");
+        mvc.perform(get("/api/admin/orders").param("day", "01/03/2030").header(HttpHeaders.AUTHORIZATION,
+                bearer(token))).andExpect(status().isBadRequest());
     }
 
     @Test

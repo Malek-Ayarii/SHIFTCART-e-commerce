@@ -3,6 +3,11 @@ package com.shiftcart.stats;
 import com.shiftcart.common.config.AppProperties;
 import com.shiftcart.common.money.Money;
 import com.shiftcart.common.time.MonthRange;
+import com.shiftcart.common.config.CoreConfig;
+import com.shiftcart.common.error.ApiException;
+import com.shiftcart.stats.StatsDtos.Calendar;
+import com.shiftcart.stats.StatsDtos.CalendarDay;
+import com.shiftcart.stats.StatsDtos.DayRow;
 import com.shiftcart.stats.StatsDtos.Finance;
 import com.shiftcart.stats.StatsDtos.GovernorateRow;
 import com.shiftcart.stats.StatsDtos.Kpis;
@@ -31,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
  *       CA net = encaissé − frais transporteur ;</li>
  *   <li>semaines S1…S5 = jours 1–7, 8–14, 15–21, 22–28, 29–fin du mois.</li>
  * </ul>
+ * {@link #daily} donne une ligne par jour du mois (jours sans commande à 0).
  * Toutes les vues acceptent un filtre optionnel par pack ({@code productId}) ; {@link #products} ventile par pack
  * (packs actifs + packs inactifs ayant des commandes dans le mois).
  */
@@ -154,13 +160,15 @@ public class StatsService {
     @Transactional(readOnly = true)
     public List<ProductRow> products(MonthRange month) {
         MapSqlParameterSource params = params(month, null);
-        record Row(long productId, String name, long orders, long delivered, long returned, long collected) {}
+        record Row(long productId, String name, long orders, long delivered, long returned, long collected,
+                long ordered) {}
         List<Row> rows = jdbc.query("""
                 SELECT p.id, p.name,
                        count(o.id) AS orders,
                        count(o.id) FILTER (WHERE o.status = 'DELIVERED') AS delivered,
                        count(o.id) FILTER (WHERE o.status = 'RETURNED') AS returned,
-                       coalesce(sum(o.amount_millimes) FILTER (WHERE o.status = 'DELIVERED'), 0) AS collected
+                       coalesce(sum(o.amount_millimes) FILTER (WHERE o.status = 'DELIVERED'), 0) AS collected,
+                       coalesce(sum(o.amount_millimes) FILTER (WHERE o.status <> 'CANCELLED'), 0) AS ordered
                 FROM product p
                 LEFT JOIN customer_order o ON o.product_id = p.id
                      AND o.created_at >= :start AND o.created_at < :end
@@ -170,12 +178,77 @@ public class StatsService {
                 """,
                 params,
                 (rs, i) -> new Row(rs.getLong("id"), rs.getString("name"), rs.getLong("orders"),
-                        rs.getLong("delivered"), rs.getLong("returned"), rs.getLong("collected")));
+                        rs.getLong("delivered"), rs.getLong("returned"), rs.getLong("collected"),
+                        rs.getLong("ordered")));
         long total = rows.stream().mapToLong(Row::orders).sum();
         return rows.stream()
                 .map(r -> new ProductRow(r.productId(), r.name(), r.orders(), r.delivered(), r.returned(),
-                        Money.toTnd(r.collected()), Money.pct(r.orders(), total)))
+                        Money.toTnd(r.collected()), Money.pct(r.orders(), total), Money.toTnd(r.ordered())))
                 .toList();
+    }
+
+    /** Une ligne par jour du mois (cohorte, heure de Tunis) ; jours sans commande à 0. */
+    @Transactional(readOnly = true)
+    public List<DayRow> daily(MonthRange month, Long productId) {
+        int days = month.month().lengthOfMonth();
+        long[] orders = new long[days];
+        long[] ordered = new long[days];
+        jdbc.query("""
+                SELECT extract(day FROM created_at AT TIME ZONE 'Africa/Tunis')::int AS day,
+                       count(*) AS orders,
+                       coalesce(sum(amount_millimes) FILTER (WHERE status <> 'CANCELLED'), 0) AS ordered
+                FROM customer_order WHERE""" + cohort(productId) + " GROUP BY day",
+                params(month, productId),
+                rs -> {
+                    int d = rs.getInt("day") - 1;
+                    if (d >= 0 && d < days) {
+                        orders[d] = rs.getLong("orders");
+                        ordered[d] = rs.getLong("ordered");
+                    }
+                });
+        List<DayRow> rows = new ArrayList<>(days);
+        for (int i = 0; i < days; i++) {
+            rows.add(new DayRow(month.month().atDay(i + 1).toString(), orders[i], Money.toTnd(ordered[i])));
+        }
+        return rows;
+    }
+
+    /** Agenda annuel : une ligne par jour (heure de Tunis), jours sans commande à 0. */
+    @Transactional(readOnly = true)
+    public Calendar calendar(int year, Long productId) {
+        if (year < 2000 || year > 2100) {
+            throw ApiException.badRequest("Année invalide.");
+        }
+        java.time.LocalDate first = java.time.LocalDate.of(year, 1, 1);
+        int days = first.lengthOfYear();
+        long[][] v = new long[days][5];
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("start", OffsetDateTime.ofInstant(first.atStartOfDay(CoreConfig.TUNIS).toInstant(), ZoneOffset.UTC))
+                .addValue("end", OffsetDateTime.ofInstant(first.plusYears(1).atStartOfDay(CoreConfig.TUNIS).toInstant(),
+                        ZoneOffset.UTC))
+                .addValue("productId", productId);
+        jdbc.query("""
+                SELECT extract(doy FROM created_at AT TIME ZONE 'Africa/Tunis')::int AS doy,
+                       count(*) AS orders,
+                       coalesce(sum(amount_millimes) FILTER (WHERE status <> 'CANCELLED'), 0) AS ordered,
+                       count(*) FILTER (WHERE status = 'DELIVERED') AS delivered,
+                       count(*) FILTER (WHERE status = 'RETURNED') AS returned,
+                       count(*) FILTER (WHERE status = 'CANCELLED') AS cancelled
+                FROM customer_order WHERE""" + cohort(productId) + " GROUP BY doy",
+                params,
+                rs -> {
+                    int d = rs.getInt("doy") - 1;
+                    if (d >= 0 && d < days) {
+                        v[d] = new long[] {rs.getLong("orders"), rs.getLong("ordered"), rs.getLong("delivered"),
+                                rs.getLong("returned"), rs.getLong("cancelled")};
+                    }
+                });
+        List<CalendarDay> rows = new ArrayList<>(days);
+        for (int i = 0; i < days; i++) {
+            rows.add(new CalendarDay(first.plusDays(i).toString(), v[i][0], Money.toTnd(v[i][1]), v[i][2], v[i][3],
+                    v[i][4]));
+        }
+        return new Calendar(year, rows);
     }
 
     private static String cohort(Long productId) {

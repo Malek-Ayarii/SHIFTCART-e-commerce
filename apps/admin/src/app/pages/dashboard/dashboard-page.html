@@ -97,6 +97,13 @@
         (open)="openOrder($event)"
       />
     }
+
+    <sc-dashboard-charts
+      [month]="state.month()"
+      [productId]="state.productFilter()"
+      [counts]="serverCounts()"
+      [refreshKey]="chartsRefresh()"
+    />
   </div>
 } @else {
   <!-- C5 — Commandes, vue mobile équipe -->

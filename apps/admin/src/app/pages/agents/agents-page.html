@@ -1,0 +1,470 @@
+<!-- Avatar d'agent : l'assistant en noir (il coordonne), les spécialistes sur fond neutre. -->
+<ng-template #avatar let-key let-size="size">
+  <span
+    class="grid place-items-center shrink-0 rounded-md"
+    [class]="(key === 'assistant' ? 'bg-ink text-ink-inverse ' : 'bg-surface-sunken text-ink ') + (size === 'lg' ? 'size-11' : size === 'sm' ? 'size-7' : 'size-9')"
+    aria-hidden="true"
+  >
+    <sc-icon [name]="iconOf(key)" [size]="size === 'lg' ? 22 : size === 'sm' ? 15 : 18" />
+  </span>
+</ng-template>
+
+<!-- Liste des conversations (barre latérale et panneau mobile) -->
+<ng-template #threadList>
+  @if (threadsLoading()) {
+    @for (i of [0, 1, 2]; track i) {
+      <div class="sc-skeleton h-14 rounded-md" aria-hidden="true"></div>
+    }
+  } @else {
+    <ul class="m-0 p-0 list-none flex flex-col gap-1" aria-label="Conversations">
+      @for (t of threads(); track t.id) {
+        <li class="group relative">
+          <button
+            type="button"
+            class="w-full flex items-start gap-2.5 pl-2.5 pr-12 py-2.5 rounded-md border-0 text-left cursor-pointer transition-colors duration-120"
+            [class]="activeThread() === t.id ? 'bg-surface-sunken' : 'bg-transparent hover:bg-surface-sunken'"
+            [attr.aria-current]="activeThread() === t.id ? 'true' : null"
+            [disabled]="!!pending()"
+            (click)="openThread(t.id)"
+          >
+            <ng-container *ngTemplateOutlet="avatar; context: { $implicit: t.lastAgent ?? 'assistant', size: 'sm' }" />
+            <span class="min-w-0 flex flex-col">
+              <span class="text-sm font-bold text-ink truncate">{{ t.title }}</span>
+              <span class="text-xs font-semibold text-ink-muted">{{ age(t.updatedAt) }} · {{ t.messages }} message{{ t.messages > 1 ? 's' : '' }}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="absolute right-1 top-1/2 -translate-y-1/2 size-11 grid place-items-center rounded-sm border-0 bg-transparent text-ink-muted cursor-pointer opacity-0 group-hover:opacity-100 focus-visible:opacity-100 hover:text-danger hover:bg-danger-soft"
+            [attr.aria-label]="'Supprimer la conversation « ' + t.title + ' »'"
+            title="Supprimer"
+            (click)="deleteThread(t, $event)"
+          >
+            <sc-icon name="trash" [size]="16" />
+          </button>
+        </li>
+      } @empty {
+        <li class="px-2.5 py-3 text-sm text-ink-muted">Aucune conversation pour l'instant.</li>
+      }
+    </ul>
+  }
+</ng-template>
+
+<div class="flex flex-col gap-5 lg:h-[calc(100dvh-var(--spacing)*14)]">
+  <!-- En-tête -->
+  <header class="flex flex-wrap items-end gap-4">
+    <div class="max-md:sr-only flex flex-col gap-1 min-w-0">
+      <h1 class="m-0 text-kpi">Agents IA</h1>
+      <p class="m-0 text-sm text-ink-muted font-semibold">
+        Un assistant qui oriente tes questions et 7 spécialistes qui se concertent
+      </p>
+    </div>
+    <div class="ml-auto flex items-center gap-2">
+      @if (roster(); as r) {
+        <span class="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-pill bg-surface-raised shadow-[inset_0_0_0_1px_var(--line)] text-xs font-bold text-ink-muted">
+          <sc-icon name="bot" [size]="14" />{{ r.model }}
+        </span>
+      }
+      <button scButton variant="ghost" icon="newChat" type="button" [disabled]="!!pending()" (click)="newConversation()">
+        Nouvelle conversation
+      </button>
+    </div>
+  </header>
+
+  @if (rosterError(); as err) {
+    <sc-error-state [message]="err" (retry)="loadRoster()" />
+  }
+
+  <!-- Mobile / tablette : destinataires en pastilles + conversations repliables -->
+  <div class="lg:hidden flex flex-col gap-3">
+    <div role="group" aria-label="Destinataire" class="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 [scrollbar-width:none]">
+      <button
+        type="button"
+        class="shrink-0 inline-flex items-center gap-2 h-11 pl-1.5 pr-4 rounded-pill border-0 text-sm font-extrabold cursor-pointer"
+        [class]="recipient() === null ? 'bg-ink text-ink-inverse' : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'"
+        [attr.aria-pressed]="recipient() === null"
+        (click)="selectRecipient(null)"
+      >
+        <span class="size-8 grid place-items-center rounded-pill" [class]="recipient() === null ? 'bg-surface-raised text-ink' : 'bg-ink text-ink-inverse'"><sc-icon name="sparkles" [size]="16" /></span>
+        Assistant
+      </button>
+      @for (a of specialists(); track a.key) {
+        <button
+          type="button"
+          class="shrink-0 inline-flex items-center gap-2 h-11 pl-1.5 pr-4 rounded-pill border-0 text-sm font-extrabold cursor-pointer whitespace-nowrap"
+          [class]="recipient() === a.key ? 'bg-ink text-ink-inverse' : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)]'"
+          [attr.aria-pressed]="recipient() === a.key"
+          (click)="selectRecipient(a.key)"
+        >
+          <span class="size-8 grid place-items-center rounded-pill bg-surface-sunken text-ink"><sc-icon [name]="iconOf(a.key)" [size]="16" /></span>
+          {{ a.label }}
+        </button>
+      }
+    </div>
+    <div class="rounded-lg bg-surface-raised shadow-card">
+      <button
+        type="button"
+        class="w-full flex items-center gap-2 h-12 px-4 border-0 bg-transparent cursor-pointer text-sm font-extrabold text-ink"
+        [attr.aria-expanded]="showThreadsMobile()"
+        (click)="showThreadsMobile.set(!showThreadsMobile())"
+      >
+        <sc-icon name="orders" [size]="18" />Conversations
+        <span class="text-ink-muted font-bold">· {{ threads().length }}</span>
+        <sc-icon name="chevronDown" [size]="18" class="ml-auto transition-transform duration-120" [class.rotate-180]="showThreadsMobile()" />
+      </button>
+      @if (showThreadsMobile()) {
+        <div class="px-2 pb-2 max-h-72 overflow-y-auto">
+          <ng-container *ngTemplateOutlet="threadList" />
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="flex-1 min-h-0 grid gap-5 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
+    <!-- Barre latérale : équipe + conversations -->
+    <aside class="hidden lg:flex flex-col gap-5 min-h-0 overflow-y-auto p-1.5 -m-1.5 [scrollbar-width:thin]" aria-label="Équipe et conversations">
+      <section aria-labelledby="team-title" class="flex flex-col gap-2">
+        <h2 id="team-title" class="m-0 text-label uppercase text-ink-muted">Équipe</h2>
+        @if (assistant(); as a) {
+          <button
+            type="button"
+            class="w-full flex items-start gap-3 p-3.5 rounded-lg border-0 text-left cursor-pointer transition-[background-color,box-shadow,transform] duration-120 hover:-translate-y-px motion-reduce:hover:translate-y-0"
+            [class]="recipient() === null ? 'bg-ink text-ink-inverse shadow-lift' : 'bg-surface-raised text-ink shadow-card hover:shadow-lift'"
+            [attr.aria-pressed]="recipient() === null"
+            (click)="selectRecipient(null)"
+          >
+            <span
+              class="size-11 grid place-items-center rounded-md shrink-0"
+              [class]="recipient() === null ? 'bg-surface-raised text-ink' : 'bg-ink text-ink-inverse'"
+              aria-hidden="true"
+            >
+              <sc-icon name="sparkles" [size]="22" />
+            </span>
+            <span class="min-w-0 flex flex-col gap-0.5">
+              <span class="text-title font-extrabold">{{ a.label }}</span>
+              <span class="text-xs font-semibold leading-4" [class]="recipient() === null ? 'opacity-80' : 'text-ink-muted'">{{ a.summary }}</span>
+            </span>
+          </button>
+        } @else if (!rosterError()) {
+          <div class="sc-skeleton h-20 rounded-lg" aria-hidden="true"></div>
+        }
+
+        <ul class="m-0 p-0 list-none flex flex-col gap-1 mt-1" aria-label="Spécialistes">
+          @for (a of specialists(); track a.key) {
+            <li>
+              <button
+                type="button"
+                class="w-full flex items-center gap-3 p-2 rounded-md border-0 text-left cursor-pointer transition-colors duration-120"
+                [class]="recipient() === a.key ? 'bg-ink text-ink-inverse' : 'bg-transparent text-ink hover:bg-surface-raised'"
+                [attr.aria-pressed]="recipient() === a.key"
+                [attr.title]="a.summary"
+                (click)="selectRecipient(a.key)"
+              >
+                <span
+                  class="size-9 grid place-items-center rounded-md shrink-0"
+                  [class]="recipient() === a.key ? 'bg-surface-raised text-ink' : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line)]'"
+                  aria-hidden="true"
+                >
+                  <sc-icon [name]="iconOf(a.key)" [size]="18" />
+                </span>
+                <span class="min-w-0 flex flex-col">
+                  <span class="text-sm font-extrabold truncate">{{ a.label }}</span>
+                  <span class="text-xs font-semibold truncate" [class]="recipient() === a.key ? 'opacity-75' : 'text-ink-muted'">{{ a.domain }}</span>
+                </span>
+              </button>
+            </li>
+          } @empty {
+            @if (!rosterError()) {
+              @for (i of [0, 1, 2, 3, 4, 5, 6]; track i) {
+                <li class="sc-skeleton h-13 rounded-md" aria-hidden="true"></li>
+              }
+            }
+          }
+        </ul>
+      </section>
+
+      <section aria-labelledby="threads-title" class="flex flex-col gap-2 min-h-0">
+        <h2 id="threads-title" class="m-0 text-label uppercase text-ink-muted">Conversations</h2>
+        <ng-container *ngTemplateOutlet="threadList" />
+      </section>
+    </aside>
+
+    <!-- Conversation -->
+    <section
+      class="min-h-[70dvh] lg:min-h-0 flex flex-col rounded-lg bg-surface-raised shadow-card overflow-hidden"
+      aria-labelledby="chat-title"
+    >
+      <!-- Destinataire -->
+      <div class="flex items-center gap-3 px-4 md:px-5 py-3 border-b border-line">
+        @if (recipientInfo(); as r) {
+          <ng-container *ngTemplateOutlet="avatar; context: { $implicit: r.key }" />
+          <div class="min-w-0 flex flex-col">
+            <h2 id="chat-title" class="m-0 text-title font-extrabold truncate">
+              {{ activeTitle() ?? (r.coordinator ? "Demande à l'équipe" : r.label) }}
+            </h2>
+            <span class="text-xs font-semibold text-ink-muted truncate">
+              À : {{ r.label }} · {{ r.coordinator ? 'oriente vers les bons spécialistes' : r.domain }}
+            </span>
+          </div>
+          @if (recipient() !== null) {
+            <button
+              type="button"
+              class="ml-auto shrink-0 inline-flex items-center gap-1.5 h-11 px-3 rounded-sm border-0 bg-transparent text-sm font-bold text-ink-muted cursor-pointer hover:text-ink hover:bg-surface-sunken"
+              (click)="selectRecipient(null)"
+            >
+              <sc-icon name="sparkles" [size]="16" />Passer par l'assistant
+            </button>
+          }
+        } @else {
+          <h2 id="chat-title" class="m-0 text-title font-extrabold">Agents IA</h2>
+        }
+      </div>
+
+
+      <!-- Fil -->
+      <div #scroller class="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 py-5 [scrollbar-width:thin]" aria-live="polite" [attr.aria-busy]="!!pending()">
+        @if (roster() && !roster()!.configured) {
+          <div class="max-w-3xl mx-auto mb-5 p-3.5 rounded-md bg-warning-soft text-warning flex gap-2.5 items-start text-sm font-semibold" role="status">
+            <sc-icon name="alert" [size]="18" />
+            <span>
+              Les agents ne sont pas encore connectés à l'IA. Ajoute <code class="font-mono font-bold">AGENTS_API_KEY</code>
+              (ou <code class="font-mono font-bold">ANTHROPIC_API_KEY</code>) dans l'environnement de l'API, puis redémarre-la.
+            </span>
+          </div>
+        }
+        @if (threadError(); as err) {
+          <sc-error-state [message]="err" (retry)="openThread(activeThread()!)" />
+        } @else if (threadLoading()) {
+          <div class="flex flex-col gap-5" aria-hidden="true">
+            <div class="sc-skeleton h-12 w-2/3 self-end rounded-lg"></div>
+            <div class="sc-skeleton h-40 rounded-lg"></div>
+          </div>
+        } @else if (messages().length === 0 && !pending()) {
+          <!-- État vide : l'équipe et des idées de questions -->
+          <div class="max-w-3xl mx-auto flex flex-col items-center text-center gap-5 py-6 md:py-10 sc-enter">
+            <span class="size-14 grid place-items-center rounded-lg bg-ink text-ink-inverse shadow-lift" aria-hidden="true">
+              <sc-icon name="sparkles" [size]="28" />
+            </span>
+            <div class="flex flex-col gap-2">
+              <h3 class="m-0 text-display-lg">Pose ta question à l'équipe</h3>
+              <p class="m-0 text-body text-ink-muted max-w-xl">
+                L'assistant choisit les bons spécialistes, les fait travailler ensemble et te rend une seule réponse.
+                Tu peux aussi écrire directement à un spécialiste.
+              </p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-1.5" aria-hidden="true">
+              @for (a of specialists(); track a.key) {
+                <span class="inline-flex items-center gap-1.5 h-7 pl-1 pr-2.5 rounded-pill bg-surface-sunken text-xs font-bold text-ink">
+                  <span class="size-5 grid place-items-center rounded-pill bg-surface-raised"><sc-icon [name]="iconOf(a.key)" [size]="12" /></span>{{ a.label }}
+                </span>
+              }
+            </div>
+            <ul class="m-0 p-0 list-none w-full grid gap-3 sm:grid-cols-2 text-left mt-2" aria-label="Idées de questions">
+              @for (p of prompts; track p.text; let i = $index) {
+                <li class="sc-enter" [style.--d]="80 + i * 40 + 'ms'">
+                  <button
+                    type="button"
+                    class="w-full h-full flex flex-col gap-2 p-4 rounded-lg border-0 bg-surface text-left cursor-pointer shadow-[inset_0_0_0_1px_var(--line)] transition-[box-shadow,transform] duration-120 hover:shadow-[inset_0_0_0_2px_var(--ink)] hover:-translate-y-px motion-reduce:hover:translate-y-0"
+                    (click)="usePrompt(p)"
+                  >
+                    <span class="text-sm font-semibold text-ink leading-5">{{ p.text }}</span>
+                    <span class="mt-auto inline-flex items-center gap-1.5 text-xs font-bold text-ink-muted">
+                      <sc-icon [name]="iconOf(p.agent ?? 'assistant')" [size]="14" />{{ p.hint }}
+                      <sc-icon name="arrowRight" [size]="14" class="ml-auto" />
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          </div>
+        } @else {
+          <ol class="m-0 p-0 list-none flex flex-col gap-6 max-w-3xl mx-auto">
+            @for (m of messages(); track m.id) {
+              @if (m.role === 'user') {
+                <li class="flex justify-end sc-enter scroll-mt-4" [attr.data-msg]="m.id">
+                  <div class="max-w-[88%] flex flex-col items-end gap-1">
+                    <span class="text-xs font-bold text-ink-muted">Toi → {{ agentLabel(m.agent) }}</span>
+                    <p class="m-0 px-4 py-3 rounded-lg rounded-br-xs bg-ink text-ink-inverse text-body whitespace-pre-wrap [overflow-wrap:anywhere]">{{ m.content }}</p>
+                  </div>
+                </li>
+              } @else {
+                <li class="flex gap-3 sc-enter">
+                  <ng-container *ngTemplateOutlet="avatar; context: { $implicit: m.agent }" />
+                  <article class="min-w-0 flex-1 flex flex-col gap-2.5" [attr.aria-label]="'Réponse de ' + agentLabel(m.agent)">
+                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pt-1">
+                      <span class="text-sm font-extrabold">{{ agentLabel(m.agent) }}</span>
+                      <span class="text-xs font-semibold text-ink-muted">{{ agentInfo(m.agent)?.domain }} · {{ time(m.createdAt) }}</span>
+                      @if (m.status === 'refused') {
+                        <span class="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-warning-soft text-warning text-xs font-extrabold"><sc-icon name="alert" [size]="12" />Demande refusée</span>
+                      } @else if (m.status === 'truncated') {
+                        <span class="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-warning-soft text-warning text-xs font-extrabold"><sc-icon name="alert" [size]="12" />Réponse incomplète</span>
+                      }
+                    </div>
+
+                    <!-- Coordination : qui a été consulté, données lues -->
+                    @if (m.trace.length) {
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        @if (consulted(m).length) {
+                          <span class="text-xs font-bold text-ink-muted mr-0.5">A consulté</span>
+                          @for (k of consulted(m); track k) {
+                            <span class="inline-flex items-center gap-1.5 h-7 pl-1 pr-2.5 rounded-pill bg-surface-sunken text-xs font-bold text-ink">
+                              <span class="size-5 grid place-items-center rounded-pill bg-surface-raised"><sc-icon [name]="iconOf(k)" [size]="12" /></span>{{ agentLabel(k) }}
+                            </span>
+                          }
+                        }
+                        @if (reads(m); as n) {
+                          <span class="inline-flex items-center gap-1 h-7 px-2.5 rounded-pill bg-surface-sunken text-xs font-bold text-ink-muted">
+                            <sc-icon name="database" [size]="12" />{{ n }} lecture{{ n > 1 ? 's' : '' }} de données
+                          </span>
+                        }
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-1 h-11 px-2 -my-2 rounded-sm border-0 bg-transparent text-xs font-extrabold text-ink cursor-pointer underline underline-offset-2 hover:bg-surface-sunken"
+                          [attr.aria-expanded]="traceOpen(m)"
+                          (click)="toggleTrace(m)"
+                        >
+                          <sc-icon name="workflow" [size]="14" />{{ traceOpen(m) ? 'Masquer la coordination' : 'Voir la coordination' }}
+                        </button>
+                      </div>
+
+                      @if (traceOpen(m)) {
+                        <ol class="m-0 p-3 md:p-4 list-none flex flex-col gap-3 rounded-md bg-surface-sunken" aria-label="Fil de coordination">
+                          @for (s of m.trace; track $index; let i = $index) {
+                            @if (s.type === 'consult') {
+                              <li class="flex gap-2.5" [class]="stepIndent(s)">
+                                <span class="text-ink-muted pt-0.5"><sc-icon name="cornerDownRight" [size]="16" /></span>
+                                <div class="min-w-0 flex-1 flex flex-col gap-1.5">
+                                  <p class="m-0 flex flex-wrap items-center gap-1.5 text-sm font-extrabold">
+                                    <ng-container *ngTemplateOutlet="avatar; context: { $implicit: s.from, size: 'sm' }" />
+                                    {{ agentLabel(s.from) }}
+                                    <sc-icon name="arrowRight" [size]="14" class="text-ink-muted" />
+                                    <ng-container *ngTemplateOutlet="avatar; context: { $implicit: s.to, size: 'sm' }" />
+                                    {{ agentLabel(s.to) }}
+                                    @if (s.status === 'refused' || s.status === 'error') {
+                                      <span class="inline-flex items-center gap-1 h-6 px-2 rounded-sm bg-warning-soft text-warning text-xs font-extrabold"><sc-icon name="alert" [size]="12" />Sans réponse</span>
+                                    }
+                                  </p>
+                                  @if (s.question) {
+                                    <p class="m-0 text-sm text-ink-muted [overflow-wrap:anywhere]">« {{ s.question }} »</p>
+                                  }
+                                  @if (s.answer) {
+                                    @if (answerOpen(m, i)) {
+                                      <div class="p-3 rounded-md bg-surface-raised">
+                                        <sc-markdown [text]="s.answer" class="text-body-sm" />
+                                      </div>
+                                    } @else {
+                                      <p class="m-0 text-sm text-ink line-clamp-2 [overflow-wrap:anywhere]">{{ plain(s.answer) }}</p>
+                                    }
+                                    <button
+                                      type="button"
+                                      class="self-start inline-flex items-center gap-1 h-11 px-2 -mx-2 -my-2 rounded-sm border-0 bg-transparent text-xs font-extrabold text-ink cursor-pointer underline underline-offset-2 hover:bg-surface-raised"
+                                      [attr.aria-expanded]="answerOpen(m, i)"
+                                      (click)="toggleAnswer(m, i)"
+                                    >
+                                      {{ answerOpen(m, i) ? 'Réduire' : 'Lire la réponse de ' + agentLabel(s.to) }}
+                                    </button>
+                                  }
+                                </div>
+                              </li>
+                            } @else {
+                              <li class="flex items-center gap-2.5 text-xs font-semibold text-ink-muted" [class]="s.depth >= 2 ? 'ml-8' : s.depth === 1 ? 'ml-6' : ''">
+                                <sc-icon name="database" [size]="14" />
+                                <span><span class="font-bold text-ink">{{ agentLabel(s.from) }}</span> a {{ s.label.replace('lire ', 'lu ') }}</span>
+                                @if (s.status === 'error') {
+                                  <span class="text-warning font-bold">· indisponible</span>
+                                }
+                              </li>
+                            }
+                          }
+                        </ol>
+                      }
+                    }
+
+                    <div class="rounded-lg rounded-tl-xs shadow-[inset_0_0_0_1px_var(--line)] p-4 md:p-5">
+                      <sc-markdown [text]="m.content" />
+                    </div>
+                  </article>
+                </li>
+              }
+            }
+
+            @if (pending(); as p) {
+              <li class="flex justify-end sc-enter">
+                <div class="max-w-[88%] flex flex-col items-end gap-1">
+                  <span class="text-xs font-bold text-ink-muted">Toi → {{ agentLabel(p.agent) }}</span>
+                  <p class="m-0 px-4 py-3 rounded-lg rounded-br-xs bg-ink text-ink-inverse text-body whitespace-pre-wrap [overflow-wrap:anywhere]">{{ p.content }}</p>
+                </div>
+              </li>
+              <li class="flex gap-3 sc-enter" role="status">
+                <ng-container *ngTemplateOutlet="avatar; context: { $implicit: p.agent }" />
+                <div class="min-w-0 flex-1 flex flex-col gap-2 pt-1">
+                  <span class="text-sm font-extrabold">{{ agentLabel(p.agent) }}</span>
+                  <div class="rounded-lg rounded-tl-xs shadow-[inset_0_0_0_1px_var(--line)] p-4 flex flex-col gap-3">
+                    <p class="m-0 flex items-center gap-2.5 text-sm font-bold text-ink">
+                      <span class="inline-flex gap-1" aria-hidden="true">
+                        <span class="size-2 rounded-pill bg-ink animate-bounce [animation-delay:-0.3s]"></span>
+                        <span class="size-2 rounded-pill bg-ink animate-bounce [animation-delay:-0.15s]"></span>
+                        <span class="size-2 rounded-pill bg-ink animate-bounce"></span>
+                      </span>
+                      {{ pendingLine() }}
+                      <span class="ml-auto text-xs font-semibold text-ink-muted tabular-nums">{{ elapsed() }} s</span>
+                    </p>
+                    @if (p.agent === 'assistant') {
+                      <div class="flex flex-wrap gap-1.5" aria-hidden="true">
+                        @for (a of specialists(); track a.key; let i = $index) {
+                          <span class="size-7 grid place-items-center rounded-md bg-surface-sunken text-ink-muted animate-pulse motion-reduce:animate-none" [style.animation-delay]="i * 120 + 'ms'">
+                            <sc-icon [name]="iconOf(a.key)" [size]="14" />
+                          </span>
+                        }
+                      </div>
+                    }
+                    @if (elapsed() >= 20) {
+                      <p class="m-0 text-xs font-semibold text-ink-muted">
+                        Quand plusieurs spécialistes se concertent, la réponse peut prendre jusqu'à une minute.
+                      </p>
+                    }
+                  </div>
+                </div>
+              </li>
+            }
+          </ol>
+        }
+      </div>
+
+      <!-- Saisie -->
+      <div class="sticky bottom-18 md:static border-t border-line px-3 md:px-5 py-3 md:py-4 bg-surface-raised">
+        @if (sendError(); as err) {
+          <p class="m-0 mb-2.5 flex items-start gap-2 text-sm font-semibold text-danger" role="alert">
+            <sc-icon name="alert" [size]="16" class="mt-0.5" />{{ err }}
+          </p>
+        }
+        <div
+          class="max-w-3xl mx-auto flex items-end gap-2 rounded-lg bg-surface p-1.5 pl-4 shadow-[inset_0_0_0_1.5px_var(--line-strong)] focus-within:shadow-[inset_0_0_0_2px_var(--focus-ring)] transition-shadow duration-120"
+        >
+          <label for="agent-composer" class="sc-sr">Ta question pour {{ recipientInfo()?.label ?? "l'assistant" }}</label>
+          <textarea
+            #composer
+            id="agent-composer"
+            rows="1"
+            class="flex-1 min-w-0 resize-none border-0 bg-transparent py-2.5 text-base leading-6 text-ink placeholder:text-ink-muted focus-visible:outline-none max-h-60"
+            [placeholder]="recipient() ? 'Écris à ' + (recipientInfo()?.label ?? 'ce spécialiste') + '…' : 'Pose ta question à l’équipe…'"
+            [value]="draft()"
+            [disabled]="!!pending()"
+            [attr.maxlength]="maxContent"
+            (input)="draft.set($any($event.target).value); autosize($any($event.target))"
+            (keydown)="onComposerKey($event)"
+          ></textarea>
+          <button scButton variant="primary" icon="send" type="button" class="shrink-0" [disabled]="!canSend()" (click)="send()">
+            Envoyer
+          </button>
+        </div>
+        <div class="max-w-3xl mx-auto mt-2 flex items-center justify-between gap-3 text-xs font-semibold text-ink-muted">
+          <span class="max-sm:hidden">Entrée pour envoyer · Maj + Entrée pour aller à la ligne</span>
+          @if (draft().length > maxContent - 500) {
+            <span class="ml-auto tabular-nums" [class.text-danger]="draft().length >= maxContent">{{ draft().length }} / {{ maxContent }}</span>
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

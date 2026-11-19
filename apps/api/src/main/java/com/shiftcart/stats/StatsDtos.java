@@ -21,5 +21,14 @@ public final class StatsDtos {
             BigDecimal collectedTnd, int sharePct) {}
 
     public record ProductRow(long productId, String name, long orders, long delivered, long returned,
-            BigDecimal collectedTnd, int sharePct) {}
+            BigDecimal collectedTnd, int sharePct, BigDecimal orderedTnd) {}
+
+    /** Un jour du mois (heure de Tunis) : commandes créées et CA commandé hors annulées. */
+    public record DayRow(String date, long orders, BigDecimal orderedTnd) {}
+
+    /** Agenda : un jour de l'année (heure de Tunis) avec le détail des issues. */
+    public record CalendarDay(String date, long orders, BigDecimal orderedTnd, long delivered, long returned,
+            long cancelled) {}
+
+    public record Calendar(int year, List<CalendarDay> days) {}
 }

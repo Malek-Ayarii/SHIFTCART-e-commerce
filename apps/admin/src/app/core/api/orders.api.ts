@@ -25,6 +25,7 @@ export class OrdersApi {
     if (query.page != null) params = params.set('page', query.page);
     if (query.size != null) params = params.set('size', query.size);
     if (query.productId != null) params = params.set('productId', query.productId);
+    if (query.day) params = params.set('day', query.day);
     return this.http.get<Page<OrderSummary>>(ORDERS_URL, { params });
   }
 

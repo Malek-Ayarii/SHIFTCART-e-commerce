@@ -21,6 +21,10 @@ export interface StatusMeta {
   badgeClass: string;
   /** Pastille de couleur en tête de colonne. */
   dotClass: string;
+  /** Fond de la liste Kanban (façon Trello) : la teinte *-soft du statut. */
+  laneBg: string;
+  /** Texte du titre de liste, lisible sur `laneBg`. */
+  laneInk: string;
 }
 
 export const STATUS_META: Record<OrderStatus, StatusMeta> = {
@@ -30,6 +34,8 @@ export const STATUS_META: Record<OrderStatus, StatusMeta> = {
     icon: 'zap',
     badgeClass: 'bg-orange-soft text-orange-ink',
     dotClass: 'bg-orange',
+    laneBg: 'bg-orange-soft',
+    laneInk: 'text-orange-ink',
   },
   pending: {
     label: 'En attente',
@@ -37,6 +43,8 @@ export const STATUS_META: Record<OrderStatus, StatusMeta> = {
     icon: 'clock',
     badgeClass: 'bg-warning-soft text-warning',
     dotClass: 'bg-warning',
+    laneBg: 'bg-warning-soft',
+    laneInk: 'text-warning',
   },
   confirmed: {
     label: 'Confirmée',
@@ -44,6 +52,8 @@ export const STATUS_META: Record<OrderStatus, StatusMeta> = {
     icon: 'check',
     badgeClass: 'bg-success-soft text-success',
     dotClass: 'bg-success',
+    laneBg: 'bg-success-soft',
+    laneInk: 'text-success',
   },
   shipped: {
     label: 'Expédiée',
@@ -51,6 +61,8 @@ export const STATUS_META: Record<OrderStatus, StatusMeta> = {
     icon: 'truck',
     badgeClass: 'bg-info-soft text-info',
     dotClass: 'bg-info',
+    laneBg: 'bg-info-soft',
+    laneInk: 'text-info',
   },
   delivered: {
     label: 'Livrée',
@@ -58,6 +70,8 @@ export const STATUS_META: Record<OrderStatus, StatusMeta> = {
     icon: 'banknote',
     badgeClass: 'bg-success-soft text-success',
     dotClass: 'bg-success',
+    laneBg: 'bg-success-soft',
+    laneInk: 'text-success',
   },
   returned: {
     label: 'Retournée',
@@ -65,6 +79,8 @@ export const STATUS_META: Record<OrderStatus, StatusMeta> = {
     icon: 'undo',
     badgeClass: 'bg-danger-soft text-danger',
     dotClass: 'bg-danger',
+    laneBg: 'bg-danger-soft',
+    laneInk: 'text-danger',
   },
   cancelled: {
     label: 'Annulée',
@@ -72,6 +88,8 @@ export const STATUS_META: Record<OrderStatus, StatusMeta> = {
     icon: 'x',
     badgeClass: 'bg-surface-sunken text-ink-muted',
     dotClass: 'bg-ink-muted',
+    laneBg: 'bg-surface-sunken',
+    laneInk: 'text-ink-muted',
   },
 };
 

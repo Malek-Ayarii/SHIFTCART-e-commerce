@@ -15,6 +15,7 @@ describe('KanbanBoard', () => {
   let rejections: OrderMoveEvent[];
 
   beforeEach(() => {
+    localStorage.removeItem('sc.kanban.collapsed');
     fixture = TestBed.createComponent(KanbanBoard);
     fixture.componentRef.setInput('orders', ORDERS);
     fixture.componentRef.setInput('counts', { new: 14, pending: 8, confirmed: 24, shipped: 5 });
@@ -86,5 +87,22 @@ describe('KanbanBoard', () => {
     fixture.detectChanges();
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text.match(/Dépose une commande ici/g)).toHaveLength(3);
+  });
+
+  it('collapses a lane like Trello, keeping its count and drop target', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    const fold = el.querySelector<HTMLButtonElement>('button[aria-label="Replier la liste Nouvelles"]');
+    if (!fold) throw new Error('fold button not found');
+    fold.click();
+    fixture.detectChanges();
+    expect(el.querySelector('[data-order-key="1"]')).toBeNull();
+    expect(el.querySelector('button[aria-label="Déplier la liste Nouvelles"]')).not.toBeNull();
+    expect(el.querySelectorAll('[role="list"]')).toHaveLength(4);
+    expect(el.querySelector('[data-testid="lane-count"]')?.textContent?.trim()).toBe('14');
+    expect(localStorage.getItem('sc.kanban.collapsed')).toBe('["new"]');
+  });
+
+  it('shows how many orders are not loaded in a lane', () => {
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('+ 13 autres');
   });
 });
