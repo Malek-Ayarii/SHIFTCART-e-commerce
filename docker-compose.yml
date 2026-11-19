@@ -17,3 +17,6 @@ services:
       retries: 10
 volumes:
   pgdata:
+    # Nom explicite : survit au renommage du dossier/dépôt (sinon le nom du projet
+    # compose dérive du dossier et la base repartirait d'un volume vide).
+    name: shiftcart-e-commerce_pgdata
