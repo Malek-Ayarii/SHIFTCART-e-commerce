@@ -1,6 +1,6 @@
-# SHIFT CART — instructions pour Claude Code
+# NEXO SHIFT — instructions pour Claude Code
 
-SHIFT CART est une marque e-commerce D2C tunisienne. Elle vend des packs « routine » (le premier : **Pack Barista, 89 TND, livraison gratuite**) à des étudiants et jeunes actifs de 19 à 30 ans. Paiement **uniquement à la livraison (COD)**, confirmation **par WhatsApp**, achat d'impulsion en un clic, sans compte ni panier.
+NEXO SHIFT est une marque e-commerce D2C tunisienne. Elle vend des packs « routine » (le premier : **Pack Barista, 89 TND, livraison gratuite**) à des étudiants et jeunes actifs de 19 à 30 ans. Paiement **uniquement à la livraison (COD)**, confirmation **par WhatsApp**, achat d'impulsion en un clic, sans compte ni panier.
 
 L'UI est déjà conçue. Ton travail est de l'**implémenter fidèlement**, pas de la réinventer.
 
@@ -15,8 +15,8 @@ L'UI est déjà conçue. Ton travail est de l'**implémenter fidèlement**, pas 
 ## Où est le design
 
 - `design/tokens.json` est la **source unique** des valeurs (couleurs en 2 thèmes, typo, espacements, rayons, ombres). `design/tokens.css` (variables CSS + `@font-face`) et `design/tailwind-theme.css` (thème Tailwind v4) en sont dérivés.
-- `design/screens/*.dc.html` est la **maquette de référence de chaque écran**. Ce sont des fichiers d'un outil de design : `<x-import component-from-global-scope="ShiftCart.X" prop="…">` = le composant `X` avec ces props ; `{{nom}}` = une valeur calculée dans `renderVals()` en bas du fichier ; `<sc-for>` = une boucle ; `<sc-if>` = une condition. Lis-les pour la structure, les textes exacts, les espacements et les tokens utilisés. Ne les copie pas tels quels dans l'app.
-- `design/components-reference/` contient l'implémentation de référence des composants (React sans JSX, `window.ShiftCart`), leurs règles (`<Composant>/README.md`), leurs props (`index.d.ts`) et leur CSS (`bundle.css`). **Réécris-les proprement** en composants Next.js (TSX + Tailwind) et Angular (standalone + Tailwind) en gardant les mêmes noms, props, états, textes et classes visuelles.
+- `design/screens/*.dc.html` est la **maquette de référence de chaque écran**. Ce sont des fichiers d'un outil de design : `<x-import component-from-global-scope="NexoShift.X" prop="…">` = le composant `X` avec ces props ; `{{nom}}` = une valeur calculée dans `renderVals()` en bas du fichier ; `<sc-for>` = une boucle ; `<sc-if>` = une condition. Lis-les pour la structure, les textes exacts, les espacements et les tokens utilisés. Ne les copie pas tels quels dans l'app.
+- `design/components-reference/` contient l'implémentation de référence des composants (React sans JSX, `window.NexoShift`), leurs règles (`<Composant>/README.md`), leurs props (`index.d.ts`) et leur CSS (`bundle.css`). **Réécris-les proprement** en composants Next.js (TSX + Tailwind) et Angular (standalone + Tailwind) en gardant les mêmes noms, props, états, textes et classes visuelles.
 - `design/logos/` : logos fournis (PNG transparents). **Ne jamais redessiner le logo.**
 - Maquettes en ligne : canvas https://claude.ai/artifact/8BLcnRQjn3qWuaZ2ArZzrc · design system https://claude.ai/artifact/FAe8h8xVbqsZo5geVJr1ta
 

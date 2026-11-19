@@ -17,35 +17,35 @@ a{color:#C24400}a:hover{color:#1A1A1A}
 </style>
 </helmet>
 <div style="width: 390px; min-height: 3200px; background: var(--surface); color: var(--ink); font-family: var(--font-body); display: flex; flex-direction: column">
-<x-import component-from-global-scope="ShiftCart.Navbar" logo-src="/_blob/90f38a8a5b493e756b98d65dfc426c91" logo-height="{{logoH}}" count="{{one}}"></x-import>
+<x-import component-from-global-scope="NexoShift.Navbar" logo-src="/_blob/90f38a8a5b493e756b98d65dfc426c91" logo-height="{{logoH}}" count="{{one}}"></x-import>
 
 <section style="padding: 24px 16px 16px; display: flex; flex-direction: column">
 <p style="margin: 0 0 12px; display: flex; align-items: center; gap: 6px; font-size: 13px; line-height: 16px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange-ink)">
-<x-import component-from-global-scope="ShiftCart.Icon" name="zap" size="{{s14}}"></x-import>
+<x-import component-from-global-scope="NexoShift.Icon" name="zap" size="{{s14}}"></x-import>
 Pour les étudiants qui bossent dur
 </p>
 <h1 style="margin: 0 0 20px; font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 40px; letter-spacing: -0.02em; text-transform: uppercase">Booste ta routine, <span style="color: var(--orange-ink)">sauve ton budget</span></h1>
-<x-import component-from-global-scope="ShiftCart.StoryVideo" author="Sarra K" handle="@sarra.shift" caption="Pourquoi j'ai arrêté de jeter 120 DT/mois"></x-import>
+<x-import component-from-global-scope="NexoShift.StoryVideo" author="Sarra K" handle="@sarra.shift" caption="Pourquoi j'ai arrêté de jeter 120 DT/mois"></x-import>
 </section>
 
 <section style="padding: 24px 16px; border-top: 1px solid var(--line)">
-<x-import component-from-global-scope="ShiftCart.ProductCard" name="Le Pack Barista" pitch="Le coffee shop chez toi, pour le prix de 3 semaines de buvette." price="{{price}}"></x-import>
+<x-import component-from-global-scope="NexoShift.ProductCard" name="Le Pack Barista" pitch="Le coffee shop chez toi, pour le prix de 3 semaines de buvette." price="{{price}}"></x-import>
 </section>
 
 <section style="padding: 24px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
 <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">
-<x-import component-from-global-scope="ShiftCart.Icon" name="banknote" size="{{s22}}"></x-import>
+<x-import component-from-global-scope="NexoShift.Icon" name="banknote" size="{{s22}}"></x-import>
 Calcule tes économies
 </h2>
-<x-import component-from-global-scope="ShiftCart.SavingsCalculator" default-value="{{daily}}" pack-price="{{price}}"></x-import>
+<x-import component-from-global-scope="NexoShift.SavingsCalculator" default-value="{{daily}}" pack-price="{{price}}"></x-import>
 </section>
 
 <section style="padding: 24px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
 <h2 style="margin: 0; display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">
-<x-import component-from-global-scope="ShiftCart.Icon" name="package" size="{{s22}}"></x-import>
+<x-import component-from-global-scope="NexoShift.Icon" name="package" size="{{s22}}"></x-import>
 Qu'y a-t-il dans ton pack ?
 </h2>
-<x-import component-from-global-scope="ShiftCart.IncludedList"></x-import>
+<x-import component-from-global-scope="NexoShift.IncludedList"></x-import>
 </section>
 
 <section style="padding: 24px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
@@ -68,16 +68,16 @@ Qu'y a-t-il dans ton pack ?
 
 <section style="padding: 24px 16px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 12px">
 <h2 style="margin: 0 0 4px; font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 24px">Ils ont choisi de changer</h2>
-<x-import component-from-global-scope="ShiftCart.ReviewCard" name="Yasmine" city="Sousse" text="Livré en 24h à Sousse, top !" rating="{{five}}" verified="{{yes}}"></x-import>
-<x-import component-from-global-scope="ShiftCart.ReviewCard" name="Aziz" city="Tunis" text="Fini le café froid en TD." rating="{{five}}" verified="{{yes}}"></x-import>
-<x-import component-from-global-scope="ShiftCart.ReviewCard" name="Ines" city="Sfax" text="[AVIS CLIENT RÉEL À INSÉRER]" rating="{{five}}"></x-import>
+<x-import component-from-global-scope="NexoShift.ReviewCard" name="Yasmine" city="Sousse" text="Livré en 24h à Sousse, top !" rating="{{five}}" verified="{{yes}}"></x-import>
+<x-import component-from-global-scope="NexoShift.ReviewCard" name="Aziz" city="Tunis" text="Fini le café froid en TD." rating="{{five}}" verified="{{yes}}"></x-import>
+<x-import component-from-global-scope="NexoShift.ReviewCard" name="Ines" city="Sfax" text="[AVIS CLIENT RÉEL À INSÉRER]" rating="{{five}}"></x-import>
 </section>
 
 <section style="padding: 24px 16px 32px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 16px">
 <p style="margin: 0; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 28px; line-height: 30px">89 TND, livré chez toi.</p>
-<x-import component-from-global-scope="ShiftCart.Button" variant="primary" size="xl" block="{{yes}}" icon-right="zap">Obtenir mon pack</x-import>
+<x-import component-from-global-scope="NexoShift.Button" variant="primary" size="xl" block="{{yes}}" icon-right="zap">Obtenir mon pack</x-import>
 <p style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; line-height: 20px; font-weight: 600; color: var(--ink-muted)">
-<x-import component-from-global-scope="ShiftCart.Icon" name="shield" size="{{s16}}"></x-import>
+<x-import component-from-global-scope="NexoShift.Icon" name="shield" size="{{s16}}"></x-import>
 Paiement en espèces à la livraison
 </p>
 </section>
@@ -85,14 +85,14 @@ Paiement en espèces à la livraison
 <footer style="margin-top: auto; background: var(--ink); color: var(--ink-inverse); padding: 32px 16px; display: flex; flex-direction: column; gap: 16px">
 <div style="display: flex; align-items: center; gap: 12px">
 <span style="width: 48px; height: 48px; border-radius: 999px; background: var(--surface-raised); display: grid; place-items: center; flex: none"><img src="/_blob/831dc0b6bed920db21f3005f2fb97bd9" alt="" style="width: 34px; height: 34px"></span>
-<span style="font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: 0.1em">SHIFT CART</span>
+<span style="font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: 0.1em">NEXO SHIFT</span>
 </div>
 <nav aria-label="Liens utiles" style="display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; font-weight: 600">
 <a href="Suivi.dc.html" style="color: var(--ink-inverse)">Suivre ma commande</a>
 <a href="#" style="color: var(--ink-inverse)">Livraison &amp; retours</a>
 <a href="#" style="color: var(--ink-inverse)">Nous contacter sur WhatsApp</a>
 </nav>
-<p style="margin: 0; font-size: 12px; line-height: 16px; opacity: 0.7">© 2026 SHIFT CART · Paiement à la livraison partout en Tunisie</p>
+<p style="margin: 0; font-size: 12px; line-height: 16px; opacity: 0.7">© 2026 NEXO SHIFT · Paiement à la livraison partout en Tunisie</p>
 </footer>
 </div>
 </x-dc>

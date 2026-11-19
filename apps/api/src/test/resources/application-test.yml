@@ -1,4 +1,4 @@
-shiftcart:
+nexoshift:
   tracking:
     secret: test-tracking-secret-0123456789abcdef0123
   auth:
@@ -15,5 +15,5 @@ shiftcart:
 logging:
   level:
     root: WARN
-    com.shiftcart: INFO
+    com.nexoshift: INFO
     org.springframework.boot.test: WARN

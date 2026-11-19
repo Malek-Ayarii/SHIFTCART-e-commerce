@@ -1,4 +1,4 @@
-/* SHIFT CART admin — global styles.
+/* NEXO SHIFT admin — global styles.
    Ordre imposé par design/tailwind-theme.css : Tailwind, puis les tokens, puis le thème. */
 @import "tailwindcss";
 @import "../../../design/tokens.css";

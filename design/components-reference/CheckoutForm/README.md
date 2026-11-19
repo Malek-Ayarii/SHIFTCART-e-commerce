@@ -6,4 +6,4 @@ Le checkout express à 3 champs (nom, téléphone, gouvernorat) + récap du pack
 
 - Le bouton reste cliquable : au clic, toutes les erreurs s'affichent et le focus va au premier champ à corriger.
 - Aucune création de compte, aucun champ facultatif.
-- Le message pré-rempli vient de `ShiftCart.utils.buildWhatsAppMessage(order)`.
+- Le message pré-rempli vient de `NexoShift.utils.buildWhatsAppMessage(order)`.

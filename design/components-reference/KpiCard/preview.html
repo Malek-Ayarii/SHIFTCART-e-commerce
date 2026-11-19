@@ -5,7 +5,7 @@
 <body>
 <div id="root"></div>
 <script>
-  var S = window.ShiftCart, h = React.createElement;
+  var S = window.NexoShift, h = React.createElement;
   ReactDOM.createRoot(document.getElementById('root')).render(h('div', { className: 'sc-row', style: { alignItems: 'stretch' } }, h('div', { style: { width: 260 } }, h(S.KpiCard, { label: 'Commandes', value: '142', icon: 'package', delta: '+18 %', trend: 'up', accent: true })), h('div', { style: { width: 260 } }, h(S.KpiCard, { label: 'Taux de retour', value: '8 %', icon: 'undo', delta: '−2 pts', trend: 'down', good: true }))));
 </script>
 </body>

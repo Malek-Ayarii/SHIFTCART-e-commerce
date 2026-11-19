@@ -1,4 +1,4 @@
-# SHIFT CART — back-office (`apps/admin`)
+# NEXO SHIFT — back-office (`apps/admin`)
 
 Angular 22 (standalone, signals, `@if/@for`, zoneless) · Tailwind CSS 4 (`@tailwindcss/postcss`) · `@lucide/angular` · Angular CDK drag-drop.
 Design : `design/tokens.css` + `design/tailwind-theme.css` importés par `src/styles.css` (polices `design/fonts` embarquées au build), logos copiés dans `public/assets/logos`.
@@ -11,7 +11,7 @@ cd apps/api && ./mvnw spring-boot:run   # API sur http://localhost:8090 (profil 
 pnpm --filter admin start               # http://localhost:4300 (proxy /api → http://localhost:8090)
 ```
 
-Compte dev créé par l'API : `admin@shiftcart.tn` / `shiftcart-dev`.
+Compte dev créé par l'API : `admin@nexoshift.tn` / `nexoshift-dev`.
 
 ## Scripts
 

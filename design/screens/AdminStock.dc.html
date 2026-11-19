@@ -18,15 +18,15 @@ a{color:#1A1A1A}a:hover{color:#C24400}
 </helmet>
 <div style="min-height: 1000px; display: flex; flex-wrap: wrap; background: var(--surface); color: var(--ink); font-family: var(--font-body)">
 <aside style="flex: 1 1 240px; max-width: 100%; background: var(--surface-raised); border-right: 1px solid var(--line); padding: 20px 16px; display: flex; flex-direction: column; gap: 24px">
-<a href="AdminDashboard.dc.html" aria-label="SHIFT CART, tableau de bord" style="display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 0 8px">
+<a href="AdminDashboard.dc.html" aria-label="NEXO SHIFT, tableau de bord" style="display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 0 8px">
 <img src="/_blob/831dc0b6bed920db21f3005f2fb97bd9" alt="" style="width: 36px; height: 36px">
-<img src="/_blob/90f38a8a5b493e756b98d65dfc426c91" alt="SHIFT CART" style="height: 16px; width: auto">
+<img src="/_blob/90f38a8a5b493e756b98d65dfc426c91" alt="NEXO SHIFT" style="height: 16px; width: auto">
 </a>
 <nav aria-label="Back-office" style="display: flex; flex-direction: column; gap: 4px; font-size: 15px; font-weight: 700">
-<a href="AdminDashboard.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="ShiftCart.Icon" name="package" size="{{s20}}"></x-import>Commandes</a>
-<a href="AdminCommande.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="ShiftCart.Icon" name="whatsapp" size="{{s20}}"></x-import>Messages IA</a>
-<a href="AdminFinances.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="ShiftCart.Icon" name="banknote" size="{{s20}}"></x-import>Finances</a>
-<a href="AdminStock.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none; background: var(--ink); color: var(--ink-inverse)"><x-import component-from-global-scope="ShiftCart.Icon" name="coffee" size="{{s20}}"></x-import>Stock &amp; marges</a>
+<a href="AdminDashboard.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="NexoShift.Icon" name="package" size="{{s20}}"></x-import>Commandes</a>
+<a href="AdminCommande.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="NexoShift.Icon" name="whatsapp" size="{{s20}}"></x-import>Messages IA</a>
+<a href="AdminFinances.dc.html" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none"><x-import component-from-global-scope="NexoShift.Icon" name="banknote" size="{{s20}}"></x-import>Finances</a>
+<a href="AdminStock.dc.html" aria-current="page" style="display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: 14px; text-decoration: none; background: var(--ink); color: var(--ink-inverse)"><x-import component-from-global-scope="NexoShift.Icon" name="coffee" size="{{s20}}"></x-import>Stock &amp; marges</a>
 </nav>
 <div style="margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 0 8px">
 <span style="width: 32px; height: 32px; border-radius: 999px; background: var(--ink); color: var(--ink-inverse); display: grid; place-items: center; font-size: 12px; font-weight: 800">AD</span>
@@ -44,13 +44,13 @@ a{color:#1A1A1A}a:hover{color:#C24400}
 </div>
 
 <div role="alert" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 18px 20px; border-radius: 20px; background: var(--warning-soft); color: var(--ink)">
-<span style="width: 44px; height: 44px; border-radius: 999px; background: var(--warning); color: var(--surface-raised); display: grid; place-items: center; flex: none"><x-import component-from-global-scope="ShiftCart.Icon" name="alert" size="{{s22}}"></x-import></span>
+<span style="width: 44px; height: 44px; border-radius: 999px; background: var(--warning); color: var(--surface-raised); display: grid; place-items: center; flex: none"><x-import component-from-global-scope="NexoShift.Icon" name="alert" size="{{s22}}"></x-import></span>
 <div style="flex: 1 1 320px; display: flex; flex-direction: column">
 <strong style="font-size: 17px; line-height: 24px">Plus que 4 packs complets en stock (seuil : 5)</strong>
 <span style="font-size: 14px; line-height: 20px; color: var(--ink-muted); font-weight: 600">Tu peux en assembler 9 de plus avec les pièces en stock : les thermos limitent.</span>
 </div>
-<x-import component-from-global-scope="ShiftCart.Button" variant="dark" size="md" icon="whatsapp">Alerter l'agent</x-import>
-<x-import component-from-global-scope="ShiftCart.Button" variant="primary" size="md" icon="package">Assembler 9 packs</x-import>
+<x-import component-from-global-scope="NexoShift.Button" variant="dark" size="md" icon="whatsapp">Alerter l'agent</x-import>
+<x-import component-from-global-scope="NexoShift.Button" variant="primary" size="md" icon="package">Assembler 9 packs</x-import>
 </div>
 
 <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">

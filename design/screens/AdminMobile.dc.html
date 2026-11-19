@@ -18,7 +18,7 @@ a{color:#5C6066}a:hover{color:#1A1A1A}
 </helmet>
 <div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: var(--surface); color: var(--ink); font-family: var(--font-body); display: flex; flex-direction: column">
 <header style="height: 64px; padding: 0 16px; display: flex; align-items: center; gap: 12px; background: var(--surface-raised); border-bottom: 1px solid var(--line)">
-<img src="/_blob/831dc0b6bed920db21f3005f2fb97bd9" alt="SHIFT CART" style="width: 36px; height: 36px">
+<img src="/_blob/831dc0b6bed920db21f3005f2fb97bd9" alt="NEXO SHIFT" style="width: 36px; height: 36px">
 <div style="display: flex; flex-direction: column">
 <span style="font-family: var(--font-display); font-weight: 800; font-size: 20px; line-height: 24px">Commandes</span>
 <span style="font-size: 12px; line-height: 16px; font-weight: 600; color: var(--ink-muted)">Nov. 2026 · 142 au total</span>
@@ -54,15 +54,15 @@ a{color:#5C6066}a:hover{color:#1A1A1A}
 
 <div style="flex: 1; overflow: hidden; padding: 0 16px; display: flex; flex-direction: column; gap: 12px">
 <sc-for list="{{orders}}" as="o" hint-placeholder-count="3">
-<x-import component-from-global-scope="ShiftCart.OrderCard" order="{{o}}" show-status="{{yes}}"></x-import>
+<x-import component-from-global-scope="NexoShift.OrderCard" order="{{o}}" show-status="{{yes}}"></x-import>
 </sc-for>
 </div>
 
 <nav aria-label="Navigation équipe" style="height: 72px; flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--surface-raised); border-top: 1px solid var(--line)">
-<a href="AdminMobile.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 12px; font-weight: 800; color: var(--orange-ink)"><x-import component-from-global-scope="ShiftCart.Icon" name="package" size="{{s22}}"></x-import>Commandes</a>
-<a href="AdminCommande.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 12px; font-weight: 700; color: var(--ink-muted)"><x-import component-from-global-scope="ShiftCart.Icon" name="whatsapp" size="{{s22}}"></x-import>Messages</a>
-<a href="AdminFinances.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 12px; font-weight: 700; color: var(--ink-muted)"><x-import component-from-global-scope="ShiftCart.Icon" name="banknote" size="{{s22}}"></x-import>Finances</a>
-<a href="AdminStock.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 12px; font-weight: 700; color: var(--ink-muted)"><x-import component-from-global-scope="ShiftCart.Icon" name="coffee" size="{{s22}}"></x-import>Stock</a>
+<a href="AdminMobile.dc.html" aria-current="page" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 12px; font-weight: 800; color: var(--orange-ink)"><x-import component-from-global-scope="NexoShift.Icon" name="package" size="{{s22}}"></x-import>Commandes</a>
+<a href="AdminCommande.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 12px; font-weight: 700; color: var(--ink-muted)"><x-import component-from-global-scope="NexoShift.Icon" name="whatsapp" size="{{s22}}"></x-import>Messages</a>
+<a href="AdminFinances.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 12px; font-weight: 700; color: var(--ink-muted)"><x-import component-from-global-scope="NexoShift.Icon" name="banknote" size="{{s22}}"></x-import>Finances</a>
+<a href="AdminStock.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 12px; font-weight: 700; color: var(--ink-muted)"><x-import component-from-global-scope="NexoShift.Icon" name="coffee" size="{{s22}}"></x-import>Stock</a>
 </nav>
 </div>
 </x-dc>

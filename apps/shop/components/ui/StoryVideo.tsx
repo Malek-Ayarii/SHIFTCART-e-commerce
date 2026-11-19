@@ -23,7 +23,7 @@ export function StoryVideo({
   poster,
   caption = "Pourquoi j'ai arrêté de jeter 120 DT/mois",
   author = "SC",
-  handle = "@shiftcart.tn",
+  handle = "@nexoshift.tn",
   index = 0,
   className,
 }: StoryVideoProps) {

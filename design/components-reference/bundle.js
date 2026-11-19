@@ -1,4 +1,4 @@
-/* @ds-bundle: {"format":4,"namespace":"ShiftCart","components":[{"name":"Icon"},{"name":"Wordmark"},{"name":"Button"},{"name":"Navbar"},{"name":"MobileFrame"},{"name":"StoryVideo"},{"name":"PriceTag"},{"name":"ProductCard"},{"name":"SavingsCalculator"},{"name":"IncludedList"},{"name":"ReviewCard"},{"name":"StickyCta"},{"name":"BottomSheet"},{"name":"TextField"},{"name":"PhoneInput"},{"name":"GovernorateSelect"},{"name":"CheckoutForm"},{"name":"KpiCard"},{"name":"StatusBadge"},{"name":"OrderCard"},{"name":"KanbanBoard"},{"name":"AdminHeader"},{"name":"LandingPage"},{"name":"AdminDashboard"}]} */
+/* @ds-bundle: {"format":4,"namespace":"NexoShift","components":[{"name":"Icon"},{"name":"Wordmark"},{"name":"Button"},{"name":"Navbar"},{"name":"MobileFrame"},{"name":"StoryVideo"},{"name":"PriceTag"},{"name":"ProductCard"},{"name":"SavingsCalculator"},{"name":"IncludedList"},{"name":"ReviewCard"},{"name":"StickyCta"},{"name":"BottomSheet"},{"name":"TextField"},{"name":"PhoneInput"},{"name":"GovernorateSelect"},{"name":"CheckoutForm"},{"name":"KpiCard"},{"name":"StatusBadge"},{"name":"OrderCard"},{"name":"KanbanBoard"},{"name":"AdminHeader"},{"name":"LandingPage"},{"name":"AdminDashboard"}]} */
 (function () {
   "use strict";
   var React = window.React;
@@ -51,8 +51,8 @@
   }
 
   function Wordmark(p) {
-    if (p.src) return h("img", { className: cx("sc-logo", p.className), src: p.src, alt: "SHIFT CART", height: p.height || 32, style: { height: (p.height || 32) + "px" } });
-    return h("span", { className: cx("sc-wordmark", p.className), "aria-label": "SHIFT CART" }, "SHIFT", h("span", { className: "sc-wordmark__cart" }, "CART"));
+    if (p.src) return h("img", { className: cx("sc-logo", p.className), src: p.src, alt: "NEXO SHIFT", height: p.height || 32, style: { height: (p.height || 32) + "px" } });
+    return h("span", { className: cx("sc-wordmark", p.className), "aria-label": "NEXO SHIFT" }, "SHIFT", h("span", { className: "sc-wordmark__cart" }, "CART"));
   }
 
   function Button(p) {
@@ -90,7 +90,7 @@
       if (v) { if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); } }
       else setPlaying(!playing);
     }
-    var handle = p.handle || "@shiftcart.tn";
+    var handle = p.handle || "@nexoshift.tn";
     var initials = (p.author || "SC").split(" ").map(function (w) { return w[0]; }).join("").slice(0, 2).toUpperCase();
     return h("figure", { className: cx("sc-story", playing && "is-playing") },
       h("div", { className: "sc-story__bars", "aria-hidden": true },
@@ -531,5 +531,5 @@
     OrderCard: OrderCard, KanbanBoard: KanbanBoard, AdminHeader: AdminHeader, AdminDashboard: AdminDashboard, LandingPage: LandingPage,
     utils: { formatTnPhone: formatTnPhone, validateTnPhone: validateTnPhone, buildWhatsAppMessage: buildWhatsAppMessage, savingsFor: savingsFor, GOVERNORATES: GOVERNORATES, SAMPLE_ORDERS: SAMPLE_ORDERS }
   };
-  window.ShiftCart = Object.assign(window.ShiftCart || {}, api);
+  window.NexoShift = Object.assign(window.NexoShift || {}, api);
 })();

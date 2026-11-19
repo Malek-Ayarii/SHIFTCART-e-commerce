@@ -11,7 +11,7 @@ Parcours équipe : **Kanban (Nouvelles → En attente → Confirmées → Expéd
 
 ### A1. Landing — `/` · `Main.dc.html`
 Ordre des sections (figé) :
-1. **Navbar** collante 56px : menu (ouvre A2) · logo `design/logos/shiftcart-wordmark.png` 20px de haut · panier (ouvre le checkout A3) avec pastille `1`.
+1. **Navbar** collante 56px : menu (ouvre A2) · logo `apps/shop/public/logos/nexoshift-horizontal.svg` 20px de haut · panier (ouvre le checkout A3) avec pastille `1`.
 2. **Hero** : sur-titre `text-label` orange-ink avec icône Zap « Pour les étudiants qui bossent dur » ; titre `text-display-xl` en capitales « BOOSTE TA ROUTINE, » + « SAUVE TON BUDGET » en `orange-ink` ; **StoryVideo** 9:16 (vidéo UGC, poster, `preload="none"`, barres de story, avatar, badge UGC, bouton play orange, légende « Pourquoi j'ai arrêté de jeter 120 DT/mois »).
 3. **ProductCard** « Le Pack Barista » : sur-titre Best-seller, pitch, **PriceTag** (89 TND + puces « Livraison gratuite » et « Paiement à la livraison »), CTA géant **OBTENIR MON PACK** (Button `primary` `xl`, ombre dure ink), réassurance « Pas de carte · Tu paies en espèces à la réception ».
 4. **Calcule tes économies** : **SavingsCalculator** (slider 4–10 DT/jour, pas 0,5, valeur initiale 6 ; résultat = (dépense − 0,5) × 30 ; équivalence ; « Pack remboursé en N jours » ; formule affichée).

@@ -4,7 +4,7 @@ Précise `docs/API.md` au niveau JSON. **Les trois apps doivent respecter exacte
 
 ## Conventions
 
-- Ports dev : shop `3000`, admin `4300`, api `8090`. Postgres : `localhost:5600` (5432, 8080 et 4200 sont déjà pris sur cette machine), base/utilisateur/mot de passe `shiftcart` (voir `docker-compose.yml`).
+- Ports dev : shop `3000`, admin `4300`, api `8090`. Postgres : `localhost:5600` (5432, 8080 et 4200 sont déjà pris sur cette machine), base/utilisateur/mot de passe `nexoshift` (voir `docker-compose.yml`).
 - Toutes les routes de l'API sont sous `/api`. JSON en camelCase. Dates en ISO-8601 UTC (`2026-11-14T10:32:00Z`).
 - **Montants en JSON : nombres en TND** (`89`, `12638.5`). En base : millimes (`integer`/`bigint`). Conversion uniquement dans l'API.
 - Statuts en JSON : `NEW | PENDING | CONFIRMED | SHIPPED | DELIVERED | RETURNED | CANCELLED` (majuscules). Les fronts les mappent vers `new | pending | …` pour les composants.
@@ -67,7 +67,7 @@ Réponse `201` :
 - `POST /api/auth/logout` → `204`, efface le cookie.
 - `GET /api/auth/me` → `user`.
 - Header : `Authorization: Bearer <accessToken>`. Access token JWT HS256 (`JWT_SECRET`), 15 min.
-- Compte créé au démarrage si la table est vide : `ADMIN_EMAIL` / `ADMIN_PASSWORD` (défauts dev : `admin@shiftcart.tn` / `shiftcart-dev`).
+- Compte créé au démarrage si la table est vide : `ADMIN_EMAIL` / `ADMIN_PASSWORD` (défauts dev : `admin@nexoshift.tn` / `nexoshift-dev`).
 - En dev l'admin passe par le proxy Angular (`/api` → `http://localhost:8090`), donc même origine.
 
 ## Admin — commandes (JWT)

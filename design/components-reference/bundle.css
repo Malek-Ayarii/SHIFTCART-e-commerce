@@ -1,4 +1,4 @@
-/* SHIFT CART — component styles. Values come from tokens.css (tokens.json); nothing here redeclares a token. */
+/* NEXO SHIFT — component styles. Values come from tokens.css (tokens.json); nothing here redeclares a token. */
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: var(--surface); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 24px; -webkit-font-smoothing: antialiased; }
 .sc-icon { flex: none; display: block; }

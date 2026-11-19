@@ -15,7 +15,7 @@ Prendre la dernière version stable de chaque outil au moment du scaffolding et 
 ## Arborescence cible
 
 ```
-shiftcart/
+nexoshift/
 ├── CLAUDE.md
 ├── docs/                    STACK.md · SPEC.md · API.md · ROADMAP.md
 ├── design/                  source de vérité visuelle (ne pas dupliquer)

@@ -10,7 +10,7 @@ import { AuthResponse } from './models';
 const session = (token: string): AuthResponse => ({
   accessToken: token,
   expiresIn: 900,
-  user: { id: 1, email: 'admin@shiftcart.tn', name: 'Admin', role: 'ADMIN' },
+  user: { id: 1, email: 'admin@nexoshift.tn', name: 'Admin', role: 'ADMIN' },
 });
 
 describe('authInterceptor', () => {
@@ -34,7 +34,7 @@ describe('authInterceptor', () => {
   afterEach(() => ctrl.verify());
 
   async function login(token: string): Promise<void> {
-    const p = auth.login({ email: 'admin@shiftcart.tn', password: 'x' });
+    const p = auth.login({ email: 'admin@nexoshift.tn', password: 'x' });
     const req = ctrl.expectOne('/api/auth/login');
     expect(req.request.headers.has('Authorization')).toBe(false);
     expect(req.request.withCredentials).toBe(true);

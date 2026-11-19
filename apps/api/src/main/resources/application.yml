@@ -14,11 +14,11 @@ server:
 
 spring:
   application:
-    name: shiftcart-api
+    name: nexoshift-api
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5600/shiftcart}
-    username: ${DATABASE_USER:shiftcart}
-    password: ${DATABASE_PASSWORD:shiftcart}
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5600/nexoshift}
+    username: ${DATABASE_USER:nexoshift}
+    password: ${DATABASE_PASSWORD:nexoshift}
   jpa:
     open-in-view: false
     hibernate:
@@ -54,7 +54,7 @@ management:
     health:
       show-details: never
 
-shiftcart:
+nexoshift:
   shop-public-url: ${SHOP_PUBLIC_URL:http://localhost:3000}
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:4300}
   carrier-fee-tnd: ${CARRIER_FEE_TND:7}            # [À DÉFINIR] — 7 TND dans les maquettes = exemple
@@ -67,8 +67,8 @@ shiftcart:
     access-token-ttl: ${JWT_ACCESS_TTL:15m}
     refresh-token-ttl: ${JWT_REFRESH_TTL:14d}
     cookie-secure: ${COOKIE_SECURE:true}
-    admin-email: ${ADMIN_EMAIL:admin@shiftcart.tn}
-    admin-password: ${ADMIN_PASSWORD:}               # défaut « shiftcart-dev » uniquement en profil dev
+    admin-email: ${ADMIN_EMAIL:admin@nexoshift.tn}
+    admin-password: ${ADMIN_PASSWORD:}               # défaut « nexoshift-dev » uniquement en profil dev
     admin-name: ${ADMIN_NAME:Admin}
     login-max-attempts: ${LOGIN_RATE_LIMIT_MAX:10}
     login-window: ${LOGIN_RATE_LIMIT_WINDOW:10m}

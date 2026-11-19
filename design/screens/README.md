@@ -17,8 +17,8 @@
 | `AdminMobile.dc.html` | Commandes, vue mobile équipe | admin | C5 |
 
 Format : fichiers de l'outil de design de Claude (ils ne s'ouvrent pas seuls dans un navigateur ; voir les rendus sur https://claude.ai/artifact/8BLcnRQjn3qWuaZ2ArZzrc).
-- `<x-import component-from-global-scope="ShiftCart.Button" variant="primary">…</x-import>` = composant `Button` de `../components-reference/` avec ces props (kebab-case → camelCase).
+- `<x-import component-from-global-scope="NexoShift.Button" variant="primary">…</x-import>` = composant `Button` de `../components-reference/` avec ces props (kebab-case → camelCase).
 - `{{nom}}` = valeur renvoyée par `renderVals()` dans le `<script>` en bas du fichier (données d'exemple, handlers).
 - `<sc-for list=… as=…>` = boucle ; `<sc-if value=…>` = condition.
-- `/_blob/…` = images du logo : utiliser les fichiers de `../logos/` (`831dc0…` = shiftcart-mark.png, `90f38a…` = shiftcart-wordmark.png, `5ecef9…` = shiftcart-logo.png).
+- `/_blob/…` = images du logo : utiliser les assets NEXO SHIFT de `apps/shop/public/logos/` (`nexoshift-mark.svg`, `nexoshift-horizontal.svg`, `nexoshift-logo.svg` + variantes `-light` pour fond sombre).
 - `style="…"` en ligne utilise les variables de `../tokens.css` : à traduire en utilitaires Tailwind du thème.

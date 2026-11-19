@@ -1,4 +1,4 @@
-# SHIFT CART — dossier de démarrage pour Claude Code
+# NEXO SHIFT — dossier de démarrage pour Claude Code
 
 Tout ce qu'il faut pour que Claude Code construise la boutique (Next.js), le back-office (Angular) et l'API (Spring Boot) à partir de l'UI déjà conçue.
 
@@ -38,13 +38,13 @@ Prérequis : Docker, Java 21, Node 24, pnpm 10. Ports utilisés : Postgres `5600
 # 0. Dépendances front (une fois, depuis la racine)
 pnpm install
 
-# 1. Base de données (conteneur shiftcart-postgres, localhost:5600, base/utilisateur/mdp shiftcart)
+# 1. Base de données (conteneur nexoshift-postgres, localhost:5600, base/utilisateur/mdp nexoshift)
 docker compose up -d
 
 # 2. API Spring Boot, profil dev (données de démo + secrets de dev) → http://localhost:8090
 cd apps/api
 ./mvnw -q -DskipTests package
-SPRING_PROFILES_ACTIVE=dev java -jar target/shiftcart-api-0.1.0-SNAPSHOT.jar
+SPRING_PROFILES_ACTIVE=dev java -jar target/nexoshift-api-0.1.0-SNAPSHOT.jar
 #   (ou : SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run)
 #   santé : curl http://localhost:8090/actuator/health → {"status":"UP"}
 #   Au démarrage, Flyway migre une base v1 en v2 (V3 catalogue + V3.1 démo) et l'amorceur
@@ -61,7 +61,7 @@ cd apps/admin
 pnpm start
 ```
 
-**Identifiants admin (profil dev uniquement)** : `admin@shiftcart.tn` / `shiftcart-dev`. Hors profil dev, `ADMIN_PASSWORD`, `JWT_SECRET` et `TRACKING_TOKEN_SECRET` (≥ 32 caractères) sont obligatoires, sinon l'API refuse de démarrer.
+**Identifiants admin (profil dev uniquement)** : `admin@nexoshift.tn` / `nexoshift-dev`. Hors profil dev, `ADMIN_PASSWORD`, `JWT_SECRET` et `TRACKING_TOKEN_SECRET` (≥ 32 caractères) sont obligatoires, sinon l'API refuse de démarrer.
 
 ### Ce que tu trouves en v2
 
@@ -85,7 +85,7 @@ pnpm start
 | App | Variable | Rôle |
 | --- | --- | --- |
 | api | `SPRING_PROFILES_ACTIVE` | `dev` en local ; vide en production |
-| api | `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | défaut `jdbc:postgresql://localhost:5600/shiftcart`, `shiftcart` / `shiftcart` |
+| api | `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | défaut `jdbc:postgresql://localhost:5600/nexoshift`, `nexoshift` / `nexoshift` |
 | api | `JWT_SECRET`, `TRACKING_TOKEN_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | obligatoires hors dev |
 | api | `SHOP_PUBLIC_URL`, `ALLOWED_ORIGINS` | défauts `http://localhost:3000` et `http://localhost:3000,http://localhost:4300` |
 | api | `WHATSAPP_SHOP_NUMBER` | `21692184592` (défaut en dev et dans `.env.example`) |

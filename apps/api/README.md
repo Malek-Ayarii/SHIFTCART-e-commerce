@@ -1,6 +1,6 @@
-# SHIFT CART — API
+# NEXO SHIFT — API
 
-API REST de SHIFT CART : commandes COD de la boutique, suivi public signé, webhook WhatsApp,
+API REST de NEXO SHIFT : commandes COD de la boutique, suivi public signé, webhook WhatsApp,
 back-office (commandes, messages IA, bon de livraison PDF, stats, stock) et auth admin.
 
 Spring Boot 3.5 · Java 21 · Maven (wrapper) · PostgreSQL 17 · Flyway · Spring Security (JWT HS256) · OpenPDF.
@@ -9,7 +9,7 @@ Contrat JSON : [`docs/CONTRACT.md`](../../docs/CONTRACT.md) · sens métier : [`
 ## Lancer en local
 
 ```bash
-# 1. Postgres (depuis la racine du dépôt) : localhost:5600, base/utilisateur/mdp = shiftcart
+# 1. Postgres (depuis la racine du dépôt) : localhost:5600, base/utilisateur/mdp = nexoshift
 docker compose up -d
 
 # 2. API avec les données de démo (profil dev), sur http://localhost:8090
@@ -18,7 +18,7 @@ SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run        # Git Bash / macOS / Li
 # PowerShell : $env:SPRING_PROFILES_ACTIVE="dev"; .\mvnw.cmd spring-boot:run
 ```
 
-Compte admin créé au premier démarrage : `admin@shiftcart.tn` / `shiftcart-dev` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
+Compte admin créé au premier démarrage : `admin@nexoshift.tn` / `nexoshift-dev` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`).
 Toutes les variables sont listées dans [`.env.example`](.env.example).
 
 Essai rapide :
@@ -27,7 +27,7 @@ Essai rapide :
 curl -s -X POST localhost:8090/api/orders -H 'Content-Type: application/json' \
   -d '{"customerName":"Mohamed Ben Ali","phone":"98765432","governorate":"Sousse","productSku":"PACK-BARISTA","quantity":1,"website":""}'
 curl -s -X POST localhost:8090/api/auth/login -H 'Content-Type: application/json' \
-  -d '{"email":"admin@shiftcart.tn","password":"shiftcart-dev"}'
+  -d '{"email":"admin@nexoshift.tn","password":"nexoshift-dev"}'
 ```
 
 ## Commandes
@@ -37,12 +37,12 @@ curl -s -X POST localhost:8090/api/auth/login -H 'Content-Type: application/json
 | `./mvnw verify` | compile (avertissements `-Xlint:all` = erreurs), tests unitaires + intégration (Testcontainers : Docker requis) |
 | `./mvnw test -Dtest=OrderApiTest` | une classe de tests |
 | `./mvnw spring-boot:run` | démarrer |
-| `./mvnw package -DskipTests` | jar exécutable `target/shiftcart-api-*.jar` |
+| `./mvnw package -DskipTests` | jar exécutable `target/nexoshift-api-*.jar` |
 
 ## Organisation
 
 ```
-com.shiftcart
+com.nexoshift
 ├── common     config (AppProperties, Clock, HttpClient), error (formes d'erreur du contrat), money (millimes ⇄ TND),
 │              phone (validation +216, affichage, masquage), ratelimit, security (JWT, CORS), time (mois Africa/Tunis)
 ├── order      commandes : création publique, suivi signé, admin (liste, compteurs, détail, statuts), bon de livraison

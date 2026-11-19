@@ -56,7 +56,7 @@ export declare function AdminDashboard(props: AdminDashboardProps): React.ReactE
 
 declare global {
   interface Window {
-    ShiftCart: {
+    NexoShift: {
       Icon: typeof Icon; Wordmark: typeof Wordmark; Button: typeof Button; Navbar: typeof Navbar; MobileFrame: typeof MobileFrame;
       StoryVideo: typeof StoryVideo; PriceTag: typeof PriceTag; ProductCard: typeof ProductCard; SavingsCalculator: typeof SavingsCalculator;
       IncludedList: typeof IncludedList; ReviewCard: typeof ReviewCard; StickyCta: typeof StickyCta; BottomSheet: typeof BottomSheet;

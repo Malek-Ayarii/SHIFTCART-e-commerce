@@ -45,7 +45,7 @@ export function contactUrl(number: string | null = shopWhatsAppNumber()): string
   return number ? waLink(number) : "/livraison#contact";
 }
 
-/** Message written by the shop (reference ShiftCart.utils.buildWhatsAppMessage). */
+/** Message written by the shop (reference NexoShift.utils.buildWhatsAppMessage). */
 export function buildWhatsAppMessage(order: { name?: string; product?: string; city?: string; amount?: number }): string {
   const first = String(order.name ?? "").trim().split(/\s+/)[0] ?? "";
   return `Salut ${first} ! Ton ${order.product ?? "Pack Barista"} pour ${order.city ?? "ta ville"} est prêt (${order.amount ?? 89} TND, paiement à la livraison). Réponds OUI pour déclencher la livraison 🚚`;

@@ -1,24 +1,25 @@
-name: shiftcart-e-commerce
+name: nexoshift
 
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: shiftcart-postgres
+    container_name: nexoshift-postgres
     environment:
-      POSTGRES_DB: shiftcart
-      POSTGRES_USER: shiftcart
-      POSTGRES_PASSWORD: shiftcart
+      POSTGRES_DB: nexoshift
+      POSTGRES_USER: nexoshift
+      POSTGRES_PASSWORD: nexoshift
     ports:
       - "5600:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U shiftcart -d shiftcart"]
+      test: ["CMD-SHELL", "pg_isready -U nexoshift -d nexoshift"]
       interval: 5s
       timeout: 3s
       retries: 10
+
 volumes:
   pgdata:
     # Nom explicite : survit au renommage du dossier/dépôt (sinon le nom du projet
     # compose dérive du dossier et la base repartirait d'un volume vide).
-    name: shiftcart-e-commerce_pgdata
+    name: nexoshift_pgdata

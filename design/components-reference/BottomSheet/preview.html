@@ -5,7 +5,7 @@
 <body>
 <div id="root"></div>
 <script>
-  var S = window.ShiftCart, h = React.createElement;
+  var S = window.NexoShift, h = React.createElement;
   function Demo() { var s = React.useState(true); return h('div', { style: { position: 'relative', height: 540, overflow: 'hidden', background: 'var(--surface)' } }, h('div', { className: 'sc-pad' }, h(S.Button, { variant: 'primary', size: 'xl', block: true, onClick: function () { s[1](true); } }, 'Obtenir mon pack')), h(S.BottomSheet, { open: s[0], onClose: function () { s[1](false); }, title: 'Finalise ta commande', subtitle: 'Tu paies à la livraison' }, h('p', { style: { margin: 0, color: 'var(--ink-muted)' } }, 'Contenu du tiroir (formulaire de checkout).'))); }
   ReactDOM.createRoot(document.getElementById('root')).render(h(Demo));
 </script>

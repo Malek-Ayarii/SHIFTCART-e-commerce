@@ -1,4 +1,4 @@
-# SHIFT CART — boutique (`apps/shop`)
+# NEXO SHIFT — boutique (`apps/shop`)
 
 Next.js 16 (App Router, RSC, Cache Components) · Tailwind CSS v4 · lucide-react.
 

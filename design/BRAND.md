@@ -1,4 +1,4 @@
-SHIFT CART vend un seul pack, à une seule cible (étudiants et jeunes actifs tunisiens, 19–30 ans), par un seul geste : un achat d'impulsion payé en espèces à la livraison, confirmé sur WhatsApp. Chaque écran sert ce geste. Le style est « hustle » : contrasté, net, énergique — fond clair, noir robuste, un orange électrique réservé à l'action.
+NEXO SHIFT vend un seul pack, à une seule cible (étudiants et jeunes actifs tunisiens, 19–30 ans), par un seul geste : un achat d'impulsion payé en espèces à la livraison, confirmé sur WhatsApp. Chaque écran sert ce geste. Le style est « hustle » : contrasté, net, énergique — fond clair, noir robuste, un orange électrique réservé à l'action.
 
 ## Contenu et ton
 
@@ -52,19 +52,19 @@ SHIFT CART vend un seul pack, à une seule cible (étudiants et jeunes actifs tu
 
 ## Iconographie
 
-- **Lucide** (licence ISC), trait 2px, coins arrondis, 24px de base — 16px dans le texte, 20–24px dans les boutons. Les tracés sont intégrés à `components/bundle.js` (`ShiftCart.Icon`) et prennent `currentColor`.
+- **Lucide** (licence ISC), trait 2px, coins arrondis, 24px de base — 16px dans le texte, 20–24px dans les boutons. Les tracés sont intégrés à `components/bundle.js` (`NexoShift.Icon`) et prennent `currentColor`.
 - L'icône WhatsApp est la bulle de dialogue Lucide (`whatsapp`), pas le logo officiel : utiliser le logo WhatsApp suppose de suivre la charte de Meta.
 - L'icône de panier de la navbar reste l'icône Lucide `cart` ; le pictogramme du logo n'est pas une icône d'interface.
 
 ## Logo
 
-- Fichiers dans `assets/Logos/` : `shiftcart-logo.png` (logo complet : pictogramme + nom + « E-SHOP & ROUTINE »), `shiftcart-mark.png` (pictogramme seul : éclair orange, grain de café, chariot, cercle noir), `shiftcart-wordmark.png` (« SHIFT CART » seul), `shiftcart-logo-original.png` (le fichier fourni, fond clair). Les trois premiers ont un fond transparent.
+- Fichiers (SVG, source de vérité) : `apps/shop/public/logos/nexoshift-logo.svg` (logo complet), `nexoshift-horizontal.svg` (logo + baseline horizontale), `nexoshift-mark.svg` (pictogramme seul) — variantes `-light` pour fond sombre, disponibles côté apps (`apps/admin/public/assets/logos/`). Ne jamais redessiner le logo ni recomposer son texte : son lettrage n'est pas une police du système.
 - Toujours utiliser ces fichiers ; ne jamais redessiner le logo ni recomposer son texte en Syne : son lettrage n'est pas une police du système.
-- **Navbar mobile** : `shiftcart-mark.png` à 32px + le `Wordmark`, ou `shiftcart-wordmark.png` à 20–24px de haut. **Header admin** : pictogramme 36px + wordmark. **Écrans de marque** (confirmation, réseaux, emballage) : `shiftcart-logo.png`.
+- **Navbar mobile** : `nexoshift-mark.svg` à 32px + le `Wordmark`, ou `nexoshift-horizontal.svg` à 20–24px de haut. **Header admin** : pictogramme 36px + wordmark. **Écrans de marque** (confirmation, réseaux, emballage) : `nexoshift-logo.svg`.
 - Le pictogramme et le wordmark sont en noir `ink` : uniquement sur `surface`, `surface-raised` ou `orange-soft`. Sur fond sombre ou orange, les poser dans une pastille `surface-raised` (cercle de 8px de marge).
 - Zone de protection : la hauteur de l'éclair ÷ 4 tout autour. Taille minimale du pictogramme : 24px.
 - `Wordmark` et `Navbar` acceptent `src` / `logoSrc` pour afficher l'image du logo ; sans image, le nom s'écrit en Syne en secours.
 
 ## Utiliser les composants
 
-Les composants sont dans `components/bundle.js` sous `window.ShiftCart` (React 18 requis sur la page) avec `components/bundle.css`. `LandingPage` assemble les vues 1 et 2, `AdminDashboard` la vue 3. Les utilitaires `ShiftCart.utils` donnent la validation du numéro tunisien, le formatage `98 765 432`, la liste des gouvernorats et le message WhatsApp pré-rempli.
+Les composants sont dans `components/bundle.js` sous `window.NexoShift` (React 18 requis sur la page) avec `components/bundle.css`. `LandingPage` assemble les vues 1 et 2, `AdminDashboard` la vue 3. Les utilitaires `NexoShift.utils` donnent la validation du numéro tunisien, le formatage `98 765 432`, la liste des gouvernorats et le message WhatsApp pré-rempli.
