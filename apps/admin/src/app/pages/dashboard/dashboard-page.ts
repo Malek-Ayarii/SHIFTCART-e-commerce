@@ -39,7 +39,6 @@ import {
   transitionRejectedMessage,
 } from '../../core/status';
 import { ToastService } from '../../core/toast.service';
-import { DashboardCharts } from '../../ui/dashboard-charts';
 import { ErrorState } from '../../ui/error-state';
 import { PackVisual } from '../../ui/pack-visual';
 import { Icon } from '../../ui/icon';
@@ -67,7 +66,6 @@ const LANE_SIZE = 50;
 @Component({
   selector: 'app-dashboard-page',
   imports: [
-    DashboardCharts,
     KanbanBoard,
     MonthPicker,
     ErrorState,
@@ -120,8 +118,6 @@ export class DashboardPage {
   protected readonly analyticsError = signal<string | null>(null);
 
   protected readonly serverCounts = signal<OrderCounts | null>(null);
-  /** Rafraîchissement silencieux des graphiques (polling, changement de statut). */
-  protected readonly chartsRefresh = signal(0);
   /** Totaux par colonne quand une recherche est active (totalElements). */
   private readonly searchTotals = signal<Partial<Record<OrderStatus, number>> | null>(null);
   protected readonly summaries = signal<OrderSummary[]>([]);
@@ -349,7 +345,6 @@ export class DashboardPage {
       if (this.doc.hidden || this.pendingMoves > 0 || this.shipTarget()) return;
       this.loadBoard(this.state.month(), this.q(), true);
       this.loadKpis(this.state.month(), true);
-      this.chartsRefresh.update((n) => n + 1);
       if (!this.state.isMobile()) this.loadAnalytics(this.state.period(), true);
     };
     const id = setInterval(tick, environment.pollIntervalMs);
@@ -416,7 +411,6 @@ export class DashboardPage {
         );
         this.toast.success(`#${refNumber(detail.ref)} : ${STATUS_META[to].label.toLowerCase()}.`);
         this.loadKpis(this.state.month(), true);
-        this.chartsRefresh.update((n) => n + 1);
         if (!this.state.isMobile()) this.loadAnalytics(this.state.period(), true);
         if (to === 'shipped') this.refreshStock();
       },
