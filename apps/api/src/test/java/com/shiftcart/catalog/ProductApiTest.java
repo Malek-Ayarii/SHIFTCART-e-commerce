@@ -97,7 +97,7 @@ class ProductApiTest extends IntegrationTest {
                 .andExpect(jsonPath("$.sku").value("PACK-SETUP"))
                 .andExpect(jsonPath("$.name").value("Le Pack Setup & Productivité"))
                 .andExpect(jsonPath("$.priceTnd").value(79))
-                .andExpect(jsonPath("$.cover").isEmpty())
+                .andExpect(jsonPath("$.cover.url").isNotEmpty())
                 .andExpect(jsonPath("$.savings").isEmpty())
                 .andExpect(jsonPath("$.items.length()").value(3))
                 .andExpect(jsonPath("$.items[0].name").value("Support d'ordinateur pliable"))
@@ -389,12 +389,11 @@ class ProductApiTest extends IntegrationTest {
         Long before = jdbc.queryForObject("select count(*) from media", Long.class);
         assertThat(seeder.seed()).isZero();
         assertThat(jdbc.queryForObject("select count(*) from media", Long.class)).isEqualTo(before);
-        // 3 photos fournies → 3 packs amorcés ; le Pack Setup (sans photo) n'a pas de photo principale.
+        // 4 photos fournies → les 4 packs sont amorcés avec une photo principale.
         assertThat(jdbc.queryForObject(
-                "select count(*) from product where photo_seeded and sku in ('PACK-BARISTA','PACK-ESPACE','PACK-MEALPREP')",
-                Integer.class)).isEqualTo(3);
-        assertThat(jdbc.queryForObject("select cover_media_id from product where sku = 'PACK-SETUP'", Long.class))
-                .isNull();
+                "select count(*) from product where photo_seeded and cover_media_id is not null and sku in "
+                        + "('PACK-BARISTA','PACK-SETUP','PACK-ESPACE','PACK-MEALPREP')",
+                Integer.class)).isEqualTo(4);
         // Photo retirée par l'admin : pas réimportée.
         Long cover = jdbc.queryForObject("select cover_media_id from product where sku = 'PACK-MEALPREP'", Long.class);
         jdbc.update("update product set cover_media_id = null where sku = 'PACK-MEALPREP'");

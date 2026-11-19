@@ -27,12 +27,18 @@ public class PackPhotoSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(PackPhotoSeeder.class);
 
-    /** Textes alternatifs (description de chaque photo fournie). */
+    /**
+     * Textes alternatifs (description de chaque photo fournie). La photo du Pack Setup est une image générée par
+     * IA (docs/SPEC-V2.md) : à remplacer par une vraie photo du pack avant la mise en ligne.
+     */
     static final Map<String, String> ALT = Map.of(
             "pack-barista", "Le Pack Barista sur un bureau : cafetière italienne Moka noire, thermos intelligent "
                     + "affichant la température et sachet de café de spécialité",
             "pack-espace-autonome", "Le Pack Espace Autonome sur un bureau en open space : bouilloire pliable bleue, "
                     + "multiprise cube avec ports USB et organisateur de bureau",
+            "pack-setup-productivite", "Le Pack Setup & Productivité sur un bureau lumineux : ordinateur portable "
+                    + "surélevé par un support pliable en aluminium, lampe LED clipsée en haut de l'écran et "
+                    + "lunettes anti-lumière bleue à fine monture noire",
             "pack-meal-prep", "Le Pack Meal Prep sur un bureau : lunchbox chauffante, gourde isotherme en inox "
                     + "et set de couverts dans son étui");
 
