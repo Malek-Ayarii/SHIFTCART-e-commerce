@@ -57,21 +57,44 @@ public class AdminOrderService {
     @Transactional(readOnly = true)
     public PageResponse<OrderSummary> list(List<String> statuses, String q, String month, Long productId, int page,
             int size) {
+        return list(statuses, q, month, productId, null, page, size);
+    }
+
+    /** {@code day} ({@code AAAA-MM-JJ}, heure de Tunis) restreint à une journée — vue Jour de l'agenda. */
+    @Transactional(readOnly = true)
+    public PageResponse<OrderSummary> list(List<String> statuses, String q, String month, Long productId, String day,
+            int page, int size) {
         if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
             throw ApiException.badRequest("Pagination invalide (size entre 1 et " + MAX_PAGE_SIZE + ").");
         }
         List<OrderStatus> parsed = parseStatuses(statuses);
         MonthRange range = MonthRange.parseOptional(month);
+        Instant[] dayRange = parseDay(day);
         Specification<CustomerOrder> spec = Specification.allOf(
                 OrderSpecifications.statusIn(parsed),
                 range == null ? OrderSpecifications.createdBetween(null, null)
                         : OrderSpecifications.createdBetween(range.start(), range.end()),
+                dayRange == null ? OrderSpecifications.createdBetween(null, null)
+                        : OrderSpecifications.createdBetween(dayRange[0], dayRange[1]),
                 OrderSpecifications.productIs(productId),
                 OrderSpecifications.search(q));
         Page<CustomerOrder> result = orders.findAll(spec,
                 PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))));
         return new PageResponse<>(result.getContent().stream().map(AdminOrderService::summary).toList(),
                 page, size, result.getTotalElements(), result.getTotalPages());
+    }
+
+    private static Instant[] parseDay(String day) {
+        if (day == null || day.isBlank()) {
+            return null;
+        }
+        try {
+            java.time.LocalDate d = java.time.LocalDate.parse(day.trim());
+            return new Instant[] {d.atStartOfDay(com.shiftcart.common.config.CoreConfig.TUNIS).toInstant(),
+                    d.plusDays(1).atStartOfDay(com.shiftcart.common.config.CoreConfig.TUNIS).toInstant()};
+        } catch (java.time.format.DateTimeParseException e) {
+            throw ApiException.badRequest("Le jour doit être au format AAAA-MM-JJ.");
+        }
     }
 
     @Transactional(readOnly = true)

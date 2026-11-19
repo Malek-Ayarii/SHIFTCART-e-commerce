@@ -140,13 +140,13 @@
   <!-- Barre d'onglets (< 768px) -->
   <nav
     aria-label="Navigation équipe"
-    class="md:hidden fixed inset-x-0 bottom-0 z-30 h-18 grid grid-cols-5 bg-surface-raised border-t border-line"
+    class="md:hidden fixed inset-x-0 bottom-0 z-30 h-18 flex overflow-x-auto bg-surface-raised border-t border-line [scrollbar-width:none]"
   >
     @for (item of nav; track item.path) {
       <a
         [routerLink]="item.path"
         [attr.aria-current]="isActive(item) ? 'page' : null"
-        class="flex flex-col items-center justify-center gap-1 no-underline text-xs"
+        class="flex-1 min-w-18 flex flex-col items-center justify-center gap-1 no-underline text-xs whitespace-nowrap"
         [class]="isActive(item) ? 'text-orange-ink font-extrabold' : 'text-ink-muted font-bold'"
       >
         <sc-icon [name]="item.icon" [size]="22" />{{ item.short }}

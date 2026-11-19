@@ -94,6 +94,12 @@ shiftcart:
     model: ${LLM_MODEL:claude-haiku-5-5}
     base-url: ${LLM_BASE_URL:https://api.anthropic.com}
     timeout: ${LLM_TIMEOUT:10s}
+  agents:                                          # Agents IA du back-office (/agents)
+    api-key: ${AGENTS_API_KEY:${LLM_API_KEY:}}     # vide = ANTHROPIC_API_KEY / profil `ant auth login`
+    model: ${AGENTS_MODEL:claude-opus-5-5}
+    base-url: ${AGENTS_BASE_URL:${LLM_BASE_URL:https://api.anthropic.com}}
+    timeout: ${AGENTS_TIMEOUT:180s}
+    fallbacks: ${AGENTS_FALLBACKS:true}             # repli serveur en cas de refus (beta server-side-fallback)
 
 logging:
   level:

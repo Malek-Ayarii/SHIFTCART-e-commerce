@@ -126,6 +126,8 @@ export interface OrderListQuery {
   size?: number;
   /** v2 : filtre par pack. */
   productId?: number | null;
+  /** Agenda : une journée (`AAAA-MM-JJ`, heure de Tunis). */
+  day?: string;
 }
 
 export interface StatusUpdateRequest {
@@ -199,6 +201,102 @@ export interface ProductStat {
   returned: number;
   collectedTnd: number;
   sharePct: number;
+  /** CA commandé hors annulées (cohorte du mois). */
+  orderedTnd: number;
+}
+
+/** GET /stats/daily : un jour du mois (heure de Tunis), jours vides à 0. */
+export interface DayStat {
+  /** `2026-11-01` */
+  date: string;
+  orders: number;
+  orderedTnd: number;
+}
+
+/** GET /stats/calendar : un jour de l'année (agenda). */
+export interface CalendarDay {
+  date: string;
+  orders: number;
+  orderedTnd: number;
+  delivered: number;
+  returned: number;
+  cancelled: number;
+}
+
+export interface CalendarYear {
+  year: number;
+  days: CalendarDay[];
+}
+
+// ---------- Agents IA ----------
+
+export interface AgentInfo {
+  key: string;
+  label: string;
+  domain: string;
+  summary: string;
+  /** Données que l'agent peut lire (« lire les indicateurs du mois »…). */
+  reads: string[];
+  coordinator: boolean;
+}
+
+export interface AgentRoster {
+  configured: boolean;
+  model: string;
+  agents: AgentInfo[];
+}
+
+export interface AgentThreadSummary {
+  id: number;
+  title: string;
+  lastAgent: string | null;
+  createdAt: string;
+  updatedAt: string;
+  messages: number;
+}
+
+export type AgentTraceStatus = 'running' | 'ok' | 'error' | 'refused' | 'truncated';
+
+export interface AgentTraceStep {
+  /** `consult` = un agent en consulte un autre ; `data` = lecture de données. */
+  type: 'consult' | 'data';
+  from: string;
+  to: string | null;
+  depth: number;
+  label: string;
+  question: string | null;
+  answer: string | null;
+  status: AgentTraceStatus;
+}
+
+export interface AgentMessage {
+  id: number;
+  role: 'user' | 'assistant';
+  agent: string;
+  content: string;
+  trace: AgentTraceStep[];
+  status: 'ok' | 'refused' | 'error' | 'truncated';
+  createdAt: string;
+}
+
+export interface AgentThreadDetail {
+  id: number;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages: AgentMessage[];
+}
+
+export interface AgentAskRequest {
+  content: string;
+  /** Clé d'un spécialiste ; absent = l'assistant oriente. */
+  agent?: string;
+}
+
+export interface AgentExchange {
+  thread: AgentThreadSummary;
+  question: AgentMessage;
+  answer: AgentMessage;
 }
 
 // ---------- Médias & packs (v2) ----------

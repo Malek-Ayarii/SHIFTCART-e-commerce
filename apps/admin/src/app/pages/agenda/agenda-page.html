@@ -1,0 +1,409 @@
+<!-- Tuile d'indicateur -->
+<ng-template #tile let-label="label" let-value="value" let-icon="icon" let-note="note">
+  <div class="p-4 rounded-lg bg-surface-raised shadow-card flex flex-col gap-1 min-w-0">
+    <span class="inline-flex items-center gap-1.5 text-label uppercase text-ink-muted">
+      <sc-icon [name]="icon" [size]="14" />{{ label }}
+    </span>
+    <span class="font-display font-extrabold text-heading md:text-kpi md:leading-9 truncate">{{ value }}</span>
+    @if (note) {
+      <span class="text-xs font-semibold text-ink-muted truncate">{{ note }}</span>
+    }
+  </div>
+</ng-template>
+
+<div class="flex flex-col gap-5">
+  <!-- En-tête -->
+  <header class="flex flex-wrap items-end gap-4">
+    <div class="max-md:sr-only flex flex-col gap-1 min-w-0">
+      <h1 class="m-0 text-kpi">Agenda</h1>
+      <p class="m-0 text-sm text-ink-muted font-semibold">Tes commandes jour par jour, mois par mois, en heure de Tunis</p>
+    </div>
+    <div role="group" aria-label="Vue de l'agenda" class="md:ml-auto inline-flex p-1 rounded-md bg-surface-sunken">
+      @for (v of views; track v.key) {
+        <button
+          type="button"
+          class="h-11 px-4 md:px-5 rounded-sm border-0 text-sm font-extrabold cursor-pointer transition-[background-color,color,box-shadow] duration-120"
+          [class]="view() === v.key ? 'bg-surface-raised text-ink shadow-card' : 'bg-transparent text-ink-muted hover:text-ink'"
+          [attr.aria-pressed]="view() === v.key"
+          (click)="go(v.key)"
+        >
+          {{ v.label }}
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- Navigation dans le temps -->
+  <div class="flex flex-wrap items-center gap-2">
+    <button
+      type="button"
+      class="size-11 grid place-items-center rounded-md border-0 bg-surface-raised text-ink cursor-pointer shadow-[inset_0_0_0_1.5px_var(--line-strong)] hover:bg-surface-sunken"
+      [attr.aria-label]="prevLabel()"
+      (click)="step(-1)"
+    >
+      <sc-icon name="chevronLeft" [size]="20" />
+    </button>
+    <button
+      type="button"
+      class="size-11 grid place-items-center rounded-md border-0 bg-surface-raised text-ink cursor-pointer shadow-[inset_0_0_0_1.5px_var(--line-strong)] hover:bg-surface-sunken"
+      [attr.aria-label]="nextLabel()"
+      (click)="step(1)"
+    >
+      <sc-icon name="chevronRight" [size]="20" />
+    </button>
+    <h2 class="m-0 mx-1 text-heading md:text-display-lg font-extrabold" aria-live="polite">{{ title() }}</h2>
+    @if (!isCurrent()) {
+      <button
+        type="button"
+        class="ml-auto md:ml-2 inline-flex items-center gap-2 h-11 px-4 rounded-md border-0 bg-ink text-ink-inverse text-sm font-extrabold cursor-pointer hover:opacity-90"
+        (click)="goToday()"
+      >
+        <sc-icon name="calendarDays" [size]="16" />Aujourd'hui
+      </button>
+    }
+  </div>
+
+  <!-- Filtre pack (partagé avec le tableau de bord) -->
+  @if (packs().length > 1) {
+    <div role="group" aria-label="Filtrer par pack" class="flex gap-2 overflow-x-auto pb-1 -mb-1 [scrollbar-width:thin]">
+      <button
+        type="button"
+        class="shrink-0 inline-flex items-center gap-2 h-11 pl-3 pr-4 rounded-pill border-0 text-sm font-extrabold whitespace-nowrap cursor-pointer transition-colors duration-120"
+        [class]="state.productFilter() === null ? 'bg-ink text-ink-inverse' : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)] hover:bg-surface-sunken'"
+        [attr.aria-pressed]="state.productFilter() === null"
+        (click)="selectPack(null)"
+      >
+        <sc-icon name="boxes" [size]="18" />Tous les packs
+      </button>
+      @for (p of packs(); track p.id) {
+        <button
+          type="button"
+          class="shrink-0 inline-flex items-center gap-2 h-11 pl-1.5 pr-4 rounded-pill border-0 text-sm font-extrabold whitespace-nowrap cursor-pointer transition-colors duration-120"
+          [class]="state.productFilter() === p.id ? 'bg-ink text-ink-inverse' : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)] hover:bg-surface-sunken'"
+          [attr.aria-pressed]="state.productFilter() === p.id"
+          (click)="selectPack(p.id)"
+        >
+          <sc-pack-visual class="size-8 rounded-pill shrink-0" [media]="p.cover" [name]="p.name" [compact]="true" />
+          {{ p.name }}
+        </button>
+      }
+    </div>
+  }
+
+  @if (calendarError(); as err) {
+    <sc-error-state [message]="err" (retry)="loadCalendar()" />
+  } @else {
+    @switch (view()) {
+      <!-- ================= MOIS ================= -->
+      @case ('mois') {
+        @if (calendarLoading() && !calendar()) {
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3" aria-hidden="true">
+            @for (i of [0, 1, 2, 3]; track i) {
+              <div class="sc-skeleton h-24 rounded-lg"></div>
+            }
+          </div>
+          <div class="sc-skeleton h-130 rounded-lg" aria-hidden="true"></div>
+          <span class="sc-sr">Chargement de l'agenda…</span>
+        } @else {
+          @let t = monthTotals();
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <ng-container *ngTemplateOutlet="tile; context: { label: 'Commandes', value: fmtNum(t.orders), icon: 'orders', note: monthBest() ? 'Record : ' + monthBest()!.orders + ' le ' + monthBest()!.label : null }" />
+            <ng-container *ngTemplateOutlet="tile; context: { label: 'CA commandé', value: fmtTnd(t.revenue), icon: 'banknote', note: 'Hors annulées' }" />
+            <ng-container *ngTemplateOutlet="tile; context: { label: 'Livrées', value: fmtNum(t.delivered), icon: 'circleCheck', note: t.orders ? Math.round((t.delivered / t.orders) * 100) + ' % des commandes' : null }" />
+            <ng-container *ngTemplateOutlet="tile; context: { label: 'Retours · annulées', value: fmtNum(t.returned) + ' · ' + fmtNum(t.cancelled), icon: 'undo', note: null }" />
+          </div>
+
+          <section class="rounded-lg bg-surface-raised shadow-card p-2 md:p-4 flex flex-col gap-2" aria-label="Calendrier du mois">
+            <div class="grid grid-cols-7 gap-1 md:gap-2" aria-hidden="true">
+              @for (w of weekdays; track w) {
+                <span class="px-1 md:px-2 py-1 text-label uppercase text-ink-muted text-center md:text-left">{{ w }}</span>
+              }
+            </div>
+            <div class="flex flex-col gap-1 md:gap-2" role="grid" [attr.aria-label]="title()">
+              @for (week of weeks(); track $index) {
+                <div class="grid grid-cols-7 gap-1 md:gap-2" role="row">
+                  @for (c of week; track $index) {
+                    @if (c) {
+                      <button
+                        type="button"
+                        role="gridcell"
+                        class="relative min-h-16 md:min-h-28 p-1.5 md:p-2.5 rounded-md border-0 text-left flex flex-col gap-1 cursor-pointer transition-[box-shadow,transform] duration-120 hover:shadow-[inset_0_0_0_2px_var(--line-strong)] disabled:cursor-default disabled:hover:shadow-none motion-reduce:transition-none"
+                        [class.shadow-[inset_0_0_0_2px_var(--ink)]]="c.isToday"
+                        [style.background]="heatBg(c.level)"
+                        [attr.aria-label]="c.label"
+                        [attr.aria-current]="c.isToday ? 'date' : null"
+                        [disabled]="c.isFuture"
+                        (click)="openDay(c.iso)"
+                      >
+                        <span class="flex items-center gap-1">
+                          <span
+                            class="text-xs md:text-sm font-extrabold leading-none"
+                            [class]="c.isToday ? 'size-6 grid place-items-center rounded-pill bg-ink text-ink-inverse' : c.isFuture ? 'text-ink-muted' : 'text-ink'"
+                            >{{ c.day }}</span
+                          >
+                          @if (c.isBest) {
+                            <span class="ml-auto text-ink max-md:hidden" title="Record du mois"><sc-icon name="star" [size]="14" [strokeWidth]="2.5" /></span>
+                          }
+                        </span>
+                        @if (c.orders > 0) {
+                          <span class="mt-auto flex items-baseline gap-1">
+                            <span class="font-display font-extrabold text-base md:text-heading leading-none tabular-nums">{{ c.orders }}</span>
+                            <span class="text-xs font-bold max-md:hidden" [class]="c.level >= 3 ? 'text-ink' : 'text-ink-muted'">cmd</span>
+                          </span>
+                          <span class="max-md:hidden text-xs font-semibold tabular-nums truncate" [class]="c.level >= 3 ? 'text-ink' : 'text-ink-muted'">{{ fmtTnd(c.revenue) }}</span>
+                          @if (c.delivered || c.returned || c.cancelled) {
+                            <span class="max-lg:hidden flex flex-wrap gap-x-2 text-xs font-bold">
+                              @if (c.delivered) {
+                                <span class="inline-flex items-center gap-0.5 text-success" [attr.title]="c.delivered + ' livrée(s)'"><sc-icon name="check" [size]="12" [strokeWidth]="3" />{{ c.delivered }}</span>
+                              }
+                              @if (c.returned) {
+                                <span class="inline-flex items-center gap-0.5 text-danger" [attr.title]="c.returned + ' retournée(s)'"><sc-icon name="undo" [size]="12" [strokeWidth]="2.5" />{{ c.returned }}</span>
+                              }
+                              @if (c.cancelled) {
+                                <span class="inline-flex items-center gap-0.5 text-ink-muted" [attr.title]="c.cancelled + ' annulée(s)'"><sc-icon name="x" [size]="12" [strokeWidth]="3" />{{ c.cancelled }}</span>
+                              }
+                            </span>
+                          }
+                        }
+                      </button>
+                    } @else {
+                      <span role="gridcell" aria-hidden="true"></span>
+                    }
+                  }
+                </div>
+              }
+            </div>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 px-1 pt-2 text-xs font-semibold text-ink-muted">
+              <span class="inline-flex items-center gap-1.5">
+                Moins
+                @for (l of [0, 1, 2, 3, 4]; track l) {
+                  <span class="size-3.5 rounded-xs shadow-[inset_0_0_0_1px_var(--line)]" [style.background]="heatBg(l)"></span>
+                }
+                Plus de commandes
+              </span>
+              <span class="max-lg:hidden inline-flex items-center gap-3">
+                <span class="inline-flex items-center gap-1 text-success"><sc-icon name="check" [size]="12" [strokeWidth]="3" />Livrées</span>
+                <span class="inline-flex items-center gap-1 text-danger"><sc-icon name="undo" [size]="12" />Retournées</span>
+                <span class="inline-flex items-center gap-1"><sc-icon name="x" [size]="12" [strokeWidth]="3" />Annulées</span>
+              </span>
+              <span class="md:ml-auto">Clique un jour pour voir ses commandes</span>
+            </div>
+          </section>
+        }
+      }
+
+      <!-- ================= ANNÉE ================= -->
+      @case ('annee') {
+        @if (calendarLoading() && !calendar()) {
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
+            @for (i of [0, 1, 2, 3, 4, 5, 6, 7]; track i) {
+              <div class="sc-skeleton h-56 rounded-lg"></div>
+            }
+          </div>
+          <span class="sc-sr">Chargement de l'agenda…</span>
+        } @else {
+          @let yt = yearTotals();
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <ng-container *ngTemplateOutlet="tile; context: { label: 'Commandes', value: fmtNum(yt.orders), icon: 'orders', note: 'Année ' + year() }" />
+            <ng-container *ngTemplateOutlet="tile; context: { label: 'CA commandé', value: fmtTnd(yt.revenue), icon: 'banknote', note: 'Hors annulées' }" />
+            <ng-container *ngTemplateOutlet="tile; context: { label: 'Livrées', value: fmtNum(yt.delivered), icon: 'circleCheck', note: yt.orders ? Math.round((yt.delivered / yt.orders) * 100) + ' % des commandes' : null }" />
+            <ng-container *ngTemplateOutlet="tile; context: { label: 'Meilleur mois', value: yearBest()?.name ?? '—', icon: 'star', note: yearBest() ? fmtNum(yearBest()!.orders) + ' commandes' : null }" />
+          </div>
+
+          <!-- Commandes par mois -->
+          <section class="rounded-lg bg-surface-raised shadow-card p-5 flex flex-col gap-4" aria-labelledby="year-bars">
+            <h3 id="year-bars" class="m-0 text-title font-extrabold">Commandes par mois</h3>
+            <div class="grid grid-cols-12 gap-1 md:gap-3 items-end h-44" aria-hidden="true">
+              @for (m of months(); track m.m) {
+                <button
+                  type="button"
+                  tabindex="-1"
+                  class="h-full flex flex-col items-center justify-end gap-1.5 border-0 bg-transparent cursor-pointer group min-w-0"
+                  (click)="openMonth(m.m)"
+                >
+                  @if (m.totals.orders > 0) {
+                    <span class="text-xs font-extrabold tabular-nums max-sm:hidden">{{ m.totals.orders }}</span>
+                  }
+                  <span
+                    class="block w-full max-w-10 rounded-t-xs transition-opacity duration-120 group-hover:opacity-80"
+                    [class]="m.isBest ? 'bg-orange' : 'bg-ink'"
+                    [style.height.%]="m.barPct"
+                    [style.min-height.px]="m.totals.orders > 0 ? 2 : 0"
+                  ></span>
+                </button>
+              }
+            </div>
+            <div class="grid grid-cols-12 gap-1 md:gap-3 -mt-2 border-t border-line-strong pt-2" aria-hidden="true">
+              @for (m of months(); track m.m) {
+                <span class="text-center text-xs font-bold truncate" [class]="m.isCurrent ? 'text-ink' : 'text-ink-muted'">{{ m.short }}</span>
+              }
+            </div>
+            <table class="sc-sr">
+              <caption>Commandes par mois, {{ year() }}</caption>
+              <thead><tr><th scope="col">Mois</th><th scope="col">Commandes</th><th scope="col">CA commandé</th></tr></thead>
+              <tbody>
+                @for (m of months(); track m.m) {
+                  <tr><th scope="row">{{ m.name }}</th><td>{{ m.totals.orders }}</td><td>{{ fmtTnd(m.totals.revenue) }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </section>
+
+          <!-- 12 mois -->
+          <ul class="m-0 p-0 list-none grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" aria-label="Mois de l'année">
+            @for (m of months(); track m.m; let i = $index) {
+              <li class="sc-enter" [style.--d]="i * 30 + 'ms'">
+                <button
+                  type="button"
+                  class="w-full h-full p-4 rounded-lg border-0 bg-surface-raised text-left cursor-pointer flex flex-col gap-3 shadow-card transition-[box-shadow,transform] duration-120 hover:shadow-lift hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+                  [class.shadow-[inset_0_0_0_2px_var(--ink)]]="m.isCurrent"
+                  [class.opacity-60]="m.isFuture"
+                  [attr.aria-label]="m.name + ' ' + year() + ' : ' + m.totals.orders + ' commandes, ' + fmtTnd(m.totals.revenue)"
+                  (click)="openMonth(m.m)"
+                >
+                  <span class="flex items-baseline gap-2">
+                    <span class="text-title font-extrabold">{{ m.name }}</span>
+                    @if (m.isCurrent) {
+                      <span class="text-xs font-extrabold text-orange-ink">En cours</span>
+                    }
+                    <span class="ml-auto font-display font-extrabold text-heading tabular-nums">{{ fmtNum(m.totals.orders) }}</span>
+                  </span>
+                  <span class="grid grid-cols-7 gap-1" aria-hidden="true">
+                    @for (week of m.grid; track $index) {
+                      @for (c of week; track $index) {
+                        @if (c) {
+                          <span class="aspect-square rounded-[3px] shadow-[inset_0_0_0_1px_var(--line)]" [style.background]="heatBg(c.level)" [attr.title]="c.title"></span>
+                        } @else {
+                          <span></span>
+                        }
+                      }
+                    }
+                  </span>
+                  <span class="mt-auto flex items-center justify-between gap-2 text-xs font-semibold text-ink-muted">
+                    <span class="tabular-nums">{{ fmtTnd(m.totals.revenue) }}</span>
+                    @if (m.totals.delivered) {
+                      <span class="inline-flex items-center gap-1 text-success font-bold"><sc-icon name="check" [size]="12" [strokeWidth]="3" />{{ m.totals.delivered }} livrées</span>
+                    }
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      }
+
+      <!-- ================= JOUR ================= -->
+      @case ('jour') {
+        @let ds = dayStats();
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <ng-container *ngTemplateOutlet="tile; context: { label: 'Commandes', value: fmtNum(ds?.orders ?? dayTotal()), icon: 'orders', note: peakHour() ? 'Pic à ' + peakHour() : null }" />
+          <ng-container *ngTemplateOutlet="tile; context: { label: 'CA commandé', value: fmtTnd(ds?.orderedTnd ?? 0), icon: 'banknote', note: 'Hors annulées' }" />
+          <ng-container *ngTemplateOutlet="tile; context: { label: 'Livrées', value: fmtNum(ds?.delivered ?? 0), icon: 'circleCheck', note: null }" />
+          <ng-container *ngTemplateOutlet="tile; context: { label: 'Retours · annulées', value: fmtNum(ds?.returned ?? 0) + ' · ' + fmtNum(ds?.cancelled ?? 0), icon: 'undo', note: null }" />
+        </div>
+
+        <div class="grid gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] items-start">
+          <!-- Chronologie -->
+          <section class="rounded-lg bg-surface-raised shadow-card p-4 md:p-5 flex flex-col gap-4 min-w-0" aria-labelledby="day-timeline">
+            <h3 id="day-timeline" class="m-0 text-title font-extrabold">Commandes de la journée</h3>
+            @if (dayError(); as err) {
+              <sc-error-state [message]="err" (retry)="loadDay()" />
+            } @else if (dayLoading()) {
+              @for (i of [0, 1, 2]; track i) {
+                <div class="sc-skeleton h-18 rounded-md" aria-hidden="true"></div>
+              }
+              <span class="sc-sr">Chargement des commandes…</span>
+            } @else {
+              <ol class="m-0 p-0 list-none flex flex-col">
+                @for (e of dayTimeline(); track e.order.key; let last = $last) {
+                  <li class="grid grid-cols-[3.25rem_1rem_minmax(0,1fr)] gap-2 sc-enter">
+                    <span class="pt-3 text-sm font-extrabold tabular-nums text-ink">{{ e.time }}</span>
+                    <span class="relative flex justify-center" aria-hidden="true">
+                      <span class="mt-4.5 size-2.5 rounded-pill bg-ink z-10"></span>
+                      @if (!last) {
+                        <span class="absolute top-6 bottom-0 w-px bg-line-strong"></span>
+                      }
+                    </span>
+                    <a
+                      [routerLink]="['/commandes', e.order.key]"
+                      class="mb-2.5 p-3 rounded-md bg-surface no-underline text-ink flex flex-wrap items-center gap-x-3 gap-y-1.5 shadow-[inset_0_0_0_1px_var(--line)] transition-shadow duration-120 hover:shadow-[inset_0_0_0_2px_var(--ink)]"
+                    >
+                      <span class="font-display font-extrabold">#{{ e.order.id }}</span>
+                      <sc-status-badge [status]="e.order.status" />
+                      <span class="font-bold min-w-0 flex-[1_1_8rem] truncate">{{ e.order.name }}</span>
+                      <span class="font-extrabold whitespace-nowrap">{{ fmtTnd(e.order.amount) }}</span>
+                      <span class="basis-full flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-ink-muted">
+                        @if (e.order.product) {
+                          <span class="inline-flex items-center gap-1.5 min-w-0">
+                            <sc-pack-visual class="size-5 rounded-xs shrink-0" [url]="e.order.productCover" [name]="e.order.product" [compact]="true" />
+                            <span class="truncate">{{ e.order.product }}</span>
+                          </span>
+                        }
+                        <span class="inline-flex items-center gap-1"><sc-icon name="pin" [size]="12" />{{ e.order.city }}</span>
+                      </span>
+                    </a>
+                  </li>
+                } @empty {
+                  <li class="py-10 flex flex-col items-center gap-3 text-center">
+                    <span class="size-12 grid place-items-center rounded-pill bg-surface-sunken text-ink-muted"><sc-icon name="calendarDays" [size]="22" /></span>
+                    <p class="m-0 text-body-sm text-ink-muted">Aucune commande ce jour-là.</p>
+                  </li>
+                }
+              </ol>
+              @if (dayTotal() > dayOrders().length) {
+                <p class="m-0 text-xs font-bold text-ink-muted">+ {{ dayTotal() - dayOrders().length }} autres commandes non affichées.</p>
+              }
+            }
+          </section>
+
+          <!-- Répartition par heure -->
+          <section class="rounded-lg bg-surface-raised shadow-card p-4 md:p-5 flex flex-col gap-4 min-w-0" aria-labelledby="day-hours">
+            <div class="flex items-baseline gap-2">
+              <h3 id="day-hours" class="m-0 text-title font-extrabold">Par heure</h3>
+              @if (peakHour(); as p) {
+                <span class="text-sm font-semibold text-ink-muted">pic à {{ p }}</span>
+              }
+            </div>
+            <div class="relative h-36 flex items-end gap-0.5 border-b border-line-strong" aria-hidden="true">
+              @for (h of hours(); track h.h) {
+                <span class="flex-1 h-full flex items-end" [attr.title]="h.h + ' h : ' + h.count">
+                  <span
+                    class="block w-full rounded-t-xs"
+                    [class]="h.isPeak ? 'bg-orange' : 'bg-ink'"
+                    [style.height.%]="h.pct"
+                    [style.min-height.px]="h.count > 0 ? 2 : 0"
+                  ></span>
+                </span>
+              }
+            </div>
+            <div class="relative h-4 -mt-2 text-xs font-semibold text-ink-muted" aria-hidden="true">
+              @for (t of [0, 6, 12, 18]; track t) {
+                <span class="absolute -translate-x-1/2" [style.left.%]="((t + 0.5) / 24) * 100">{{ t }} h</span>
+              }
+            </div>
+            <table class="sc-sr">
+              <caption>Commandes par heure</caption>
+              <tbody>
+                @for (h of hours(); track h.h) {
+                  @if (h.count) {
+                    <tr><th scope="row">{{ h.h }} h</th><td>{{ h.count }}</td></tr>
+                  }
+                }
+              </tbody>
+            </table>
+            <div class="flex flex-col gap-2 pt-1 border-t border-line">
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 h-11 px-3 -mx-3 rounded-sm border-0 bg-transparent text-sm font-extrabold text-ink cursor-pointer hover:bg-surface-sunken"
+                (click)="go('mois')"
+              >
+                <sc-icon name="calendar" [size]="16" />Voir tout le mois
+                <sc-icon name="arrowRight" [size]="16" class="ml-auto" />
+              </button>
+            </div>
+          </section>
+        </div>
+      }
+    }
+  }
+</div>

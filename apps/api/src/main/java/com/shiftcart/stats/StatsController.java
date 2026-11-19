@@ -39,6 +39,21 @@ public class StatsController {
         return stats.governorates(MonthRange.parseOrCurrent(month, clock), productId);
     }
 
+    @GetMapping("/daily")
+    public List<StatsDtos.DayRow> daily(@RequestParam(name = "month", required = false) String month,
+            @RequestParam(name = "productId", required = false) Long productId) {
+        return stats.daily(MonthRange.parseOrCurrent(month, clock), productId);
+    }
+
+    /** Agenda : chaque jour de l'année {@code year} (défaut : année en cours, heure de Tunis). */
+    @GetMapping("/calendar")
+    public StatsDtos.Calendar calendar(@RequestParam(name = "year", required = false) Integer year,
+            @RequestParam(name = "productId", required = false) Long productId) {
+        int y = year == null ? java.time.Year.now(clock.withZone(com.shiftcart.common.config.CoreConfig.TUNIS)).getValue()
+                : year;
+        return stats.calendar(y, productId);
+    }
+
     @GetMapping("/products")
     public List<StatsDtos.ProductRow> products(@RequestParam(name = "month", required = false) String month) {
         return stats.products(MonthRange.parseOrCurrent(month, clock));

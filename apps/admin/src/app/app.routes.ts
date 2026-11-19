@@ -29,6 +29,11 @@ export const routes: Routes = [
           import('./pages/order-detail/order-detail-page').then((m) => m.OrderDetailPage),
       },
       {
+        path: 'agenda',
+        title: 'Agenda · NEXO SHIFT',
+        loadComponent: () => import('./pages/agenda/agenda-page').then((m) => m.AgendaPage),
+      },
+      {
         path: 'packs',
         title: 'Packs · NEXO SHIFT',
         loadComponent: () => import('./pages/packs/packs-page').then((m) => m.PacksPage),
@@ -51,6 +56,11 @@ export const routes: Routes = [
         path: 'messages',
         title: 'Messages IA · NEXO SHIFT',
         loadComponent: () => import('./pages/messages/messages-page').then((m) => m.MessagesPage),
+      },
+      {
+        path: 'agents',
+        title: 'Agents IA · NEXO SHIFT',
+        loadComponent: () => import('./pages/agents/agents-page').then((m) => m.AgentsPage),
       },
       {
         path: 'finances',

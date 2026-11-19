@@ -34,6 +34,13 @@ const NAV: NavItem[] = [
     match: (u) => u === '/' || u.startsWith('/?') || u.startsWith('/#') || u.startsWith('/commandes/'),
   },
   {
+    path: '/agenda',
+    label: 'Agenda',
+    short: 'Agenda',
+    icon: 'calendarDays',
+    match: (u) => u.startsWith('/agenda'),
+  },
+  {
     path: '/packs',
     label: 'Packs',
     short: 'Packs',
@@ -46,6 +53,13 @@ const NAV: NavItem[] = [
     short: 'Messages',
     icon: 'whatsapp',
     match: (u) => u.startsWith('/messages'),
+  },
+  {
+    path: '/agents',
+    label: 'Agents IA',
+    short: 'Agents',
+    icon: 'sparkles',
+    match: (u) => u.startsWith('/agents'),
   },
   {
     path: '/finances',
@@ -69,6 +83,8 @@ const MOBILE_TITLES: [RegExp, string][] = [
   [/^\/packs\//, 'Éditer le pack'],
   [/^\/packs/, 'Packs'],
   [/^\/messages/, 'Messages IA'],
+  [/^\/agenda/, 'Agenda'],
+  [/^\/agents/, 'Agents IA'],
   [/^\/finances/, 'Finances'],
   [/^\/stock/, 'Stock & marges'],
 ];

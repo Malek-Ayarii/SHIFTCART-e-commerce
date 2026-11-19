@@ -54,6 +54,8 @@ class AdminSeederTest {
                 new AppProperties.RateLimit(5, Duration.ofMinutes(10), 3, Duration.ofMinutes(30)),
                 new AppProperties.WhatsApp(null, null, null, null, null, "https://graph.facebook.com", "v24.0",
                         "order_confirmation", "fr", Duration.ofSeconds(10)),
-                new AppProperties.Llm(null, "claude-haiku-5-5", "https://api.anthropic.com", Duration.ofSeconds(10)));
+                new AppProperties.Llm(null, "claude-haiku-5-5", "https://api.anthropic.com", Duration.ofSeconds(10)),
+                new AppProperties.Agents(null, "claude-opus-5-5", "https://api.anthropic.com", Duration.ofSeconds(180),
+                        true));
     }
 }

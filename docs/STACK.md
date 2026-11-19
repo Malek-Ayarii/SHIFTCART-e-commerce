@@ -87,6 +87,8 @@ CSS global de chaque app :
 | `JWT_SECRET` | api | auth admin |
 | `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_APP_SECRET` | api | Cloud API + vérification du webhook |
 | `LLM_API_KEY` | api | génération du message IA |
+| `AGENTS_API_KEY` | api | agents IA du back-office (`/agents`) ; vide = `LLM_API_KEY`, puis `ANTHROPIC_API_KEY` |
+| `AGENTS_MODEL` | api | modèle des agents (défaut `claude-opus-5-5`) |
 | `CARRIER_FEE_TND` | api | frais transporteur par colis (7 TND dans les maquettes = exemple) — **[À DÉFINIR]** |
 | `ALLOWED_ORIGINS` | api | CORS |
 

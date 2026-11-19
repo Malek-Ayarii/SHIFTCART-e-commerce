@@ -39,6 +39,7 @@ import {
   transitionRejectedMessage,
 } from '../../core/status';
 import { ToastService } from '../../core/toast.service';
+import { DashboardCharts } from '../../ui/dashboard-charts';
 import { ErrorState } from '../../ui/error-state';
 import { PackVisual } from '../../ui/pack-visual';
 import { Icon } from '../../ui/icon';
@@ -64,7 +65,7 @@ interface KpiView {
 /** / — C1 tableau de bord (KPI + Kanban) ; sous 768px, C5 liste mobile filtrable. */
 @Component({
   selector: 'app-dashboard-page',
-  imports: [KpiCard, KanbanBoard, MonthPicker, ErrorState, OrderCard, Icon, ShipDialog, PackVisual, NgTemplateOutlet],
+  imports: [DashboardCharts, KpiCard, KanbanBoard, MonthPicker, ErrorState, OrderCard, Icon, ShipDialog, PackVisual, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   templateUrl: './dashboard-page.html',
@@ -101,7 +102,9 @@ export class DashboardPage {
   protected readonly kpisLoading = signal(true);
   protected readonly kpisError = signal<string | null>(null);
 
-  private readonly serverCounts = signal<OrderCounts | null>(null);
+  protected readonly serverCounts = signal<OrderCounts | null>(null);
+  /** Rafraîchissement silencieux des graphiques (polling, changement de statut). */
+  protected readonly chartsRefresh = signal(0);
   /** Totaux par colonne quand une recherche est active (totalElements). */
   private readonly searchTotals = signal<Partial<Record<OrderStatus, number>> | null>(null);
   protected readonly summaries = signal<OrderSummary[]>([]);
@@ -315,6 +318,7 @@ export class DashboardPage {
       if (this.doc.hidden || this.pendingMoves > 0 || this.shipTarget()) return;
       this.loadBoard(this.state.month(), this.q(), true);
       this.loadKpis(this.state.month(), true);
+      this.chartsRefresh.update((n) => n + 1);
     };
     const id = setInterval(tick, environment.pollIntervalMs);
     const onVisible = () => {
@@ -380,6 +384,7 @@ export class DashboardPage {
         );
         this.toast.success(`#${refNumber(detail.ref)} : ${STATUS_META[to].label.toLowerCase()}.`);
         this.loadKpis(this.state.month(), true);
+        this.chartsRefresh.update((n) => n + 1);
         if (to === 'shipped') this.refreshStock();
       },
       error: (err) => {

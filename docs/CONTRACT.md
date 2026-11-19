@@ -242,7 +242,18 @@ Réponse `201` :
 
 ## Admin — stats v2
 - `kpis`, `finance`, `governorates`, `counts` acceptent un `productId` optionnel.
-- `GET /api/admin/stats/products?month=` → `[ { "productId", "name", "orders", "delivered", "returned", "collectedTnd", "sharePct" } ]`.
+- `GET /api/admin/stats/products?month=` → `[ { "productId", "name", "orders", "delivered", "returned", "collectedTnd", "sharePct", "orderedTnd" } ]` (`orderedTnd` = CA commandé hors annulées).
+- `GET /api/admin/stats/daily?month=&productId=` → une ligne par jour du mois (heure de Tunis, jours vides à 0) : `[ { "date": "2026-11-01", "orders": 4, "orderedTnd": 356 } ]` (`orders` = commandes créées, annulées comprises ; `orderedTnd` hors annulées).
+- `GET /api/admin/stats/calendar?year=&productId=` → agenda : `{ "year": 2026, "days": [ { "date", "orders", "orderedTnd", "delivered", "returned", "cancelled" } ] }`, un jour par jour de l'année (heure de Tunis, vides à 0). `year` hors 2000–2100 → `400`.
+- `GET /api/admin/orders?day=AAAA-MM-JJ` : filtre une journée (heure de Tunis), cumulable avec les autres filtres ; format invalide → `400`.
+
+## Admin — agents IA (JWT)
+Un assistant (`assistant`) oriente la question et consulte des spécialistes (`social`, `content`, `design`, `developer`, `security`, `sales`, `finance`) ; un spécialiste peut interroger un collègue (profondeur max 2, 8 consultations par demande). Les agents lisent uniquement des agrégats (KPI, finances, jours, gouvernorats, packs, stock, catalogue) — jamais de données personnelles client. Modèle : `AGENTS_MODEL` (défaut `claude-opus-5-5`), SDK Java officiel Anthropic.
+- `GET /api/admin/agents` → `{ "configured": bool, "model", "agents": [ { "key", "label", "domain", "summary", "reads": [..], "coordinator" } ] }`.
+- `GET /api/admin/agents/threads` → fils du membre connecté `[ { "id", "title", "lastAgent", "createdAt", "updatedAt", "messages" } ]`.
+- `GET /api/admin/agents/threads/{id}` → `{ "id", "title", "createdAt", "updatedAt", "messages": [ { "id", "role": "user|assistant", "agent", "content", "trace": [ { "type": "consult|data", "from", "to", "depth", "label", "question", "answer", "status" } ], "status": "ok|refused|truncated|error", "createdAt" } ] }` ; fil d'un autre membre → `404`.
+- `POST /api/admin/agents/threads` `{ "content", "agent"? }` (nouveau fil) et `POST /api/admin/agents/threads/{id}/messages` (suite) → `{ "thread", "question", "answer" }`. Réponse synchrone (jusqu'à ~1 min). Erreurs : `400` (vide, > 4000 caractères, agent inconnu), `409 AGENT_BUSY` (une demande à la fois), `429 AGENTS_RATE_LIMIT`, `503 AGENTS_NOT_CONFIGURED | AGENTS_AUTH | AGENTS_UPSTREAM | AGENTS_NETWORK` (rien n'est enregistré).
+- `DELETE /api/admin/agents/threads/{id}` → `204`.
 
 ## Données d'amorçage v2
 - Migration **de prod** : les 4 packs de `docs/SPEC-V2.md` (textes exacts, slugs, SKU, prix ; Meal Prep en brouillon prix 0, puis passé à 99 TND et activé par la migration `V4__meal_prep_mvp_price` — prix MVP provisoire), leurs pièces (coûts 0 = [À DÉFINIR]), compositions, hotspots, calculateurs. Le Pack Barista existant (`PACK-BARISTA`) est **mis à jour**, pas recréé.

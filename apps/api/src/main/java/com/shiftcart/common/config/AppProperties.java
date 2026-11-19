@@ -19,7 +19,8 @@ public record AppProperties(
         @DefaultValue Auth auth,
         @DefaultValue RateLimit rateLimit,
         @DefaultValue WhatsApp whatsapp,
-        @DefaultValue Llm llm) {
+        @DefaultValue Llm llm,
+        @DefaultValue Agents agents) {
 
     public record Tracking(String secret) {}
 
@@ -67,6 +68,17 @@ public record AppProperties(
             return notBlank(apiKey);
         }
     }
+
+    /**
+     * Agents IA du back-office (assistant + 7 spécialistes). Clé : {@code AGENTS_API_KEY}, sinon {@code LLM_API_KEY},
+     * sinon les identifiants standards du SDK Anthropic ({@code ANTHROPIC_API_KEY}, profil {@code ant auth login}).
+     */
+    public record Agents(
+            String apiKey,
+            @DefaultValue("claude-opus-5-5") String model,
+            @DefaultValue("https://api.anthropic.com") String baseUrl,
+            @DefaultValue("180s") Duration timeout,
+            @DefaultValue("true") boolean fallbacks) {}
 
     static boolean notBlank(String s) {
         return s != null && !s.isBlank();
