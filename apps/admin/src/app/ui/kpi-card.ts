@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { Sparkline } from './charts/sparkline';
 import { Icon, IconName } from './icon';
 
 /**
@@ -7,7 +8,7 @@ import { Icon, IconName } from './icon';
  */
 @Component({
   selector: 'sc-kpi-card',
-  imports: [Icon],
+  imports: [Icon, Sparkline],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: '@container grid gap-2 min-w-0 bg-surface-raised rounded-lg p-5 shadow-card ring-1 ring-line',
@@ -35,6 +36,13 @@ import { Icon, IconName } from './icon';
         <sc-icon [name]="trend() === 'up' ? 'trendUp' : 'trendDown'" [size]="14" />
         {{ delta() }}<span class="text-ink-muted font-semibold">{{ period() }}</span>
       </div>
+    } @else if (spark()) {
+      <div class="text-label tracking-normal normal-case text-ink-muted font-semibold">
+        Pas de comparaison
+      </div>
+    }
+    @if (spark(); as s) {
+      <sc-sparkline class="mt-1" [values]="s" />
     }
   `,
 })
@@ -47,6 +55,8 @@ export class KpiCard {
   readonly good = input<boolean | undefined>(undefined);
   readonly period = input(' vs mois dernier');
   readonly accent = input(false);
+  /** Mini-courbe optionnelle (valeurs par tranche de la période). */
+  readonly spark = input<number[] | null>(null);
 
   /** « 12 638 TND » : l'unité en plus petit pour que le montant tienne dans la carte. */
   protected readonly parts = computed<{ main: string; unit: string | null }>(() => {

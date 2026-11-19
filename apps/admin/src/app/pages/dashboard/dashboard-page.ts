@@ -20,16 +20,16 @@ import { StockApi } from '../../core/api/stock.api';
 import { AppState } from '../../core/app-state';
 import { DeliverySlipService } from '../../core/delivery-slip.service';
 import { apiErrorMessage } from '../../core/errors';
+import { formatNumber, formatPct, monthLabel, monthShortLabel, refNumber } from '../../core/format';
 import {
-  formatDelta,
-  formatNumber,
-  formatPct,
-  formatTnd,
-  monthLabel,
-  monthShortLabel,
-  refNumber,
-} from '../../core/format';
-import { KpiStats, OrderCounts, OrderSummary, ProductAdmin, StatusUpdateRequest } from '../../core/models';
+  AnalyticsStats,
+  KpiStats,
+  OrderCounts,
+  OrderSummary,
+  ProductAdmin,
+  StatusUpdateRequest,
+} from '../../core/models';
+import { Period, comparisonWindow, granularityFor, periodLabel } from '../../core/period';
 import { Order, toOrderView, toSummary } from '../../core/order-view';
 import {
   KANBAN_LANES,
@@ -43,28 +43,40 @@ import { ErrorState } from '../../ui/error-state';
 import { PackVisual } from '../../ui/pack-visual';
 import { Icon } from '../../ui/icon';
 import { KanbanBoard, OrderMoveEvent } from '../../ui/kanban-board';
-import { KpiCard } from '../../ui/kpi-card';
 import { MonthPicker } from '../../ui/month-picker';
 import { OrderActionEvent, OrderCard } from '../../ui/order-card';
+import { PeriodPicker } from '../../ui/period-picker';
 import { ShipDialog, ShipInfo } from '../../ui/ship-dialog';
+import { AnalyticsPanel } from './analytics-panel';
+
+const GRANULARITY_LABEL = {
+  hour: 'par heure',
+  day: 'par jour',
+  week: 'par semaine',
+  month: 'par mois',
+} as const;
 
 /** Nombre max de cartes chargées par colonne (le compteur vient du serveur). */
 const LANE_SIZE = 50;
 
-interface KpiView {
-  label: string;
-  value: string;
-  icon: 'package' | 'banknote' | 'undo' | 'whatsapp';
-  delta?: string;
-  trend: 'up' | 'down';
-  good?: boolean;
-  accent?: boolean;
-}
-
-/** / — C1 tableau de bord (KPI + Kanban) ; sous 768px, C5 liste mobile filtrable. */
+/**
+ * / — C1 tableau de bord : analytique sur une période (jour, semaine, mois, année, libre) puis pipeline Kanban du
+ * mois ; sous 768px, C5 liste mobile filtrable.
+ */
 @Component({
   selector: 'app-dashboard-page',
-  imports: [KpiCard, KanbanBoard, MonthPicker, ErrorState, OrderCard, Icon, ShipDialog, PackVisual, NgTemplateOutlet],
+  imports: [
+    KanbanBoard,
+    MonthPicker,
+    ErrorState,
+    OrderCard,
+    Icon,
+    ShipDialog,
+    PackVisual,
+    NgTemplateOutlet,
+    PeriodPicker,
+    AnalyticsPanel,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   templateUrl: './dashboard-page.html',
@@ -101,6 +113,10 @@ export class DashboardPage {
   protected readonly kpisLoading = signal(true);
   protected readonly kpisError = signal<string | null>(null);
 
+  protected readonly analytics = signal<AnalyticsStats | null>(null);
+  protected readonly analyticsLoading = signal(true);
+  protected readonly analyticsError = signal<string | null>(null);
+
   private readonly serverCounts = signal<OrderCounts | null>(null);
   /** Totaux par colonne quand une recherche est active (totalElements). */
   private readonly searchTotals = signal<Partial<Record<OrderStatus, number>> | null>(null);
@@ -114,13 +130,18 @@ export class DashboardPage {
   private moveVersion = 0;
   private boardSub?: Subscription;
   private kpiSub?: Subscription;
+  private analyticsSub?: Subscription;
 
   /** Commande en attente du transporteur (fenêtre « Expédier »). */
   protected readonly shipTarget = signal<Order | null>(null);
 
-  protected readonly monthTitle = computed(
+  protected readonly packName = computed(() => this.selectedPack()?.name ?? 'Tous les packs');
+  protected readonly analyticsTitle = computed(
     () =>
-      `${monthLabel(this.state.month())} · ${this.selectedPack()?.name ?? 'tous les packs'} · pipeline COD`,
+      `${periodLabel(this.state.period())} · ${this.packName()} · ${GRANULARITY_LABEL[granularityFor(this.state.period())]}`,
+  );
+  protected readonly pipelineTitle = computed(
+    () => `${monthLabel(this.state.month())} · ${this.packName().toLowerCase()} · pipeline COD`,
   );
 
   protected readonly orders = computed<Order[]>(() => {
@@ -134,41 +155,6 @@ export class DashboardPage {
     const c = this.serverCounts();
     if (!c) return {};
     return { new: c.NEW, pending: c.PENDING, confirmed: c.CONFIRMED, shipped: c.SHIPPED };
-  });
-
-  protected readonly kpiCards = computed<KpiView[]>(() => {
-    const k = this.kpis();
-    if (!k) return [];
-    const d = (v: number | null, unit: '%' | 'pts') => (v == null ? undefined : formatDelta(v, unit));
-    return [
-      {
-        label: 'Commandes',
-        value: formatNumber(k.orders),
-        icon: 'package',
-        delta: d(k.ordersDeltaPct, '%'),
-        trend: (k.ordersDeltaPct ?? 0) < 0 ? 'down' : 'up',
-        good: (k.ordersDeltaPct ?? 0) >= 0,
-        accent: true,
-      },
-      {
-        label: "Chiffre d'affaires",
-        value: formatTnd(k.revenueTnd),
-        icon: 'banknote',
-        delta: d(k.revenueDeltaPct, '%'),
-        trend: (k.revenueDeltaPct ?? 0) < 0 ? 'down' : 'up',
-        good: (k.revenueDeltaPct ?? 0) >= 0,
-      },
-      {
-        label: 'Taux de retour',
-        value: formatPct(k.returnRatePct),
-        icon: 'undo',
-        delta: d(k.returnRateDeltaPts, 'pts'),
-        trend: (k.returnRateDeltaPts ?? 0) > 0 ? 'up' : 'down',
-        // Un taux de retour qui baisse est favorable.
-        good: (k.returnRateDeltaPts ?? 0) <= 0,
-      },
-      { label: 'À confirmer', value: formatNumber(k.toConfirm), icon: 'whatsapp', trend: 'up' },
-    ];
   });
 
   // ---------- Vue mobile (C5) ----------
@@ -187,7 +173,11 @@ export class DashboardPage {
   protected readonly mobileKpis = computed(() => {
     const k = this.kpis();
     return k
-      ? { revenue: formatNumber(k.revenueTnd), toConfirm: formatNumber(k.toConfirm), returns: formatPct(k.returnRatePct) }
+      ? {
+          revenue: formatNumber(k.revenueTnd),
+          toConfirm: formatNumber(k.toConfirm),
+          returns: formatPct(k.returnRatePct),
+        }
       : null;
   });
 
@@ -208,6 +198,13 @@ export class DashboardPage {
       this.state.productFilter();
       untracked(() => this.loadKpis(month, false));
     });
+    // Période / pack → recharger l'analytique (desktop uniquement : la vue mobile n'en affiche pas).
+    effect(() => {
+      const period = this.state.period();
+      this.state.productFilter();
+      if (this.state.isMobile()) return;
+      untracked(() => this.loadAnalytics(period, false));
+    });
     effect(() => {
       const month = this.state.month();
       const q = this.q();
@@ -218,7 +215,8 @@ export class DashboardPage {
       .list()
       .pipe(takeUntilDestroyed())
       .subscribe({
-        next: (list) => this.packs.set([...list].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)),
+        next: (list) =>
+          this.packs.set([...list].sort((a, b) => a.sortOrder - b.sortOrder || a.id - b.id)),
         error: () => this.packs.set([]),
       });
 
@@ -233,6 +231,7 @@ export class DashboardPage {
     this.destroyRef.onDestroy(() => {
       this.boardSub?.unsubscribe();
       this.kpiSub?.unsubscribe();
+      this.analyticsSub?.unsubscribe();
     });
   }
 
@@ -241,6 +240,37 @@ export class DashboardPage {
   protected reloadAll(): void {
     this.loadKpis(this.state.month(), false);
     this.loadBoard(this.state.month(), this.q(), false);
+    if (!this.state.isMobile()) this.loadAnalytics(this.state.period(), false);
+  }
+
+  /** Rechargement silencieux : le rendu précédent reste affiché (atténué) jusqu'à la réponse. */
+  private loadAnalytics(period: Period, quiet: boolean): void {
+    if (!quiet) {
+      this.analyticsLoading.set(true);
+      this.analyticsError.set(null);
+    }
+    this.analyticsSub?.unsubscribe();
+    this.analyticsSub = this.statsApi
+      .analytics(
+        period.from,
+        period.to,
+        granularityFor(period),
+        this.state.productFilter(),
+        comparisonWindow(period),
+      )
+      .subscribe({
+        next: (a) => {
+          this.analytics.set(a);
+          this.analyticsLoading.set(false);
+          this.analyticsError.set(null);
+        },
+        error: (err) => {
+          this.analyticsLoading.set(false);
+          if (!quiet || !this.analytics()) {
+            this.analyticsError.set(apiErrorMessage(err, "L'analytique n'a pas pu être chargée."));
+          }
+        },
+      });
   }
 
   private loadKpis(month: string, quiet: boolean): void {
@@ -315,6 +345,7 @@ export class DashboardPage {
       if (this.doc.hidden || this.pendingMoves > 0 || this.shipTarget()) return;
       this.loadBoard(this.state.month(), this.q(), true);
       this.loadKpis(this.state.month(), true);
+      if (!this.state.isMobile()) this.loadAnalytics(this.state.period(), true);
     };
     const id = setInterval(tick, environment.pollIntervalMs);
     const onVisible = () => {
@@ -380,6 +411,7 @@ export class DashboardPage {
         );
         this.toast.success(`#${refNumber(detail.ref)} : ${STATUS_META[to].label.toLowerCase()}.`);
         this.loadKpis(this.state.month(), true);
+        if (!this.state.isMobile()) this.loadAnalytics(this.state.period(), true);
         if (to === 'shipped') this.refreshStock();
       },
       error: (err) => {
@@ -399,11 +431,19 @@ export class DashboardPage {
     if (c) {
       const fromKey = toApiStatus(from);
       const toKey = toApiStatus(to);
-      this.serverCounts.set({ ...c, [fromKey]: Math.max(0, c[fromKey] - 1), [toKey]: c[toKey] + 1 });
+      this.serverCounts.set({
+        ...c,
+        [fromKey]: Math.max(0, c[fromKey] - 1),
+        [toKey]: c[toKey] + 1,
+      });
     }
     const t = this.searchTotals();
     if (t) {
-      this.searchTotals.set({ ...t, [from]: Math.max(0, (t[from] ?? 1) - 1), [to]: (t[to] ?? 0) + 1 });
+      this.searchTotals.set({
+        ...t,
+        [from]: Math.max(0, (t[from] ?? 1) - 1),
+        [to]: (t[to] ?? 0) + 1,
+      });
     }
   }
 

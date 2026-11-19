@@ -78,6 +78,7 @@ Référence d'implémentation : `formatTnPhone`, `validateTnPhone`, `GOVERNORATE
 | `GET` | `/api/admin/stats/kpis?month=2026-11` | commandes, CA commandé, taux de retour, à confirmer, variations vs mois précédent |
 | `GET` | `/api/admin/stats/finance?month=` | CA commandé, encaissé, retours, en cours, frais transporteur, net, série par semaine |
 | `GET` | `/api/admin/stats/governorates?month=` | par gouvernorat : commandes, livrées, retours, CA encaissé, part |
+| `GET` | `/api/admin/stats/analytics?from=&to=&granularity=&productId=&compareFrom=&compareTo=` | analytique sur une période libre (jour, semaine, mois, année, plage) : résumé vs période précédente, série par heure/jour/semaine/mois, entonnoir, packs, gouvernorats, sources, heures de commande — voir `CONTRACT.md` › stats v2 |
 | `GET` / `PATCH` | `/api/admin/stock` | pièces, coûts, quantités, seuils ; packs assemblables (min des pièces) ; alerte si packs complets < 5 |
 
 Formules (écran Finances) : CA encaissé = Σ montants `DELIVERED` ; taux d'encaissement = encaissé ÷ commandé ; CA net = encaissé − frais transporteur × colis expédiés ; marge par pack = prix − COGS (Σ pièces) − frais transporteur.

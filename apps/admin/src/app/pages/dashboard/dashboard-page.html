@@ -1,10 +1,18 @@
 <ng-template #packFilter>
   @if (packs().length > 1) {
-    <div role="group" aria-label="Filtrer par pack" class="flex gap-2 overflow-x-auto pb-1 -mb-1 [scrollbar-width:thin]">
+    <div
+      role="group"
+      aria-label="Filtrer par pack"
+      class="flex gap-2 overflow-x-auto pb-1 -mb-1 [scrollbar-width:thin]"
+    >
       <button
         type="button"
         class="shrink-0 inline-flex items-center gap-2 h-11 pl-3 pr-4 rounded-pill border-0 text-sm font-extrabold whitespace-nowrap cursor-pointer transition-colors duration-120"
-        [class]="state.productFilter() === null ? 'bg-ink text-ink-inverse' : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)] hover:bg-surface-sunken'"
+        [class]="
+          state.productFilter() === null
+            ? 'bg-ink text-ink-inverse'
+            : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)] hover:bg-surface-sunken'
+        "
         [attr.aria-pressed]="state.productFilter() === null"
         (click)="selectPack(null)"
       >
@@ -14,11 +22,20 @@
         <button
           type="button"
           class="shrink-0 inline-flex items-center gap-2 h-11 pl-1.5 pr-4 rounded-pill border-0 text-sm font-extrabold whitespace-nowrap cursor-pointer transition-colors duration-120"
-          [class]="state.productFilter() === p.id ? 'bg-ink text-ink-inverse' : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)] hover:bg-surface-sunken'"
+          [class]="
+            state.productFilter() === p.id
+              ? 'bg-ink text-ink-inverse'
+              : 'bg-surface-raised text-ink shadow-[inset_0_0_0_1px_var(--line-strong)] hover:bg-surface-sunken'
+          "
           [attr.aria-pressed]="state.productFilter() === p.id"
           (click)="selectPack(p.id)"
         >
-          <sc-pack-visual class="size-8 rounded-pill shrink-0" [media]="p.cover" [name]="p.name" [compact]="true" />
+          <sc-pack-visual
+            class="size-8 rounded-pill shrink-0"
+            [media]="p.cover"
+            [name]="p.name"
+            [compact]="true"
+          />
           {{ p.name }}
           @if (!p.active) {
             <span class="text-xs font-bold opacity-70">· Brouillon</span>
@@ -32,71 +49,100 @@
 @if (!state.isMobile()) {
   <!-- C1 — Tableau de bord desktop -->
   <div class="flex flex-col gap-7">
-    <div class="flex flex-wrap items-center gap-4">
-      <div class="flex flex-col">
-        <h1 class="m-0 font-display font-extrabold text-kpi">Tableau de bord</h1>
-        <span class="text-sm text-ink-muted font-semibold">{{ monthTitle() }}</span>
-      </div>
-      <div class="ml-auto flex flex-wrap items-center gap-3">
-        <label for="search-orders" class="sc-sr">Rechercher une commande</label>
-        <div class="relative">
-          <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
-            <sc-icon name="search" [size]="16" />
-          </span>
-          <input
-            id="search-orders"
-            type="search"
-            placeholder="#2948, nom, téléphone, adresse…"
-            autocomplete="off"
-            class="w-65 max-w-full h-11 pl-10 pr-4 rounded-md border-[1.5px] border-line-strong bg-surface-raised text-ink text-base"
-            [value]="search()"
-            (input)="search.set($any($event.target).value)"
-          />
-        </div>
-        <sc-month-picker [(value)]="state.month" />
-      </div>
+    <div class="flex flex-col">
+      <h1 class="m-0 font-display font-extrabold text-kpi">Tableau de bord</h1>
+      <span class="text-sm text-ink-muted font-semibold">{{ analyticsTitle() }}</span>
     </div>
 
-    <ng-container [ngTemplateOutlet]="packFilter" />
-
-    @if (kpisError(); as err) {
-      <sc-error-state [message]="err" (retry)="reloadAll()" />
-    } @else if (kpisLoading() && !kpis()) {
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(--spacing(55),1fr))] gap-4" aria-busy="true">
-        @for (i of [0, 1, 2, 3]; track i) {
-          <div class="sc-skeleton h-34 rounded-lg" aria-hidden="true"></div>
-        }
-        <span class="sc-sr">Chargement des indicateurs…</span>
+    <!-- Filtres de l'analytique : une rangée au-dessus de tout ce qu'ils filtrent (le pack filtre aussi le pipeline). -->
+    <section aria-label="Analytique" class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3">
+        <sc-period-picker [(value)]="state.period" />
+        <ng-container [ngTemplateOutlet]="packFilter" />
       </div>
-    } @else {
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(--spacing(55),1fr))] gap-4">
-        @for (k of kpiCards(); track k.label) {
-          <sc-kpi-card
-            [label]="k.label"
-            [value]="k.value"
-            [icon]="k.icon"
-            [delta]="k.delta"
-            [trend]="k.trend"
-            [good]="k.good"
-            [accent]="!!k.accent"
-          />
-        }
-      </div>
-    }
 
-    @if (boardError(); as err) {
-      <sc-error-state [message]="err" (retry)="reloadAll()" />
-    } @else {
-      <sc-kanban-board
-        [orders]="orders()"
-        [counts]="laneCounts()"
-        [loading]="boardLoading() && summaries().length === 0"
-        (move)="onMove($event)"
-        (rejected)="onRejected($event)"
-        (action)="onAction($event)"
-        (open)="openOrder($event)"
-      />
-    }
+      @if (analyticsError(); as err) {
+        <sc-error-state [message]="err" (retry)="reloadAll()" />
+      } @else if (analytics(); as a) {
+        <sc-analytics-panel
+          [data]="a"
+          [period]="state.period()"
+          [refreshing]="analyticsLoading()"
+        />
+      } @else {
+        <div class="flex flex-col gap-4" aria-busy="true">
+          <div class="grid grid-cols-2 gap-4 lg:grid-cols-3 min-[1800px]:grid-cols-6">
+            @for (i of [0, 1, 2, 3, 4, 5]; track i) {
+              <div class="sc-skeleton h-40 rounded-lg" aria-hidden="true"></div>
+            }
+          </div>
+          <div class="grid gap-4 xl:grid-cols-3">
+            <div class="sc-skeleton h-96 rounded-lg xl:col-span-2" aria-hidden="true"></div>
+            <div class="sc-skeleton h-96 rounded-lg" aria-hidden="true"></div>
+          </div>
+          <span class="sc-sr">Chargement de l'analytique…</span>
+        </div>
+      }
+    </section>
+
+    <!-- Pipeline des commandes : le Kanban du mois, avec sa recherche. -->
+    <div class="flex flex-col gap-4 border-t border-line pt-7">
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex flex-col">
+          <h2
+            id="pipeline-title"
+            class="m-0 flex items-center gap-3 font-display font-extrabold text-display-lg"
+          >
+            Pipeline des commandes
+            @if (kpis(); as k) {
+              @if (k.toConfirm > 0) {
+                <span
+                  class="inline-flex h-7 items-center gap-1.5 rounded-pill bg-orange-soft px-3 text-sm font-extrabold text-orange-ink"
+                >
+                  <sc-icon name="whatsapp" [size]="14" />{{ k.toConfirm }} à confirmer
+                </span>
+              }
+            }
+          </h2>
+          <span class="text-sm text-ink-muted font-semibold">{{ pipelineTitle() }}</span>
+        </div>
+        <div class="ml-auto flex flex-wrap items-center gap-3">
+          <label for="search-orders" class="sc-sr">Rechercher une commande</label>
+          <div class="relative">
+            <span
+              class="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none"
+            >
+              <sc-icon name="search" [size]="16" />
+            </span>
+            <input
+              id="search-orders"
+              type="search"
+              placeholder="#2948, nom, téléphone, adresse…"
+              autocomplete="off"
+              class="w-65 max-w-full h-11 pl-10 pr-4 rounded-md border-[1.5px] border-line-strong bg-surface-raised text-ink text-base"
+              [value]="search()"
+              (input)="search.set($any($event.target).value)"
+            />
+          </div>
+          <sc-month-picker [(value)]="state.month" />
+        </div>
+      </div>
+
+      @if (boardError(); as err) {
+        <sc-error-state [message]="err" (retry)="reloadAll()" />
+      } @else {
+        <sc-kanban-board
+          [titleHidden]="true"
+          [orders]="orders()"
+          [counts]="laneCounts()"
+          [loading]="boardLoading() && summaries().length === 0"
+          (move)="onMove($event)"
+          (rejected)="onRejected($event)"
+          (action)="onAction($event)"
+          (open)="openOrder($event)"
+        />
+      }
+    </div>
   </div>
 } @else {
   <!-- C5 — Commandes, vue mobile équipe -->
@@ -107,12 +153,22 @@
           <span class="text-xs leading-4 font-bold tracking-[0.06em] uppercase opacity-80">CA</span>
           <span class="font-display font-extrabold text-title">{{ k.revenue }}</span>
         </div>
-        <div class="p-3 rounded-md bg-surface-raised shadow-[inset_0_0_0_1px_var(--line)] flex flex-col justify-between gap-0.5">
-          <span class="text-xs leading-4 font-bold tracking-[0.06em] uppercase text-ink-muted">À confirmer</span>
-          <span class="font-display font-extrabold text-title text-orange-ink">{{ k.toConfirm }}</span>
+        <div
+          class="p-3 rounded-md bg-surface-raised shadow-[inset_0_0_0_1px_var(--line)] flex flex-col justify-between gap-0.5"
+        >
+          <span class="text-xs leading-4 font-bold tracking-[0.06em] uppercase text-ink-muted"
+            >À confirmer</span
+          >
+          <span class="font-display font-extrabold text-title text-orange-ink">{{
+            k.toConfirm
+          }}</span>
         </div>
-        <div class="p-3 rounded-md bg-surface-raised shadow-[inset_0_0_0_1px_var(--line)] flex flex-col justify-between gap-0.5">
-          <span class="text-xs leading-4 font-bold tracking-[0.06em] uppercase text-ink-muted">Retours</span>
+        <div
+          class="p-3 rounded-md bg-surface-raised shadow-[inset_0_0_0_1px_var(--line)] flex flex-col justify-between gap-0.5"
+        >
+          <span class="text-xs leading-4 font-bold tracking-[0.06em] uppercase text-ink-muted"
+            >Retours</span
+          >
           <span class="font-display font-extrabold text-title">{{ k.returns }}</span>
         </div>
       } @else if (kpisError()) {

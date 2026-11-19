@@ -33,11 +33,16 @@ export interface OrderMoveEvent {
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
-    <section aria-labelledby="board-title">
+    <section
+      [attr.aria-labelledby]="titleHidden() ? null : 'board-title'"
+      [attr.aria-label]="titleHidden() ? title() : null"
+    >
       <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
-        <h2 id="board-title" class="m-0 text-heading font-extrabold uppercase tracking-[0.02em]">
-          {{ title() }}
-        </h2>
+        @if (!titleHidden()) {
+          <h2 id="board-title" class="m-0 text-heading font-extrabold uppercase tracking-[0.02em]">
+            {{ title() }}
+          </h2>
+        }
         <span class="text-sm font-semibold text-ink-muted">
           Glisse une carte (ou ← → au clavier) pour changer son statut
         </span>
@@ -111,6 +116,8 @@ export class KanbanBoard {
   readonly lanes = input<readonly OrderStatus[]>(KANBAN_LANES);
   readonly counts = input<Partial<Record<OrderStatus, number>> | null>(null);
   readonly title = input('Pipeline des commandes');
+  /** La page affiche déjà son propre titre : pas de <h2>, la section est nommée par aria-label. */
+  readonly titleHidden = input(false);
   readonly loading = input(false);
 
   readonly move = output<OrderMoveEvent>();

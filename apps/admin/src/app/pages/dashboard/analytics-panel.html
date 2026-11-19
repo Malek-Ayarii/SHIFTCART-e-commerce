@@ -1,0 +1,319 @@
+<!-- KPI de la période, comparés à la période précédente -->
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-3 min-[1800px]:grid-cols-6">
+  @for (k of kpis(); track k.label; let i = $index) {
+    <sc-kpi-card
+      class="sc-enter"
+      [style.--d]="i * 50 + 'ms'"
+      [label]="k.label"
+      [value]="k.value"
+      [icon]="k.icon"
+      [delta]="k.delta"
+      [trend]="k.trend"
+      [good]="k.good"
+      [accent]="!!k.accent"
+      [period]="' ' + comparison()"
+      [spark]="k.spark"
+    />
+  }
+</div>
+
+<div class="grid gap-4 xl:grid-cols-3">
+  <!-- Tendance : période courante vs précédente -->
+  <sc-chart-card
+    class="xl:col-span-2"
+    icon="chartLine"
+    chartIcon="chartLine"
+    [heading]="metricLabel()"
+    [subtitle]="trendTotal().cur + ' · ' + currentLabel()"
+  >
+    <div
+      actions
+      role="group"
+      aria-label="Mesure affichée"
+      class="inline-flex rounded-md bg-surface-sunken p-1"
+    >
+      @for (m of metrics; track m.key) {
+        <button
+          type="button"
+          class="h-8 px-3 rounded-sm border-0 text-xs font-extrabold cursor-pointer"
+          [class]="
+            metric() === m.key
+              ? 'bg-surface-raised text-ink shadow-card'
+              : 'bg-transparent text-ink-muted hover:text-ink'
+          "
+          [attr.aria-pressed]="metric() === m.key"
+          (click)="metric.set(m.key)"
+        >
+          {{ m.label }}
+        </button>
+      }
+    </div>
+    <ul
+      legend
+      class="m-0 flex list-none flex-wrap gap-x-5 gap-y-1 p-0 text-sm font-semibold text-ink-muted"
+    >
+      <li class="inline-flex items-center gap-2">
+        <span
+          class="h-0.5 w-4 rounded-pill"
+          style="background: var(--chart-accent)"
+          aria-hidden="true"
+        ></span>
+        <span class="text-ink">{{ currentLabel() }}</span>
+      </li>
+      <li class="inline-flex items-center gap-2">
+        <span
+          class="h-0.5 w-4 rounded-pill"
+          style="background: var(--chart-muted)"
+          aria-hidden="true"
+        ></span>
+        {{ previousLabel() }} · {{ trendTotal().prev }}
+      </li>
+    </ul>
+    <ng-template #chart>
+      <sc-trend-chart
+        [points]="trend()"
+        [format]="metricFormat()"
+        [valueName]="currentLabel()"
+        [previousName]="previousLabel()"
+        [summary]="trendSummary()"
+      />
+    </ng-template>
+    <ng-template #table>
+      <table [class]="tableClass">
+        <thead>
+          <tr>
+            <th scope="col">Tranche</th>
+            <th scope="col" class="num">{{ metricLabel() }}</th>
+            <th scope="col" class="num">Période préc.</th>
+            <th scope="col" class="num">Variation</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of trend(); track $index) {
+            <tr>
+              <th scope="row">
+                {{ p.long }}
+              </th>
+              <td class="num">{{ cell(p.value) }}</td>
+              <td class="num text-ink-muted">{{ cell(p.previous) }}</td>
+              <td class="num text-ink-muted">{{ variation(p.value, p.previous) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </ng-template>
+  </sc-chart-card>
+
+  <!-- Entonnoir de confirmation (COD) -->
+  <sc-chart-card
+    icon="funnel"
+    heading="Entonnoir COD"
+    subtitle="Part des commandes reçues à chaque étape"
+  >
+    <ng-template #chart>
+      <sc-bar-list
+        [rows]="funnelBars()"
+        [max]="data().funnel.received"
+        label="Entonnoir des commandes"
+      />
+    </ng-template>
+    <ng-template #table>
+      <table [class]="tableClass">
+        <thead>
+          <tr>
+            <th scope="col">Étape</th>
+            <th scope="col" class="num">Commandes</th>
+            <th scope="col" class="num">% reçues</th>
+            <th scope="col" class="num">% étape préc.</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of funnel(); track s.key) {
+            <tr>
+              <th scope="row">
+                {{ s.label }}
+              </th>
+              <td class="num">{{ fmtNumber(s.value) }}</td>
+              <td class="num">{{ fmtPct(s.ofReceived) }}</td>
+              <td class="num">{{ s.ofPrevious === null ? '—' : fmtPct(s.ofPrevious) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </ng-template>
+    <dl class="m-0 mt-auto grid grid-cols-3 gap-2 border-t border-line pt-4">
+      <div class="flex flex-col gap-0.5">
+        <dt class="text-xs font-bold text-ink-muted">Délai de confirmation</dt>
+        <dd class="m-0 text-heading font-extrabold">{{ avgConfirm() }}</dd>
+      </div>
+      <div class="flex flex-col gap-0.5">
+        <dt class="text-xs font-bold text-ink-muted">Délai de livraison</dt>
+        <dd class="m-0 text-heading font-extrabold">{{ avgDelivery() }}</dd>
+      </div>
+      <div class="flex flex-col gap-0.5">
+        <dt class="text-xs font-bold text-ink-muted">Taux de livraison</dt>
+        <dd class="m-0 text-heading font-extrabold">
+          {{ fmtPct(data().summary.deliveryRatePct) }}
+        </dd>
+      </div>
+    </dl>
+  </sc-chart-card>
+
+  <!-- Issues des commandes dans le temps -->
+  <sc-chart-card
+    class="xl:col-span-2"
+    icon="chartColumn"
+    heading="Issues des commandes"
+    subtitle="Statut actuel des commandes reçues, par tranche"
+  >
+    <ul
+      legend
+      class="m-0 flex list-none flex-wrap gap-x-5 gap-y-1 p-0 text-sm font-semibold text-ink-muted"
+    >
+      @for (o of outcomeTotals(); track o.key) {
+        <li class="inline-flex items-center gap-2">
+          <span
+            class="size-2.5 rounded-[3px]"
+            [style.background]="o.color"
+            aria-hidden="true"
+          ></span>
+          <span class="text-ink">{{ o.label }}</span>
+          <span class="tabular-nums">{{ fmtNumber(o.total) }}</span>
+        </li>
+      }
+    </ul>
+    <ng-template #chart>
+      <sc-stacked-columns
+        [series]="outcomeSeries"
+        [columns]="outcomes()"
+        [summary]="outcomeSummary()"
+      />
+    </ng-template>
+    <ng-template #table>
+      <table [class]="tableClass">
+        <thead>
+          <tr>
+            <th scope="col">Tranche</th>
+            @for (s of outcomeSeries; track s.key) {
+              <th scope="col" class="num">{{ s.label }}</th>
+            }
+            <th scope="col" class="num">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (b of data().series; track b.start) {
+            <tr>
+              <th scope="row">
+                {{ bucketLong(b.start) }}
+              </th>
+              <td class="num">{{ b.delivered }}</td>
+              <td class="num">{{ b.inProgress }}</td>
+              <td class="num">{{ b.returned }}</td>
+              <td class="num">{{ b.cancelled }}</td>
+              <td class="num font-bold">{{ b.orders }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </ng-template>
+  </sc-chart-card>
+
+  <!-- Répartition : packs, gouvernorats, sources -->
+  <sc-chart-card icon="boxes" heading="Répartition" subtitle="Commandes et part du total">
+    <div
+      actions
+      role="group"
+      aria-label="Répartition par"
+      class="inline-flex rounded-md bg-surface-sunken p-1"
+    >
+      @for (b of breakdowns; track b.key) {
+        <button
+          type="button"
+          class="h-8 px-2.5 rounded-sm border-0 text-xs font-extrabold cursor-pointer"
+          [class]="
+            breakdownKind() === b.key
+              ? 'bg-surface-raised text-ink shadow-card'
+              : 'bg-transparent text-ink-muted hover:text-ink'
+          "
+          [attr.aria-pressed]="breakdownKind() === b.key"
+          (click)="breakdownKind.set(b.key)"
+        >
+          {{ b.label }}
+        </button>
+      }
+    </div>
+    <ng-template #chart>
+      <sc-bar-list
+        [rows]="shareBars()"
+        [label]="'Commandes par ' + breakdownLabel().toLowerCase()"
+      />
+    </ng-template>
+    <ng-template #table>
+      <table [class]="tableClass">
+        <thead>
+          <tr>
+            <th scope="col">{{ breakdownLabel() }}</th>
+            <th scope="col" class="num">Commandes</th>
+            <th scope="col" class="num">CA</th>
+            <th scope="col" class="num">Part</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of shares(); track r.key) {
+            <tr>
+              <th scope="row">
+                {{ r.name }}
+              </th>
+              <td class="num">{{ fmtNumber(r.orders) }}</td>
+              <td class="num">{{ fmtTnd(r.revenueTnd) }}</td>
+              <td class="num">{{ fmtPct(r.sharePct) }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="text-center text-ink-muted">
+                Aucune commande sur la période.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </ng-template>
+  </sc-chart-card>
+</div>
+
+<!-- Quand les clients commandent -->
+<sc-chart-card
+  icon="clock"
+  heading="Heures de commande"
+  subtitle="Commandes reçues par jour de la semaine et par heure (Tunis)"
+>
+  <ng-template #chart>
+    <sc-heatmap [cells]="data().heatmap" />
+  </ng-template>
+  <ng-template #table>
+    <table [class]="tableClass">
+      <thead>
+        <tr>
+          <th scope="col">Jour</th>
+          <th scope="col">Heure</th>
+          <th scope="col" class="num">Commandes</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of heatRows(); track c.weekday + '-' + c.hour) {
+          <tr>
+            <th scope="row">
+              {{ weekdays[c.weekday - 1] }}
+            </th>
+            <td>{{ c.hour }} h – {{ (c.hour + 1) % 24 }} h</td>
+            <td class="num">{{ c.orders }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3" class="text-center text-ink-muted">Aucune commande sur la période.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </ng-template>
+</sc-chart-card>

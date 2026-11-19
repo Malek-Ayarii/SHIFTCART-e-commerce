@@ -243,6 +243,16 @@ Réponse `201` :
 ## Admin — stats v2
 - `kpis`, `finance`, `governorates`, `counts` acceptent un `productId` optionnel.
 - `GET /api/admin/stats/products?month=` → `[ { "productId", "name", "orders", "delivered", "returned", "collectedTnd", "sharePct" } ]`.
+- `GET /api/admin/stats/analytics` — analytique du tableau de bord sur une période libre. Même cohorte que les autres stats : les commandes **créées** dans la période (heure de Tunis).
+  - Paramètres : `from` / `to` (AAAA-MM-JJ, inclus ; défaut : les 30 derniers jours), `granularity` = `hour` | `day` | `week` | `month` (défaut : ≤ 2 j → heure, ≤ 62 j → jour, ≤ 183 j → semaine, sinon mois), `productId` optionnel, `compareFrom` / `compareTo` optionnels (ensemble). Limites : 5 ans max ; `hour` ≤ 7 jours ; `day` ≤ 400 jours. `400 BAD_REQUEST` sinon.
+  - Période précédente (`previousFrom` / `previousTo`, série `previousSeries`) : les mêmes mois civils juste avant si la période couvre des mois entiers (mois, année), sinon la même durée juste avant. `compareFrom` / `compareTo` ne changent que le résumé `previous` (le back-office compare une période en cours à la même durée écoulée : 1er–16 nov. vs 1er–16 oct.).
+  - Réponse : `{ from, to, granularity, previousFrom, previousTo, compareFrom, compareTo, summary, previous, series, previousSeries, funnel, products, governorates, sources, heatmap }`.
+    - `summary` / `previous` : `{ orders, revenueTnd (hors annulées), collectedTnd (livrées), avgOrderTnd, delivered, inProgress, returned, cancelled, confirmationRatePct, deliveryRatePct (livrées ÷ expédiées), returnRatePct (retours ÷ (livrées + retours)), avgConfirmHours, avgDeliveryDays }` — taux à une décimale, délais `null` sans donnée.
+    - `series` : une entrée par tranche, tranches vides comprises : `{ start: "2026-11-03T00:00" (heure locale), orders, revenueTnd, collectedTnd, delivered, inProgress, returned, cancelled }` ; une semaine commence le lundi. `previousSeries` : `{ start, orders, revenueTnd, collectedTnd }`, alignée par index.
+    - `funnel` : `{ received, confirmed, shipped, delivered }` (étapes atteintes).
+    - `products` / `governorates` / `sources` : `{ …, orders, revenueTnd }` triés par commandes ; `source` = `utm_source`, `null` = direct.
+    - `heatmap` : `[ { weekday (1 = lundi … 7), hour (0–23), orders } ]`, cases non vides seulement.
+  - Aucune donnée personnelle (nom, téléphone, adresse) dans la réponse.
 
 ## Données d'amorçage v2
 - Migration **de prod** : les 4 packs de `docs/SPEC-V2.md` (textes exacts, slugs, SKU, prix ; Meal Prep en brouillon prix 0, puis passé à 99 TND et activé par la migration `V4__meal_prep_mvp_price` — prix MVP provisoire), leurs pièces (coûts 0 = [À DÉFINIR]), compositions, hotspots, calculateurs. Le Pack Barista existant (`PACK-BARISTA`) est **mis à jour**, pas recréé.
