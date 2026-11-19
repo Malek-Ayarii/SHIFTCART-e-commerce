@@ -92,7 +92,8 @@ class StockApiTest extends IntegrationTest {
         JsonNode setup = pack(s, setupId);
         assertThat(setup.get("assemblablePacks").asInt()).isEqualTo(4);
         assertThat(setup.get("alert").asBoolean()).isFalse();
-        assertThat(setup.get("cover").isNull()).isTrue();
+        // La photo du Pack Setup est amorcée depuis la mise en ligne du visuel (upstream).
+        assertThat(setup.get("cover").get("url").asText()).startsWith("/api/media/");
 
         // Meal Prep actif (V4, 99 TND) à 0 pack complet → en alerte.
         JsonNode activeMealPrep = null;

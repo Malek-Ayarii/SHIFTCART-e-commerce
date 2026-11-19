@@ -1,6 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import {
   LucideArrowDown,
+  LucideCalendarRange,
+  LucideChartColumn,
+  LucideChartLine,
+  LucideChevronLeft,
+  LucideFunnel,
+  LucideHourglass,
+  LucidePercent,
+  LucideReceiptText,
+  LucideTable2,
+  LucideWallet,
   LucideArrowUp,
   LucideBoxes,
   LucideCircleCheck,
@@ -27,7 +37,6 @@ import {
   LucideChevronRight,
   LucideCircleAlert,
   LucideClock,
-  LucideChartColumn,
   LucideBot,
   LucideSparkles,
   LucideMegaphone,
@@ -39,7 +48,6 @@ import {
   LucideSend,
   LucideMessageSquarePlus,
   LucideCalendarDays,
-  LucideChevronLeft,
   LucideDatabase,
   LucideCornerDownRight,
   LucideArrowRight,
@@ -159,6 +167,16 @@ const ICONS = {
   arrowRight: LucideArrowRight,
   workflow: LucideWorkflow,
   users: LucideUsers,
+  // Analytique du tableau de bord
+  calendarRange: LucideCalendarRange,
+  chartLine: LucideChartLine,
+  chartColumn: LucideChartColumn,
+  table: LucideTable2,
+  funnel: LucideFunnel,
+  hourglass: LucideHourglass,
+  percent: LucidePercent,
+  receipt: LucideReceiptText,
+  wallet: LucideWallet,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

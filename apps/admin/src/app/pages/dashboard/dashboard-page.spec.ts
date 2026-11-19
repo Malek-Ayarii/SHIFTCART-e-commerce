@@ -16,11 +16,17 @@ describe('DashboardPage — pack filter', () => {
   });
 
   function productIdsOf(url: string): (string | null)[] {
-    return ctrl.match((r) => r.url === url).map((r) => {
-      const v = r.request.params.get('productId');
-      r.flush(url.endsWith('/orders') ? { content: [], page: 0, size: 50, totalElements: 0, totalPages: 0 } : {});
-      return v;
-    });
+    return ctrl
+      .match((r) => r.url === url)
+      .map((r) => {
+        const v = r.request.params.get('productId');
+        r.flush(
+          url.endsWith('/orders')
+            ? { content: [], page: 0, size: 50, totalElements: 0, totalPages: 0 }
+            : {},
+        );
+        return v;
+      });
   }
 
   it('sends productId on orders list, counts and kpis when a pack is selected', async () => {
@@ -31,6 +37,13 @@ describe('DashboardPage — pack filter', () => {
     await fixture.whenStable();
 
     ctrl.match('/api/admin/products').forEach((r) => r.flush([]));
+    // Analytique : période par défaut = mois en cours, découpée par jour, filtrée par pack.
+    const analytics = ctrl.match((r) => r.url === '/api/admin/stats/analytics');
+    expect(analytics.map((r) => r.request.params.get('productId'))).toEqual(['3']);
+    const p = state.period();
+    expect(analytics[0].request.params.get('from')).toBe(p.from);
+    expect(analytics[0].request.params.get('to')).toBe(p.to);
+    expect(analytics[0].request.params.get('granularity')).toBe('day');
     expect(productIdsOf('/api/admin/stats/kpis')).toEqual(['3']);
     expect(productIdsOf('/api/admin/orders/counts')).toEqual(['3']);
     expect(productIdsOf('/api/admin/orders')).toEqual(['3', '3', '3', '3']);
@@ -40,6 +53,7 @@ describe('DashboardPage — pack filter', () => {
     fixture.detectChanges();
     await fixture.whenStable();
     expect(productIdsOf('/api/admin/stats/kpis')).toEqual([null]);
+    expect(productIdsOf('/api/admin/stats/analytics')).toEqual([null]);
     expect(productIdsOf('/api/admin/orders')).toEqual([null, null, null, null]);
     productIdsOf('/api/admin/orders/counts');
     fixture.destroy();

@@ -217,7 +217,7 @@ class OrderApiTest extends IntegrationTest {
                 .andExpect(jsonPath("$.amountTnd").value(79))
                 .andExpect(jsonPath("$.productName").value("Le Pack Setup & Productivité"))
                 .andExpect(jsonPath("$.productSlug").value("pack-setup-productivite"))
-                .andExpect(jsonPath("$.productCoverUrl").isEmpty())
+                .andExpect(jsonPath("$.productCoverUrl").isNotEmpty())
                 .andReturn();
         String raw = r.getResponse().getContentAsString();
         assertThat(raw).doesNotContain("Ibn Khaldoun").doesNotContain("\"address\"");

@@ -151,6 +151,77 @@ export interface SendMessageRequest {
 
 // ---------- Stats ----------
 
+/** Découpage d'une période d'analyse. */
+export type Granularity = 'hour' | 'day' | 'week' | 'month';
+
+/** GET /api/admin/stats/analytics — cohorte des commandes créées dans la période (heure de Tunis). */
+export interface AnalyticsStats {
+  from: string;
+  to: string;
+  granularity: Granularity;
+  /** Période précédente entière (série de comparaison). */
+  previousFrom: string;
+  previousTo: string;
+  /** Fenêtre résumée dans `previous` (même durée écoulée pour une période en cours). */
+  compareFrom: string;
+  compareTo: string;
+  summary: AnalyticsSummary;
+  previous: AnalyticsSummary;
+  /** Une tranche par heure/jour/semaine/mois, tranches vides comprises. */
+  series: AnalyticsBucket[];
+  /** Même découpage sur la période précédente, aligné par index. */
+  previousSeries: AnalyticsPreviousBucket[];
+  funnel: AnalyticsFunnel;
+  products: { productId: number; name: string; orders: number; revenueTnd: number }[];
+  governorates: { governorate: string; orders: number; revenueTnd: number }[];
+  /** `source` null = trafic direct (sans utm_source). */
+  sources: { source: string | null; orders: number; revenueTnd: number }[];
+  /** weekday 1 = lundi … 7 = dimanche ; seules les cases non vides. */
+  heatmap: { weekday: number; hour: number; orders: number }[];
+}
+
+export interface AnalyticsSummary {
+  orders: number;
+  revenueTnd: number;
+  collectedTnd: number;
+  avgOrderTnd: number;
+  delivered: number;
+  inProgress: number;
+  returned: number;
+  cancelled: number;
+  confirmationRatePct: number;
+  deliveryRatePct: number;
+  returnRatePct: number;
+  avgConfirmHours: number | null;
+  avgDeliveryDays: number | null;
+}
+
+export interface AnalyticsBucket {
+  /** Début de la tranche, heure locale (« 2026-11-03T00:00 »). */
+  start: string;
+  orders: number;
+  revenueTnd: number;
+  collectedTnd: number;
+  delivered: number;
+  inProgress: number;
+  returned: number;
+  cancelled: number;
+}
+
+export interface AnalyticsPreviousBucket {
+  start: string;
+  orders: number;
+  revenueTnd: number;
+  collectedTnd: number;
+}
+
+export interface AnalyticsFunnel {
+  received: number;
+  confirmed: number;
+  shipped: number;
+  delivered: number;
+}
+
 export interface KpiStats {
   month: string;
   orders: number;

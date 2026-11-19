@@ -148,7 +148,8 @@ class AdminOrderApiTest extends IntegrationTest {
                 .andExpect(jsonPath("$.content[0].ref").value(ref))
                 .andExpect(jsonPath("$.content[0].productId").value(setupId))
                 .andExpect(jsonPath("$.content[0].productSlug").value("pack-setup-productivite"))
-                .andExpect(jsonPath("$.content[0].productCoverUrl").isEmpty())
+                // La photo du Pack Setup est amorcée depuis la mise en ligne du visuel (upstream).
+                .andExpect(jsonPath("$.content[0].productCoverUrl").isNotEmpty())
                 .andExpect(jsonPath("$.content[0].address").value(unique + ", La Marsa, Tunis"));
 
         JsonNode page = body(mvc.perform(get("/api/admin/orders").param("productId", String.valueOf(setupId))

@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { currentMonth } from './format';
 import { StockOverview } from './models';
+import { Period, periodOf, todayInTunis } from './period';
 
 /** Sous 768px : vue mobile équipe (C5). */
 export const MOBILE_QUERY = '(max-width: 767.98px)';
@@ -20,6 +21,9 @@ export class AppState {
     this.breakpoints.observe(MOBILE_QUERY).pipe(map((s) => s.matches)),
     { initialValue: this.breakpoints.isMatched(MOBILE_QUERY) },
   );
+
+  /** Période de l'analytique du tableau de bord (par défaut : le mois en cours). */
+  readonly period = signal<Period>(periodOf('month', todayInTunis()));
 
   /** Filtre « pack » du tableau de bord (productId), null = tous les packs. */
   readonly productFilter = signal<number | null>(null);

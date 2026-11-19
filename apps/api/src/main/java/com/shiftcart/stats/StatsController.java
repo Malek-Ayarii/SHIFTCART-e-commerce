@@ -14,11 +14,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class StatsController {
 
     private final StatsService stats;
+    private final AnalyticsService analytics;
     private final Clock clock;
 
-    public StatsController(StatsService stats, Clock clock) {
+    public StatsController(StatsService stats, AnalyticsService analytics, Clock clock) {
         this.stats = stats;
+        this.analytics = analytics;
         this.clock = clock;
+    }
+
+    /**
+     * Analytique sur une période libre : {@code from}/{@code to} (AAAA-MM-JJ, inclus, heure de Tunis ; défaut =
+     * 30 derniers jours), {@code granularity} = hour | day | week | month (défaut selon la durée), {@code productId},
+     * {@code compareFrom}/{@code compareTo} = fenêtre de comparaison des KPI (défaut : la période précédente).
+     */
+    @GetMapping("/analytics")
+    public StatsDtos.Analytics analytics(@RequestParam(name = "from", required = false) String from,
+            @RequestParam(name = "to", required = false) String to,
+            @RequestParam(name = "granularity", required = false) String granularity,
+            @RequestParam(name = "productId", required = false) Long productId,
+            @RequestParam(name = "compareFrom", required = false) String compareFrom,
+            @RequestParam(name = "compareTo", required = false) String compareTo) {
+        AnalyticsRange range = AnalyticsRange.parse(from, to, granularity, clock);
+        return analytics.analytics(range, range.comparison(compareFrom, compareTo), productId);
     }
 
     @GetMapping("/kpis")
